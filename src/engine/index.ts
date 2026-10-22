@@ -13,6 +13,7 @@ export type {
   GroupId,
   Grouping,
   MatchId,
+  MatchResult,
   PlayerId,
   SlotSource,
   StageConfig,
@@ -27,6 +28,9 @@ export type {
 // Commands
 export { createTournament, type CreateTournamentInput } from './tournament';
 export { execute, type Command, type CommandType } from './commands';
+
+/** Parses typed game scores ("11-7 9-11 11-5"); check them with validateResult. */
+export { parseGames } from './score';
 
 // Queries
 export {
@@ -49,6 +53,10 @@ export {
   type GroupView,
   type StandingsRowView,
   getMatch,
+  getWaitingList,
+  getFreeTables,
+  validateResult,
+  type FreeTableView,
   type MatchView,
   type MatchStatus,
   type MatchLocationView,

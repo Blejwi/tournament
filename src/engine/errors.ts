@@ -1,3 +1,4 @@
+import type { MatchStatus } from './derive';
 import type { CompetitionId, EntryId, MatchId, PlayerId, StageId, TableId } from './types';
 
 /**
@@ -25,6 +26,18 @@ export type EngineError =
   | { code: 'stageNotDrawn' }
   | { code: 'stageConfirmed' }
   | { code: 'notEnoughEntries'; needed: number }
-  | { code: 'matchNotFound'; match: MatchId };
+  | { code: 'matchNotFound'; match: MatchId }
+  | { code: 'matchNotReady'; status: MatchStatus }
+  | { code: 'matchNotOnTable' }
+  | { code: 'matchFinished' }
+  | { code: 'tableBusy'; number: number }
+  | { code: 'tableInactive'; number: number }
+  | { code: 'tableInUse'; number: number }
+  | { code: 'gamePointsRequired' }
+  | { code: 'invalidScoreFormat'; text: string }
+  /** `game` is 1-based; `a` and `b` are the points as entered, slot A first. */
+  | { code: 'invalidGame'; game: number; a: number; b: number }
+  | { code: 'gamesAfterDecided'; game: number }
+  | { code: 'matchNotDecided'; gamesToWin: number };
 
 export type EngineErrorCode = EngineError['code'];

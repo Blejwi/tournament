@@ -64,8 +64,9 @@ export type SlotSource =
 export type GameScore = [number, number];
 
 /**
- * The recorded outcome of a match. Later kinds (walkover, retirement, disqualification)
- * join this union; `winner` is the slot index (0 = A, 1 = B).
+ * The recorded outcome of a match, slot A first. `gamesOnly` (e.g. 3:1) is for stages that allow it
+ * (brackets); groups need the points of every game. Walkover, retirement and disqualification
+ * join this union with #0014.
  */
 export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'gamesOnly'; games: [number, number] };
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { execute, getCompetition, getPlayers, getStage, type TournamentState } from '@/engine';
+import { execute, getCompetition, getPlayers, getStage, type Command, type TournamentState } from '@/engine';
 import { errorOf } from './helpers';
 import { competitionWith, drawnGroups, groupNames, groupsOf, run, slotName } from './fixtures';
 
@@ -148,12 +148,13 @@ describe('confirming the draw', () => {
     const entry = getCompetition(state, competition)!.entries[0].id;
     const extra = run(state, { type: 'addPlayer', firstName: 'Late', lastName: 'Comer', club: '' });
     const player = getPlayers(extra).find((p) => p.lastName === 'Comer')!.id;
-    for (const [s, cmd] of [
+    const cases: [TournamentState, Command][] = [
       [extra, { type: 'enterPlayer', competition, player }],
       [state, { type: 'removeEntry', competition, entry }],
       [state, { type: 'setSeed', competition, entry, seed: 3 }],
       [state, { type: 'configureStages', competition, stages: [{ type: 'groups', grouping: { by: 'count', groups: 3 } }] }],
-    ] as const) {
+    ];
+    for (const [s, cmd] of cases) {
       expect(errorOf(execute(s, cmd))).toEqual({ code: 'stageConfirmed' });
     }
   });

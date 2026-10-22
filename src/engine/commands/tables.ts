@@ -1,4 +1,5 @@
 import { allocateId } from '../ids';
+import { tableInUse } from './matches';
 import { fail, ok, type Result } from '../result';
 import type { Table, TableId, TournamentState } from '../types';
 
@@ -47,7 +48,9 @@ export function setTableActive(state: TournamentState, cmd: Cmd<'setTableActive'
 }
 
 export function removeTable(state: TournamentState, cmd: Cmd<'removeTable'>): Result<TournamentState> {
-  if (!exists(state, cmd.table)) return fail({ code: 'tableNotFound', table: cmd.table });
+  const table = state.tables.find((t) => t.id === cmd.table);
+  if (!table) return fail({ code: 'tableNotFound', table: cmd.table });
+  if (tableInUse(state, table.id)) return fail({ code: 'tableInUse', number: table.number });
   return ok({ ...state, tables: state.tables.filter((t) => t.id !== cmd.table) });
 }
 

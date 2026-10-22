@@ -85,6 +85,17 @@ export const en = {
     stageConfirmed: 'The draw is already confirmed and can no longer be changed.',
     notEnoughEntries: 'Not enough entries: this needs at least {{needed}}.',
     matchNotFound: 'This match no longer exists.',
+    matchNotReady: 'This match cannot be played yet.',
+    matchNotOnTable: 'This match is not on a table.',
+    matchFinished: 'This match already has a result.',
+    tableBusy: 'Table {{number}} already has a match on it.',
+    tableInactive: 'Table {{number}} is inactive.',
+    tableInUse: 'Table {{number}} has a match on it. Finish the match or take it off the table first.',
+    gamePointsRequired: 'Group matches need the points of every game, e.g. 11-7 9-11 11-5.',
+    invalidScoreFormat: '“{{text}}” is not a game score. Type games like 11-7 9-11 11-5.',
+    invalidGame: 'Game {{game}} ({{a}}-{{b}}) is not valid: a game goes to 11 with a 2-point lead.',
+    gamesAfterDecided: 'Game {{game}} comes after the match was already decided.',
+    matchNotDecided: 'The match is not decided: the winner needs exactly {{gamesToWin}} games.',
   } satisfies Record<EngineErrorCode, string>,
 };
 
