@@ -1,7 +1,7 @@
 ---
 id: 17
 title: Export/import and backup reminder
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -29,3 +29,7 @@ created: 2026-10-22
 ## Blocked by
 
 - #0002
+
+## Resolution
+
+Done on `integration/v1` in c9a23ce (engine export/import with Zod and migrations, plus the backup reminder query) and 9086db0 (import/export UI, backup banner, and localStorage now in the tournament file format). Export/import lives in the engine (`exportTournament`/`importTournament`, schema v2) so that it is testable through the engine seam. Until real activity exists, "live" means any change in the last 30 minutes. The change-log section stays `[]` until #0016.
