@@ -9,3 +9,13 @@ export function useNow(everyMs = 30_000): string {
   }, [everyMs]);
   return now;
 }
+
+/** The current time in epoch milliseconds (the engine's `Timestamp`), refreshed every `everyMs`. */
+export function useNowMs(everyMs = 1_000): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), everyMs);
+    return () => clearInterval(timer);
+  }, [everyMs]);
+  return now;
+}

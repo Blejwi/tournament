@@ -31,6 +31,8 @@ export { execute, type Command, type CommandType } from './commands';
 
 /** Parses typed game scores ("11-7 9-11 11-5"); check them with validateResult. */
 export { parseGames } from './score';
+/** Games won by slot A and slot B, from the points of each game (e.g. for a score preview). */
+export { gamesWon } from './derive';
 // Tournament file (export/import)
 export {
   CURRENT_SCHEMA_VERSION,
