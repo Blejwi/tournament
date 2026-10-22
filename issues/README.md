@@ -1,6 +1,6 @@
 # Issues
 
-This folder is the project's issue tracker. One Markdown file per issue.
+This folder is the project's issue tracker. One Markdown file per issue. [BOARD.md](BOARD.md) is the Kanban board (Ready / In progress / Blocked / Done) and must be kept in step with each issue's `status`.
 
 - **File name:** `NNNN-short-slug.md`, numbered in creation order (`0001-…`, `0002-…`).
 - **Frontmatter:** every issue starts with
