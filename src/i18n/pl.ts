@@ -34,6 +34,23 @@ export const pl: Translations = {
     notFound: 'Tego turnieju nie ma w tej przeglądarce.',
     backToList: 'Wszystkie turnieje',
   },
+  importFile: {
+    heading: 'Import turnieju',
+    intro: 'Przywróć turniej z pliku kopii zapasowej (.json).',
+    file: 'Plik kopii zapasowej',
+    found: 'Plik zawiera „{{name}}” ({{date}}).',
+    asNew: 'Importuj jako nowy',
+    replaceTarget: 'Turniej do zastąpienia',
+    replace: 'Zastąp',
+    replaceTitle: 'Zastąpić „{{name}}”?',
+    replaceBody: 'Wszystkie dane „{{name}}” zapisane w tej przeglądarce zostaną zastąpione turniejem z pliku. Tego nie można cofnąć.',
+  },
+  backup: {
+    download: 'Pobierz kopię zapasową',
+    reminderTitle: 'Czas pobrać kopię zapasową',
+    reminderBody: 'Ostatnie zmiany są zapisane tylko w tej przeglądarce. Pobierz plik kopii zapasowej na wypadek utraty danych przeglądarki.',
+    later: 'Później',
+  },
   nav: {
     tables: 'Stoły',
     players: 'Zawodnicy',
@@ -71,5 +88,9 @@ export const pl: Translations = {
     invalidRating: 'Ranking musi być liczbą nie mniejszą niż 0.',
     invalidBirthYear: 'Podaj rok urodzenia z zakresu 1900–2100.',
     playerNotFound: 'Ten zawodnik już nie istnieje.',
+    importNotJson: 'Nie można odczytać pliku: to nie jest plik JSON.',
+    importNotTournamentFile: 'Ten plik nie jest kopią zapasową turnieju.',
+    importNewerVersion: 'Ten plik pochodzi z nowszej wersji aplikacji (format pliku {{version}}). Zaktualizuj aplikację, aby go zaimportować.',
+    importInvalidData: 'Plik jest uszkodzony lub niekompletny (problem w „{{path}}”). Niczego nie zaimportowano.',
   },
 };

@@ -12,6 +12,11 @@ export type EngineError =
   | { code: 'tableNotFound'; table: TableId }
   | { code: 'invalidRating' }
   | { code: 'invalidBirthYear' }
-  | { code: 'playerNotFound'; player: PlayerId };
+  | { code: 'playerNotFound'; player: PlayerId }
+  | { code: 'importNotJson' }
+  | { code: 'importNotTournamentFile' }
+  | { code: 'importNewerVersion'; version: number }
+  /** `path` is where the file is wrong, e.g. "tournament.players.1.lastName". */
+  | { code: 'importInvalidData'; path: string };
 
 export type EngineErrorCode = EngineError['code'];

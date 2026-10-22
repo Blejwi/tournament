@@ -35,6 +35,23 @@ export const en = {
     notFound: 'This tournament is not stored in this browser.',
     backToList: 'All tournaments',
   },
+  importFile: {
+    heading: 'Import tournament',
+    intro: 'Restore a tournament from a backup file (.json).',
+    file: 'Backup file',
+    found: 'File contains “{{name}}” ({{date}}).',
+    asNew: 'Import as new',
+    replaceTarget: 'Tournament to replace',
+    replace: 'Replace',
+    replaceTitle: 'Replace “{{name}}”?',
+    replaceBody: 'Everything stored for “{{name}}” in this browser will be replaced by the tournament from the file. This cannot be undone.',
+  },
+  backup: {
+    download: 'Download backup',
+    reminderTitle: 'Time to download a backup',
+    reminderBody: 'Your recent changes are stored only in this browser. Download a backup file in case browser data is lost.',
+    later: 'Later',
+  },
   nav: {
     tables: 'Tables',
     players: 'Players',
@@ -72,6 +89,10 @@ export const en = {
     invalidRating: 'The rating must be a number of 0 or more.',
     invalidBirthYear: 'Enter a birth year between 1900 and 2100.',
     playerNotFound: 'This player no longer exists.',
+    importNotJson: 'This file can’t be read: it is not a JSON file.',
+    importNotTournamentFile: 'This file is not a tournament backup.',
+    importNewerVersion: 'This file was made by a newer version of the app (file format {{version}}). Update the app to import it.',
+    importInvalidData: 'This file is damaged or incomplete (problem at “{{path}}”). Nothing was imported.',
   } satisfies Record<EngineErrorCode, string>,
 };
 

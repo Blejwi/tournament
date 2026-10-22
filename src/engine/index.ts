@@ -10,7 +10,22 @@ export type { PlayerId, TableId, TournamentId, TournamentState } from './types';
 export { createTournament, type CreateTournamentInput } from './tournament';
 export { execute, type Command, type CommandType } from './commands';
 
+// Tournament file (export/import)
+export {
+  CURRENT_SCHEMA_VERSION,
+  exportTournament,
+  importTournament,
+  type ImportTournamentInput,
+} from './tournamentFile';
+
 // Queries
+export {
+  BACKUP_INTERVAL_MINUTES,
+  getBackupReminder,
+  LIVE_WINDOW_MINUTES,
+  type BackupActivity,
+  type BackupReminder,
+} from './backupReminder';
 export {
   getPlayers,
   getTables,
