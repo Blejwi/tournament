@@ -1,7 +1,7 @@
 ---
 id: 17
 title: Export/import and backup reminder
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

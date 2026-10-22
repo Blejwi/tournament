@@ -17,13 +17,14 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
-| [#0002](0002-project-scaffold-tournaments-tables-players.md) | Project scaffold: tournaments, tables and players | started 2026-10-22 |
+| [#0003](0003-groups-only-competition-end-to-end.md) | Groups-only competition, end to end | started 2026-10-22 |
+| [#0017](0017-export-import-and-backup-reminder.md) | Export/import and backup reminder | started 2026-10-22 |
+| [#0018](0018-works-offline-pwa.md) | Works offline (PWA) | started 2026-10-22 |
 
 ## ⛔ Blocked
 
 | Ticket | Title | Blocked by |
 |---|---|---|
-| [#0003](0003-groups-only-competition-end-to-end.md) | Groups-only competition, end to end | #0002 |
 | [#0004](0004-ittf-tiebreaks-and-group-detail.md) | ITTF tiebreaks and group detail | #0003 |
 | [#0005](0005-tables-panel-overdue-and-idle.md) | Tables panel, overdue and idle | #0003 |
 | [#0006](0006-multiple-competitions-busy-players-waiting-list.md) | Multiple competitions: busy players and waiting-list order | #0003 |
@@ -37,13 +38,12 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 | [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | #0007 |
 | [#0015](0015-corrections.md) | Corrections | #0007 |
 | [#0016](0016-change-log-and-stats-drawer.md) | Change log and stats drawer | #0005 |
-| [#0017](0017-export-import-and-backup-reminder.md) | Export/import and backup reminder | #0002 |
-| [#0018](0018-works-offline-pwa.md) | Works offline (PWA) | #0002 |
 
 ## ✅ Done
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0002](0002-project-scaffold-tournaments-tables-players.md) | Project scaffold: tournaments, tables and players | 58e0dfa, fb6f34b |
 
 ## Dependency graph
 

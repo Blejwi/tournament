@@ -1,7 +1,7 @@
 ---
 id: 3
 title: Groups-only competition, end to end
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

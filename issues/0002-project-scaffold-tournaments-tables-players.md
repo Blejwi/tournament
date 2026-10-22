@@ -1,7 +1,7 @@
 ---
 id: 2
 title: Project scaffold — tournaments, tables and players
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -37,3 +37,7 @@ The operator can create, open and delete tournaments (name, date, venue). In a t
 ## Blocked by
 
 None (can start immediately)
+
+## Resolution
+
+Done on `integration/v1` in 58e0dfa (project and pure engine) and fb6f34b (store, autosave, i18n and setup screens). Engine interface: `execute(state, command)` → `Result`, with queries `getTournament`/`getTables`/`getPlayers`. Conventions are in CLAUDE.md, under "Code conventions". The shadcn/ui components were written by hand, and `components.json` is ready for `npx shadcn add`.
