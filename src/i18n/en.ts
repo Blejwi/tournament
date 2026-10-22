@@ -78,6 +78,13 @@ export const en = {
     alreadyEntered: 'This player is already entered in the competition.',
     invalidSeed: 'The seed must be a whole number of 1 or more.',
     seedTaken: 'Seed {{seed}} is already given to another entry.',
+    invalidGrouping: 'Choose at least 1 group, or a group size of at least 2.',
+    unsupportedStageChain: 'This stage format is not available yet.',
+    stageNotFound: 'This stage no longer exists.',
+    stageNotDrawn: 'Generate the draw first.',
+    stageConfirmed: 'The draw is already confirmed and can no longer be changed.',
+    notEnoughEntries: 'Not enough entries: this needs at least {{needed}}.',
+    matchNotFound: 'This match no longer exists.',
   } satisfies Record<EngineErrorCode, string>,
 };
 

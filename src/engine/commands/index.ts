@@ -2,10 +2,12 @@ import type { Result } from '../result';
 import type { TournamentState } from '../types';
 import * as competitions from './competitions';
 import * as players from './players';
+import * as stages from './stages';
 import * as tables from './tables';
 
 /** Every command the engine accepts, as a discriminated union on `type`. */
-export type Command = tables.TableCommand | players.PlayerCommand | competitions.CompetitionCommand;
+export type Command = tables.TableCommand | players.PlayerCommand | competitions.CompetitionCommand
+  | stages.StageCommand;
 
 export type CommandType = Command['type'];
 
@@ -23,6 +25,9 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   enterPlayer: competitions.enterPlayer,
   removeEntry: competitions.removeEntry,
   setSeed: competitions.setSeed,
+  configureStages: stages.configureStages,
+  generateDraw: stages.generateDraw,
+  confirmStage: stages.confirmStage,
 };
 
 /** Applies a command to the state: returns the new state, or a typed error. Never mutates `state`. */

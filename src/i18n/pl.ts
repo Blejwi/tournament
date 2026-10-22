@@ -77,5 +77,12 @@ export const pl: Translations = {
     alreadyEntered: 'Ten zawodnik jest już zgłoszony do konkurencji.',
     invalidSeed: 'Numer rozstawienia musi być liczbą całkowitą większą od 0.',
     seedTaken: 'Numer rozstawienia {{seed}} ma już inny zawodnik.',
+    invalidGrouping: 'Wybierz co najmniej 1 grupę albo grupy co najmniej 2-osobowe.',
+    unsupportedStageChain: 'Ten format etapu nie jest jeszcze dostępny.',
+    stageNotFound: 'Ten etap już nie istnieje.',
+    stageNotDrawn: 'Najpierw wylosuj.',
+    stageConfirmed: 'Losowanie jest już zatwierdzone i nie można go zmienić.',
+    notEnoughEntries: 'Za mało zgłoszeń: potrzeba co najmniej {{needed}}.',
+    matchNotFound: 'Ten mecz już nie istnieje.',
   },
 };

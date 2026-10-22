@@ -6,6 +6,7 @@ export type { Result } from './result';
 export type { EngineError, EngineErrorCode } from './errors';
 export type {
   CompetitionId,
+  DrawState,
   EntryId,
   GameScore,
   GamesToWin,
@@ -39,4 +40,18 @@ export {
   type TournamentView,
   type CompetitionSummaryView,
   type CompetitionView,
+  type StageSummaryView,
+  type EntryView,
+  type EntryPlayerView,
+  getStage,
+  type StageView,
+  type GroupsStageView,
+  type GroupView,
+  type StandingsRowView,
+  getMatch,
+  type MatchView,
+  type MatchStatus,
+  type MatchLocationView,
+  type ResultView,
+  type SlotView,
 } from './queries';

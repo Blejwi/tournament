@@ -1,4 +1,4 @@
-import type { CompetitionId, EntryId, PlayerId, TableId } from './types';
+import type { CompetitionId, EntryId, MatchId, PlayerId, StageId, TableId } from './types';
 
 /**
  * Typed engine errors. They carry a `code` and data only, never display text:
@@ -18,6 +18,13 @@ export type EngineError =
   | { code: 'entryNotFound'; entry: EntryId }
   | { code: 'alreadyEntered'; player: PlayerId }
   | { code: 'invalidSeed' }
-  | { code: 'seedTaken'; seed: number };
+  | { code: 'seedTaken'; seed: number }
+  | { code: 'invalidGrouping' }
+  | { code: 'unsupportedStageChain' }
+  | { code: 'stageNotFound'; stage: StageId }
+  | { code: 'stageNotDrawn' }
+  | { code: 'stageConfirmed' }
+  | { code: 'notEnoughEntries'; needed: number }
+  | { code: 'matchNotFound'; match: MatchId };
 
 export type EngineErrorCode = EngineError['code'];

@@ -1,5 +1,7 @@
 import { allocateId } from '../ids';
+import { replaceCompetition } from '../locate';
 import { fail, ok, type Result } from '../result';
+import { handlerFor } from '../stages';
 import type { Competition, CompetitionId, EntryId, GamesToWin, PlayerId, TournamentState } from '../types';
 
 export type CompetitionCommand =
@@ -62,17 +64,19 @@ export function findCompetition(state: TournamentState, id: CompetitionId): Resu
   return competition ? ok(competition) : fail({ code: 'competitionNotFound', competition: id });
 }
 
-export function replaceCompetition(state: TournamentState, competition: Competition): TournamentState {
-  return { ...state, competitions: state.competitions.map((c) => (c.id === competition.id ? competition : c)) };
-}
-
-/** Changes a competition's entries. */
+/**
+ * Changes a competition's entries. Entries are locked once the first stage is confirmed;
+ * before that, a change discards the first stage's draw, which no longer matches the entries.
+ */
 function changeEntries(
   state: TournamentState,
   competition: Competition,
   change: (entries: Competition['entries']) => Result<Competition['entries']>,
 ): Result<TournamentState> {
+  const [first, ...rest] = competition.stages;
+  if (first?.drawState === 'confirmed') return fail({ code: 'stageConfirmed' });
   const entries = change(competition.entries);
   if (!entries.ok) return entries;
-  return ok(replaceCompetition(state, { ...competition, entries: entries.value }));
+  const stages = first ? [handlerFor(first).clearDraw(first), ...rest] : [];
+  return ok(replaceCompetition(state, { ...competition, entries: entries.value, stages }));
 }

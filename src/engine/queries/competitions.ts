@@ -1,4 +1,5 @@
-import type { Competition, CompetitionId, Entry, EntryId, GamesToWin, PlayerId, TournamentState } from '../types';
+import { handlerFor } from '../stages';
+import type { Competition, CompetitionId, DrawState, Entry, EntryId, GamesToWin, PlayerId, StageConfig, StageId, TournamentState } from '../types';
 
 export interface CompetitionSummaryView {
   id: CompetitionId;
@@ -32,15 +33,18 @@ export interface CompetitionView {
   gamesToWin: GamesToWin;
   /** Seeded entries first (by seed), then the rest by last name and first name. */
   entries: EntryView[];
-  stages: never[];
+  /** The stage chain in order, with each stage's options. */
+  stages: StageSummaryView[];
 }
+
+export type StageSummaryView = { id: StageId; drawState: DrawState } & StageConfig;
 
 /** One competition with its entries and stage chain, or null when it doesn't exist. */
 export function getCompetition(state: TournamentState, id: CompetitionId): CompetitionView | null {
   const competition = state.competitions.find((c) => c.id === id);
   if (!competition) return null;
   const entries = competition.entries.map((e) => entryView(state, e)).sort(entryOrder);
-  return { id: competition.id, name: competition.name, gamesToWin: competition.gamesToWin, entries, stages: [] };
+  return { id: competition.id, name: competition.name, gamesToWin: competition.gamesToWin, entries, stages: competition.stages.map((s) => ({ id: s.id, drawState: s.drawState, ...structuredClone(handlerFor(s).config(s)) })) };
 }
 
 export function entryView(state: TournamentState, entry: Entry): EntryView {
