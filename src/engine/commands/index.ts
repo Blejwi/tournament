@@ -4,6 +4,7 @@ import * as competitions from './competitions';
 import * as matches from './matches';
 import * as players from './players';
 import * as stages from './stages';
+import * as standings from './standings';
 import * as tables from './tables';
 
 /** Every command the engine accepts, as a discriminated union on `type`. */
@@ -12,7 +13,8 @@ export type Command =
   | players.PlayerCommand
   | competitions.CompetitionCommand
   | stages.StageCommand
-  | matches.MatchCommand;
+  | matches.MatchCommand
+  | standings.StandingsCommand;
 
 export type CommandType = Command['type'];
 
@@ -36,6 +38,7 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   assignMatch: matches.assignMatch,
   unassignMatch: matches.unassignMatch,
   recordResult: matches.recordResult,
+  resolveTie: standings.resolveTie,
 };
 
 /** Applies a command to the state: returns the new state, or a typed error. Never mutates `state`. */

@@ -10,6 +10,7 @@ import type {
   SlotSource,
   Stage,
   Table,
+  TieResolution,
   TournamentState,
 } from '../types';
 import { isIsoDate } from '../validation';
@@ -84,10 +85,19 @@ const matchSchema = z.object({
   finishedAt: timestamp,
 }) satisfies z.ZodType<Match>;
 
+const tieResolutionSchema = z.object({
+  entries: z
+    .array(id)
+    .min(2)
+    .refine((entries) => new Set(entries).size === entries.length, 'Duplicate entry'),
+  method: z.enum(['decision', 'lot']),
+}) satisfies z.ZodType<TieResolution>;
+
 const groupSchema = z.object({
   id,
   name: z.string().min(1),
   entries: z.array(slotSourceSchema),
+  tieResolutions: z.array(tieResolutionSchema),
 }) satisfies z.ZodType<Group>;
 
 const groupsStageSchema = z.object({

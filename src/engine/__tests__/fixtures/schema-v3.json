@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 3,
+  "tournament": {
+    "id": "summer-open",
+    "name": "Summer Open",
+    "date": "2026-07-04",
+    "venue": "",
+    "tables": [{ "id": "table-1", "number": 1, "name": "", "active": true }],
+    "players": [
+      { "id": "player-2", "firstName": "Ola", "lastName": "Kowal", "club": "", "rating": null, "birthYear": null },
+      { "id": "player-3", "firstName": "Iga", "lastName": "Lis", "club": "", "rating": null, "birthYear": null },
+      { "id": "player-4", "firstName": "Ewa", "lastName": "Sowa", "club": "", "rating": null, "birthYear": null }
+    ],
+    "competitions": [
+      {
+        "id": "competition-5",
+        "name": "Women",
+        "gamesToWin": 3,
+        "entries": [
+          { "id": "entry-6", "players": ["player-2"], "seed": null },
+          { "id": "entry-7", "players": ["player-3"], "seed": null },
+          { "id": "entry-8", "players": ["player-4"], "seed": null }
+        ],
+        "stages": [
+          {
+            "id": "stage-9",
+            "type": "groups",
+            "drawState": "confirmed",
+            "grouping": { "by": "count", "groups": 1 },
+            "groups": [
+              {
+                "id": "group-10",
+                "name": "A",
+                "entries": [
+                  { "kind": "entry", "entry": "entry-6" },
+                  { "kind": "entry", "entry": "entry-7" },
+                  { "kind": "entry", "entry": "entry-8" }
+                ]
+              }
+            ],
+            "matches": [
+              {
+                "id": "match-11",
+                "location": { "kind": "group", "group": "group-10" },
+                "round": 1,
+                "order": 1,
+                "slots": [{ "kind": "entry", "entry": "entry-7" }, { "kind": "entry", "entry": "entry-8" }],
+                "table": "table-1",
+                "assignedAt": 1000,
+                "result": { "kind": "games", "games": [[11, 7], [11, 9], [11, 5]] },
+                "finishedAt": 2000
+              },
+              {
+                "id": "match-12",
+                "location": { "kind": "group", "group": "group-10" },
+                "round": 2,
+                "order": 1,
+                "slots": [{ "kind": "entry", "entry": "entry-6" }, { "kind": "entry", "entry": "entry-7" }],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              },
+              {
+                "id": "match-13",
+                "location": { "kind": "group", "group": "group-10" },
+                "round": 3,
+                "order": 1,
+                "slots": [{ "kind": "entry", "entry": "entry-8" }, { "kind": "entry", "entry": "entry-6" }],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "nextId": 14
+  },
+  "log": []
+}

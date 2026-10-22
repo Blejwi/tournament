@@ -75,7 +75,7 @@ export function derive(state: TournamentState): Derived {
     const played = stage.matches
       .filter((m) => m.location.kind === 'group' && m.location.group === group.id)
       .map((m) => ({ match: m, entries: matchEntries(m.id), winner: winnerOf(m) }));
-    const result = groupStandings(members, played);
+    const result = groupStandings(members, played, group.tieResolutions);
     standingsMemo.set(group, result);
     return result;
   };
@@ -98,7 +98,7 @@ export function derive(state: TournamentState): Derived {
         if (!stage || stage.type !== 'groups' || !group) return null;
         const table = standings(stage, group);
         if (!table.complete) return null;
-        const row = table.rows.find((r) => r.place === source.place);
+        const row = table.rows.find((r) => r.place === source.place && !r.tied);
         return row?.entry ?? null;
       }
     }
