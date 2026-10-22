@@ -72,6 +72,12 @@ export const en = {
     invalidRating: 'The rating must be a number of 0 or more.',
     invalidBirthYear: 'Enter a birth year between 1900 and 2100.',
     playerNotFound: 'This player no longer exists.',
+    invalidGamesToWin: 'Games to win must be 2, 3 or 4.',
+    competitionNotFound: 'This competition no longer exists.',
+    entryNotFound: 'This entry no longer exists.',
+    alreadyEntered: 'This player is already entered in the competition.',
+    invalidSeed: 'The seed must be a whole number of 1 or more.',
+    seedTaken: 'Seed {{seed}} is already given to another entry.',
   } satisfies Record<EngineErrorCode, string>,
 };
 

@@ -71,5 +71,11 @@ export const pl: Translations = {
     invalidRating: 'Ranking musi być liczbą nie mniejszą niż 0.',
     invalidBirthYear: 'Podaj rok urodzenia z zakresu 1900–2100.',
     playerNotFound: 'Ten zawodnik już nie istnieje.',
+    invalidGamesToWin: 'Liczba wygranych gier musi wynosić 2, 3 lub 4.',
+    competitionNotFound: 'Ta konkurencja już nie istnieje.',
+    entryNotFound: 'Ten zawodnik nie jest już zgłoszony.',
+    alreadyEntered: 'Ten zawodnik jest już zgłoszony do konkurencji.',
+    invalidSeed: 'Numer rozstawienia musi być liczbą całkowitą większą od 0.',
+    seedTaken: 'Numer rozstawienia {{seed}} ma już inny zawodnik.',
   },
 };

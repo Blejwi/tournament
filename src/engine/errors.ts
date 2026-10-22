@@ -1,4 +1,4 @@
-import type { PlayerId, TableId } from './types';
+import type { CompetitionId, EntryId, PlayerId, TableId } from './types';
 
 /**
  * Typed engine errors. They carry a `code` and data only, never display text:
@@ -12,6 +12,12 @@ export type EngineError =
   | { code: 'tableNotFound'; table: TableId }
   | { code: 'invalidRating' }
   | { code: 'invalidBirthYear' }
-  | { code: 'playerNotFound'; player: PlayerId };
+  | { code: 'playerNotFound'; player: PlayerId }
+  | { code: 'invalidGamesToWin' }
+  | { code: 'competitionNotFound'; competition: CompetitionId }
+  | { code: 'entryNotFound'; entry: EntryId }
+  | { code: 'alreadyEntered'; player: PlayerId }
+  | { code: 'invalidSeed' }
+  | { code: 'seedTaken'; seed: number };
 
 export type EngineErrorCode = EngineError['code'];

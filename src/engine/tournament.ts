@@ -14,5 +14,5 @@ export function createTournament(input: CreateTournamentInput): Result<Tournamen
   const name = input.name.trim();
   if (!name) return fail({ code: 'required', field: 'name' });
   if (!isIsoDate(input.date)) return fail({ code: 'invalidDate', field: 'date' });
-  return ok({ id: input.id, name, date: input.date, venue: input.venue.trim(), tables: [], players: [], nextId: 1 });
+  return ok({ id: input.id, name, date: input.date, venue: input.venue.trim(), tables: [], players: [], competitions: [], nextId: 1 });
 }

@@ -1,4 +1,4 @@
-import type { PlayerId, TableId, TournamentId, TournamentState } from './types';
+import type { PlayerId, TableId, TournamentId, TournamentState } from '../types';
 
 /**
  * Queries are pure functions of the state (plus `now` once a query depends on time).

@@ -4,7 +4,24 @@
  */
 export type { Result } from './result';
 export type { EngineError, EngineErrorCode } from './errors';
-export type { PlayerId, TableId, TournamentId, TournamentState } from './types';
+export type {
+  CompetitionId,
+  EntryId,
+  GameScore,
+  GamesToWin,
+  GroupId,
+  Grouping,
+  MatchId,
+  PlayerId,
+  SlotSource,
+  StageConfig,
+  StageId,
+  StageType,
+  TableId,
+  Timestamp,
+  TournamentId,
+  TournamentState,
+} from './types';
 
 // Commands
 export { createTournament, type CreateTournamentInput } from './tournament';
@@ -15,7 +32,11 @@ export {
   getPlayers,
   getTables,
   getTournament,
+  getCompetitions,
+  getCompetition,
   type PlayerView,
   type TableView,
   type TournamentView,
+  type CompetitionSummaryView,
+  type CompetitionView,
 } from './queries';
