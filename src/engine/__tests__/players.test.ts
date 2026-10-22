@@ -70,8 +70,8 @@ describe('players', () => {
   });
 
   it('updates a player, including clearing the optional fields', () => {
-    let [state, id] = withPlayer();
-    state = unwrap(execute(state, { type: 'updatePlayer', player: id, ...kowalski, rating: 1500, birthYear: 2010 }));
+    const [registered, id] = withPlayer();
+    let state = unwrap(execute(registered, { type: 'updatePlayer', player: id, ...kowalski, rating: 1500, birthYear: 2010 }));
     state = unwrap(
       execute(state, {
         type: 'updatePlayer',

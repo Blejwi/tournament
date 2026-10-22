@@ -11,3 +11,37 @@ Issues are Markdown files in `issues/` (conventions in `issues/README.md`). Trac
 ## Prototypes
 
 Throwaway UI prototypes live on the branch `prototype/ui-variants`, not on `main`.
+
+## Commands
+
+`npm run dev` (Vite), `npm test` (Vitest), `npm run build` (typecheck + build), `npm run lint` (ESLint). Keep all four green.
+
+## Code conventions
+
+Folder layout (`@/` = `src/`):
+
+- `src/engine/`: the pure tournament engine (ADR 0004). No React, storage, clock or `Math.random` (ESLint enforces this). Everything else imports it only via `@/engine` (`index.ts` is the public interface).
+  - `types.ts` state shape (plain JSON), `errors.ts` the typed `EngineError` union, `result.ts` `Result<T>`.
+  - `commands/<area>.ts` command types + handlers; `commands/index.ts` the `Command` union, the handler map and `execute(state, command)`.
+  - `queries.ts` (split into `queries/` when it grows): pure `(state, now?)` functions returning fresh view objects.
+  - `__tests__/`: the only tests. They import `@/engine` alone: set up with commands, assert on queries.
+- `src/app/`: thin Zustand store (`store.ts`). Holds the open tournament, calls `execute`, autosaves through `TournamentStorage` after each successful command. Hooks `useApp(selector)` and `useQuery(query, deps)` in `useApp.ts`. No rules here.
+- `src/storage/`: `TournamentStorage` interface + localStorage adapter (index key `tm:tournaments`, one document per tournament at `tm:tournament:<id>`, wrapped with `schemaVersion`).
+- `src/i18n/`: i18next setup, `en.ts` (source of keys), `pl.ts`.
+- `src/ui/`: React. `router.tsx`, `AppShell.tsx`, `screens/`, `components/` (app components), `components/ui/` (shadcn/ui source; `components.json` is set up for `npx shadcn add`).
+
+How to add an engine command:
+
+1. Add a variant `{ type: 'doThing'; ... }` to the area's union in `commands/<area>.ts`. A new area gets a new file whose union is added to `Command` in `commands/index.ts`.
+2. Write `doThing(state, cmd): Result<TournamentState>` next to it. Never mutate `state`; return `fail({ code, ...data })` for rule violations. New error codes go in `errors.ts` (data only, no display text).
+3. Register it in the `handlers` map in `commands/index.ts` (TypeScript fails until you do).
+4. Time and randomness are command fields (`at`, `randomSeed`). Ids the engine makes come from `allocateId` (`ids.ts`); the tournament id is passed in.
+5. Test first in `__tests__/` through `execute` + queries. Re-export new queries and types from `index.ts`.
+
+The UI runs commands with `useApp((s) => s.dispatch)(command)`, which returns the `EngineError` or `null`; show it with `errorMessage(t, error)`. Read data with `useQuery(getThing)`, never by calling queries inside a `useApp` selector (new objects each call make Zustand loop).
+
+How to add a translation:
+
+1. Add the key to `src/i18n/en.ts`, then to `src/i18n/pl.ts`. TypeScript fails if PL lacks a key or `t('...')` names an unknown one.
+2. Every `EngineError` code needs an `errors.<code>` message in both files (enforced). The error's data fields are interpolation values (`{{number}}`).
+3. Use `useTranslation()` and `t('area.key')`. Never hard-code UI text, `aria-label`s or titles. Plurals need i18next suffixes (`_one`/`_other` in EN; `_one`/`_few`/`_many` in PL).
