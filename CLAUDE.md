@@ -14,7 +14,7 @@ Throwaway UI prototypes live on the branch `prototype/ui-variants`, not on `main
 
 ## Commands
 
-`npm run dev` (Vite), `npm test` (Vitest), `npm run build` (typecheck + build), `npm run lint` (ESLint). Keep all four green.
+`npm run dev` (Vite), `npm test` (Vitest), `npm run build` (typecheck + build), `npm run lint` (ESLint). Keep all four green. The service worker (offline PWA) exists only in the build: try it with `npm run build && npm run preview`. Deployment, offline behaviour and the SPA fallback: `docs/deployment.md`.
 
 ## Code conventions
 

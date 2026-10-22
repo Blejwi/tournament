@@ -9,6 +9,12 @@ export const pl: Translations = {
     en: 'English',
     pl: 'Polski',
   },
+  pwa: {
+    offlineReady: 'Aplikacja jest gotowa do pracy offline.',
+    updateAvailable: 'Dostępna jest nowa wersja aplikacji. Twoje turnieje zostaną zachowane.',
+    reload: 'Aktualizuj teraz',
+    later: 'Później',
+  },
   common: {
     add: 'Dodaj',
     save: 'Zapisz',

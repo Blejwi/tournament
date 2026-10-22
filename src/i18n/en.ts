@@ -10,6 +10,12 @@ export const en = {
     en: 'English',
     pl: 'Polski',
   },
+  pwa: {
+    offlineReady: 'The app is ready to work offline.',
+    updateAvailable: 'A new version of the app is available. Your tournaments are kept.',
+    reload: 'Update now',
+    later: 'Later',
+  },
   common: {
     add: 'Add',
     save: 'Save',
