@@ -1,7 +1,7 @@
 ---
 id: 3
 title: Groups-only competition, end to end
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -45,3 +45,7 @@ The main screen is a basic pan/zoom canvas for the competition, showing group bo
 ## Blocked by
 
 - #0002
+
+## Resolution
+
+Done on `integration/v1` in 5d053a5, a144d07, 2af709f, 61c67d1 and d86df9a. This adds the core domain model: competitions, entries, stages behind a `StageHandler` registry, matches with a `SlotSource` union, and derived match status. It also adds the groups draw (snake, Berger order), match calling and validated results, standings by group points, a basic waiting list, and the pan/zoom play canvas. The tournament file schema is now v3. The tiebreak (#0004) and ready-since ordering (#0006) are left to their own tickets.

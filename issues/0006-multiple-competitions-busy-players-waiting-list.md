@@ -1,7 +1,7 @@
 ---
 id: 6
 title: Multiple competitions — busy players and waiting-list order
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

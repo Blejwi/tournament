@@ -1,7 +1,7 @@
 ---
 id: 4
 title: ITTF tiebreaks and group detail
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

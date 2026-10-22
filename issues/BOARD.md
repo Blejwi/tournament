@@ -17,16 +17,15 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
-| [#0003](0003-groups-only-competition-end-to-end.md) | Groups-only competition, end to end | started 2026-10-22 |
+| [#0007](0007-direct-single-elimination.md) | Direct single elimination | started 2026-10-22 |
+| [#0006](0006-multiple-competitions-busy-players-waiting-list.md) | Multiple competitions: busy players and waiting-list order | started 2026-10-22 |
+| [#0005](0005-tables-panel-overdue-and-idle.md) | Tables panel, overdue and idle | started 2026-10-22 |
+| [#0004](0004-ittf-tiebreaks-and-group-detail.md) | ITTF tiebreaks and group detail | started 2026-10-22 |
 
 ## ⛔ Blocked
 
 | Ticket | Title | Blocked by |
 |---|---|---|
-| [#0004](0004-ittf-tiebreaks-and-group-detail.md) | ITTF tiebreaks and group detail | #0003 |
-| [#0005](0005-tables-panel-overdue-and-idle.md) | Tables panel, overdue and idle | #0003 |
-| [#0006](0006-multiple-competitions-busy-players-waiting-list.md) | Multiple competitions: busy players and waiting-list order | #0003 |
-| [#0007](0007-direct-single-elimination.md) | Direct single elimination | #0003 |
 | [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | #0003, #0007 |
 | [#0009](0009-groups-to-single-elimination.md) | Groups → single elimination | #0004, #0007, #0008 |
 | [#0010](0010-direct-double-elimination.md) | Direct double elimination | #0007 |
@@ -44,6 +43,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 | [#0002](0002-project-scaffold-tournaments-tables-players.md) | Project scaffold: tournaments, tables and players | 58e0dfa, fb6f34b |
 | [#0017](0017-export-import-and-backup-reminder.md) | Export/import and backup reminder | c9a23ce, 9086db0 |
 | [#0018](0018-works-offline-pwa.md) | Works offline (PWA) | ef8ce41 |
+| [#0003](0003-groups-only-competition-end-to-end.md) | Groups-only competition, end to end | 5d053a5..d86df9a |
 
 ## Dependency graph
 

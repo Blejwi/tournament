@@ -1,7 +1,7 @@
 ---
 id: 5
 title: Tables panel, overdue and idle
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

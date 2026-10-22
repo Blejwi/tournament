@@ -1,7 +1,7 @@
 ---
 id: 7
 title: Direct single elimination
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
