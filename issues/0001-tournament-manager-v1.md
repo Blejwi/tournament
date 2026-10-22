@@ -324,7 +324,7 @@ type MatchStatus =
 **Group standings**
 - 1 point for a win, 0 for a loss or walkover.
 - Ties are broken by ITTF rules among the tied players only: points in their matches against each other, then game ratio in those matches, then point ratio in those matches, repeated for any subset still tied.
-- After that, the manager decides (manual decision or lot).
+- After that, the operator decides (manual decision or lot).
 
 **Groups → bracket**
 - Uses the algorithm from user story 28.
@@ -338,7 +338,7 @@ type MatchStatus =
 
 **Double elimination**
 - Built as user stories 44–47 describe.
-- There is no grand final reset.
+- There is no grand final: the WB final winner is champion (see ADR 0002).
 
 **Play-offs**
 - Turned on per range, at any time.
@@ -390,7 +390,7 @@ type MatchStatus =
   - "correcting a result after the next match started requires force and resets these matches"
   - "a 3-way tie is resolved by head-to-head game ratio"
 
-  It asserts on observable output: match statuses, resolved players, standings order, places, queue order and table status.
+  It asserts on observable output: match statuses, resolved players, standings order, places, waiting-list order and table status.
 - **Covered through the seam:**
   - seed positions for 8/16/32/64
   - BYE placement and auto-advance
@@ -421,7 +421,7 @@ type MatchStatus =
 - a read-only display screen for a projector or TV (deferred)
 - printing (match cards, draw sheets, results)
 - club separation in draws
-- double elimination grand final reset
+- a grand final or grand final reset in double elimination (see ADR 0002)
 - brackets smaller than 8, except the 4-player knockout after groups
 - a general undo beyond the correction flow
 - automatic table assignment (the operator always chooses)
