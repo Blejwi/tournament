@@ -38,6 +38,11 @@ export type EngineError =
   /** `game` is 1-based; `a` and `b` are the points as entered, slot A first. */
   | { code: 'invalidGame'; game: number; a: number; b: number }
   | { code: 'gamesAfterDecided'; game: number }
-  | { code: 'matchNotDecided'; gamesToWin: number };
+  | { code: 'matchNotDecided'; gamesToWin: number }
+  | { code: 'importNotJson' }
+  | { code: 'importNotTournamentFile' }
+  | { code: 'importNewerVersion'; version: number }
+  /** `path` is where the file is wrong, e.g. "tournament.players.1.lastName". */
+  | { code: 'importInvalidData'; path: string };
 
 export type EngineErrorCode = EngineError['code'];

@@ -14,7 +14,7 @@ Throwaway UI prototypes live on the branch `prototype/ui-variants`, not on `main
 
 ## Commands
 
-`npm run dev` (Vite), `npm test` (Vitest), `npm run build` (typecheck + build), `npm run lint` (ESLint). Keep all four green.
+`npm run dev` (Vite), `npm test` (Vitest), `npm run build` (typecheck + build), `npm run lint` (ESLint). Keep all four green. The service worker (offline PWA) exists only in the build: try it with `npm run build && npm run preview`. Deployment, offline behaviour and the SPA fallback: `docs/deployment.md`.
 
 ## Code conventions
 
@@ -24,9 +24,11 @@ Folder layout (`@/` = `src/`):
   - `types.ts` state shape (plain JSON), `errors.ts` the typed `EngineError` union, `result.ts` `Result<T>`.
   - `commands/<area>.ts` command types + handlers; `commands/index.ts` the `Command` union, the handler map and `execute(state, command)`.
   - `queries.ts` (split into `queries/` when it grows): pure `(state, now?)` functions returning fresh view objects.
+  - `tournamentFile/`: the tournament file format, used for export/import AND for each stored tournament. `schema.ts` (Zod schema of the current version), `migrations.ts` (one step per old version), `index.ts` (`exportTournament(state)` → JSON text, `importTournament({ id, file })` → `Result<TournamentState>`).
+  - `backupReminder.ts`: `getBackupReminder(state, { now, lastChangeAt, unsavedSince, postponedUntil? })`; the app tracks those times.
   - `__tests__/`: the only tests. They import `@/engine` alone: set up with commands, assert on queries.
 - `src/app/`: thin Zustand store (`store.ts`). Holds the open tournament, calls `execute`, autosaves through `TournamentStorage` after each successful command. Hooks `useApp(selector)` and `useQuery(query, deps)` in `useApp.ts`. No rules here.
-- `src/storage/`: `TournamentStorage` interface + localStorage adapter (index key `tm:tournaments`, one document per tournament at `tm:tournament:<id>`, wrapped with `schemaVersion`).
+- `src/storage/`: `TournamentStorage` interface + localStorage adapter (index key `tm:tournaments`, one document per tournament at `tm:tournament:<id>`). Each document is a tournament file: written with `exportTournament`, read with `importTournament`, so stored tournaments migrate like imported files.
 - `src/i18n/`: i18next setup, `en.ts` (source of keys), `pl.ts`.
 - `src/ui/`: React. `router.tsx`, `AppShell.tsx`, `screens/`, `components/` (app components), `components/ui/` (shadcn/ui source; `components.json` is set up for `npx shadcn add`).
 
@@ -37,6 +39,15 @@ How to add an engine command:
 3. Register it in the `handlers` map in `commands/index.ts` (TypeScript fails until you do).
 4. Time and randomness are command fields (`at`, `randomSeed`). Ids the engine makes come from `allocateId` (`ids.ts`); the tournament id is passed in.
 5. Test first in `__tests__/` through `execute` + queries. Re-export new queries and types from `index.ts`.
+
+How to change the tournament state shape (new section such as `competitions`, new or renamed field):
+
+1. Change `types.ts`, then the Zod schema in `tournamentFile/schema.ts`. Its `satisfies z.ZodType<...>` makes TypeScript fail until the schema covers the new type. Put cross-item rules (unique ids, unique numbers) on the schema too.
+2. Add a migration in `tournamentFile/migrations.ts`: `migrations[n]` turns version n into n+1, e.g. `2: (file) => ({ ...file, schemaVersion: 3, tournament: { ...(file.tournament as object), competitions: [] } })`. `CURRENT_SCHEMA_VERSION` is derived from it. Update the version list in that file's comment. Never edit a released migration.
+3. Add a fixture `__tests__/fixtures/schema-v<n>.json` (a file as the previous version wrote it) and a test in `exportImport.test.ts` that imports it. Extend the round-trip test's setup so it covers the new section.
+4. Stored tournaments go through the same migrations on load, so nothing else is needed for localStorage.
+
+The change log (#0016) has its own top-level `log` section in the file, currently always `[]` and not checked beyond being an array. Give it a schema there when the log exists.
 
 The UI runs commands with `useApp((s) => s.dispatch)(command)`, which returns the `EngineError` or `null`; show it with `errorMessage(t, error)`. Read data with `useQuery(getThing)`, never by calling queries inside a `useApp` selector (new objects each call make Zustand loop).
 

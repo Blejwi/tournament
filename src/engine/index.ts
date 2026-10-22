@@ -31,8 +31,22 @@ export { execute, type Command, type CommandType } from './commands';
 
 /** Parses typed game scores ("11-7 9-11 11-5"); check them with validateResult. */
 export { parseGames } from './score';
+// Tournament file (export/import)
+export {
+  CURRENT_SCHEMA_VERSION,
+  exportTournament,
+  importTournament,
+  type ImportTournamentInput,
+} from './tournamentFile';
 
 // Queries
+export {
+  BACKUP_INTERVAL_MINUTES,
+  getBackupReminder,
+  LIVE_WINDOW_MINUTES,
+  type BackupActivity,
+  type BackupReminder,
+} from './backupReminder';
 export {
   getPlayers,
   getTables,

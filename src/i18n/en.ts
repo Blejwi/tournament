@@ -10,6 +10,12 @@ export const en = {
     en: 'English',
     pl: 'Polski',
   },
+  pwa: {
+    offlineReady: 'The app is ready to work offline.',
+    updateAvailable: 'A new version of the app is available. Your tournaments are kept.',
+    reload: 'Update now',
+    later: 'Later',
+  },
   common: {
     add: 'Add',
     save: 'Save',
@@ -34,6 +40,23 @@ export const en = {
     deleteBody: '“{{name}}” and all its data will be removed from this browser. This cannot be undone.',
     notFound: 'This tournament is not stored in this browser.',
     backToList: 'All tournaments',
+  },
+  importFile: {
+    heading: 'Import tournament',
+    intro: 'Restore a tournament from a backup file (.json).',
+    file: 'Backup file',
+    found: 'File contains “{{name}}” ({{date}}).',
+    asNew: 'Import as new',
+    replaceTarget: 'Tournament to replace',
+    replace: 'Replace',
+    replaceTitle: 'Replace “{{name}}”?',
+    replaceBody: 'Everything stored for “{{name}}” in this browser will be replaced by the tournament from the file. This cannot be undone.',
+  },
+  backup: {
+    download: 'Download backup',
+    reminderTitle: 'Time to download a backup',
+    reminderBody: 'Your recent changes are stored only in this browser. Download a backup file in case browser data is lost.',
+    later: 'Later',
   },
   nav: {
     tables: 'Tables',
@@ -96,6 +119,10 @@ export const en = {
     invalidGame: 'Game {{game}} ({{a}}-{{b}}) is not valid: a game goes to 11 with a 2-point lead.',
     gamesAfterDecided: 'Game {{game}} comes after the match was already decided.',
     matchNotDecided: 'The match is not decided: the winner needs exactly {{gamesToWin}} games.',
+    importNotJson: 'This file can’t be read: it is not a JSON file.',
+    importNotTournamentFile: 'This file is not a tournament backup.',
+    importNewerVersion: 'This file was made by a newer version of the app (file format {{version}}). Update the app to import it.',
+    importInvalidData: 'This file is damaged or incomplete (problem at “{{path}}”). Nothing was imported.',
   } satisfies Record<EngineErrorCode, string>,
 };
 

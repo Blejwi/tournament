@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { getTournament } from '@/engine';
 import { useApp, useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
+import { BackupReminder, DownloadBackupButton } from '@/ui/components/Backup';
 import { formatDate } from '@/ui/format';
 
 /** Opens the tournament named in the URL and frames its screens (tables, players, ...). */
@@ -38,12 +39,18 @@ export function TournamentLayout() {
     <div className="mx-auto grid max-w-5xl gap-6 p-4 md:p-8">
       <div className="grid gap-2">
         <BackLink />
-        <h1 className="text-2xl font-semibold">{tournament.name}</h1>
-        <p className="text-muted-foreground text-sm">
-          {formatDate(tournament.date, i18n.language)}
-          {tournament.venue && ` · ${tournament.venue}`}
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="grid gap-2">
+            <h1 className="text-2xl font-semibold">{tournament.name}</h1>
+            <p className="text-muted-foreground text-sm">
+              {formatDate(tournament.date, i18n.language)}
+              {tournament.venue && ` · ${tournament.venue}`}
+            </p>
+          </div>
+          <DownloadBackupButton />
+        </div>
       </div>
+      <BackupReminder />
       <nav className="flex gap-1 border-b">
         {tabs.map((tab) => (
           <NavLink

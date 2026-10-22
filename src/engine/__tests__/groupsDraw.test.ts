@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { execute, getCompetition, getPlayers, getStage, type Command, type TournamentState } from '@/engine';
 import { errorOf } from './helpers';
-import { competitionWith, drawnGroups, groupNames, groupsOf, run, slotName } from './fixtures';
+import { competitionWith, drawnGroups, groupNames, groupsOf, run, slotName } from './scenarios';
 
 const allSeeded = (count: number) => Object.fromEntries(Array.from({ length: count }, (_, i) => [i + 1, i + 1]));
 

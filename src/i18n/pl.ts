@@ -9,6 +9,12 @@ export const pl: Translations = {
     en: 'English',
     pl: 'Polski',
   },
+  pwa: {
+    offlineReady: 'Aplikacja jest gotowa do pracy offline.',
+    updateAvailable: 'Dostępna jest nowa wersja aplikacji. Twoje turnieje zostaną zachowane.',
+    reload: 'Aktualizuj teraz',
+    later: 'Później',
+  },
   common: {
     add: 'Dodaj',
     save: 'Zapisz',
@@ -33,6 +39,23 @@ export const pl: Translations = {
     deleteBody: '„{{name}}” i wszystkie jego dane zostaną usunięte z tej przeglądarki. Tego nie można cofnąć.',
     notFound: 'Tego turnieju nie ma w tej przeglądarce.',
     backToList: 'Wszystkie turnieje',
+  },
+  importFile: {
+    heading: 'Import turnieju',
+    intro: 'Przywróć turniej z pliku kopii zapasowej (.json).',
+    file: 'Plik kopii zapasowej',
+    found: 'Plik zawiera „{{name}}” ({{date}}).',
+    asNew: 'Importuj jako nowy',
+    replaceTarget: 'Turniej do zastąpienia',
+    replace: 'Zastąp',
+    replaceTitle: 'Zastąpić „{{name}}”?',
+    replaceBody: 'Wszystkie dane „{{name}}” zapisane w tej przeglądarce zostaną zastąpione turniejem z pliku. Tego nie można cofnąć.',
+  },
+  backup: {
+    download: 'Pobierz kopię zapasową',
+    reminderTitle: 'Czas pobrać kopię zapasową',
+    reminderBody: 'Ostatnie zmiany są zapisane tylko w tej przeglądarce. Pobierz plik kopii zapasowej na wypadek utraty danych przeglądarki.',
+    later: 'Później',
   },
   nav: {
     tables: 'Stoły',
@@ -95,5 +118,9 @@ export const pl: Translations = {
     invalidGame: 'Gra {{game}} ({{a}}-{{b}}) jest niepoprawna: gra toczy się do 11 punktów z przewagą 2 punktów.',
     gamesAfterDecided: 'Gra {{game}} jest już po rozstrzygnięciu meczu.',
     matchNotDecided: 'Mecz nie jest rozstrzygnięty: zwycięzca musi mieć dokładnie {{gamesToWin}} wygrane gry.',
+    importNotJson: 'Nie można odczytać pliku: to nie jest plik JSON.',
+    importNotTournamentFile: 'Ten plik nie jest kopią zapasową turnieju.',
+    importNewerVersion: 'Ten plik pochodzi z nowszej wersji aplikacji (format pliku {{version}}). Zaktualizuj aplikację, aby go zaimportować.',
+    importInvalidData: 'Plik jest uszkodzony lub niekompletny (problem w „{{path}}”). Niczego nie zaimportowano.',
   },
 };

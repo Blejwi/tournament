@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { execute, getFreeTables, getMatch, getWaitingList, parseGames, validateResult, type GameScore } from '@/engine';
 import { errorOf } from './helpers';
-import { drawnGroups, groupsOf, matchBetween, run, slotName, tableId } from './fixtures';
+import { drawnGroups, groupsOf, matchBetween, run, slotName, tableId } from './scenarios';
 
 const MIN = 60_000;
 const T0 = Date.UTC(2026, 4, 1, 9, 0);

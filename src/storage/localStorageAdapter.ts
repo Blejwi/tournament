@@ -1,22 +1,14 @@
-import type { TournamentId, TournamentState } from '@/engine';
+import { exportTournament, importTournament, type TournamentId, type TournamentState } from '@/engine';
 import type { TournamentStorage, TournamentSummary } from './storage';
-
-/** Version of the stored document shape. Bump it and add a migration when TournamentState changes incompatibly. */
-export const SCHEMA_VERSION = 1;
 
 const INDEX_KEY = 'tm:tournaments';
 const tournamentKey = (id: TournamentId) => `tm:tournament:${id}`;
 
-interface StoredTournament {
-  schemaVersion: number;
-  tournament: TournamentState;
-}
-
-function readJson<T>(store: Storage, key: string): T | null {
-  const raw = store.getItem(key);
+function readIndexJson(store: Storage): TournamentSummary[] | null {
+  const raw = store.getItem(INDEX_KEY);
   if (raw === null) return null;
   try {
-    return JSON.parse(raw) as T;
+    return JSON.parse(raw) as TournamentSummary[];
   } catch {
     return null;
   }
@@ -29,23 +21,27 @@ const summaryOf = (s: TournamentState): TournamentSummary => ({
   venue: s.venue,
 });
 
-/** Stores a tournament index plus one document per tournament in the browser's localStorage. */
+/**
+ * Stores a tournament index plus one document per tournament in the browser's localStorage.
+ * Each document is a tournament file (the export format), so stored tournaments from older
+ * versions are validated and migrated by the engine exactly like imported files.
+ */
 export function createLocalStorageAdapter(store: Storage = window.localStorage): TournamentStorage {
-  const readIndex = () => readJson<TournamentSummary[]>(store, INDEX_KEY) ?? [];
+  const readIndex = () => readIndexJson(store) ?? [];
   const writeIndex = (index: TournamentSummary[]) => store.setItem(INDEX_KEY, JSON.stringify(index));
 
   return {
     listTournaments: readIndex,
 
     loadTournament(id) {
-      const doc = readJson<StoredTournament>(store, tournamentKey(id));
-      if (!doc || doc.schemaVersion !== SCHEMA_VERSION) return null;
-      return doc.tournament;
+      const file = store.getItem(tournamentKey(id));
+      if (file === null) return null;
+      const result = importTournament({ id, file });
+      return result.ok ? result.value : null;
     },
 
     saveTournament(state) {
-      const doc: StoredTournament = { schemaVersion: SCHEMA_VERSION, tournament: state };
-      store.setItem(tournamentKey(state.id), JSON.stringify(doc));
+      store.setItem(tournamentKey(state.id), exportTournament(state));
       const index = readIndex();
       const at = index.findIndex((row) => row.id === state.id);
       if (at === -1) index.push(summaryOf(state));
