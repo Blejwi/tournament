@@ -18,7 +18,6 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 | Ticket | Title | Notes |
 |---|---|---|
 | [#0003](0003-groups-only-competition-end-to-end.md) | Groups-only competition, end to end | started 2026-10-22 |
-| [#0017](0017-export-import-and-backup-reminder.md) | Export/import and backup reminder | started 2026-10-22 |
 | [#0018](0018-works-offline-pwa.md) | Works offline (PWA) | started 2026-10-22 |
 
 ## ⛔ Blocked
@@ -44,6 +43,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 | Ticket | Title | Resolution |
 |---|---|---|
 | [#0002](0002-project-scaffold-tournaments-tables-players.md) | Project scaffold: tournaments, tables and players | 58e0dfa, fb6f34b |
+| [#0017](0017-export-import-and-backup-reminder.md) | Export/import and backup reminder | c9a23ce, 9086db0 |
 
 ## Dependency graph
 

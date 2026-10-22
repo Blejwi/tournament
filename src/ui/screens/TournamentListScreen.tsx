@@ -9,6 +9,7 @@ import { Button } from '@/ui/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/components/ui/card';
 import { ConfirmDialog } from '@/ui/components/ConfirmDialog';
 import { FormError, FormField } from '@/ui/components/FormField';
+import { ImportTournamentCard } from '@/ui/components/ImportTournament';
 import { errorField } from '@/ui/formErrors';
 import { formatDate, todayIso } from '@/ui/format';
 
@@ -22,6 +23,7 @@ export function TournamentListScreen() {
     <div className="mx-auto grid max-w-4xl gap-6 p-4 md:p-8">
       <h1 className="text-2xl font-semibold">{t('tournaments.heading')}</h1>
       <NewTournamentForm />
+      <ImportTournamentCard />
       {sorted.length === 0 ? (
         <p className="text-muted-foreground">{t('tournaments.empty')}</p>
       ) : (
