@@ -12,12 +12,12 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Blocked by |
 |---|---|---|
-| [#0002](0002-project-scaffold-tournaments-tables-players.md) | Project scaffold: tournaments, tables and players | none |
 
 ## 🔵 In progress
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0002](0002-project-scaffold-tournaments-tables-players.md) | Project scaffold: tournaments, tables and players | started 2026-10-22 |
 
 ## ⛔ Blocked
 

@@ -1,7 +1,7 @@
 ---
 id: 2
 title: Project scaffold — tournaments, tables and players
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
