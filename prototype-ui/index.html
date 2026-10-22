@@ -1,0 +1,27 @@
+<!doctype html>
+<!-- PROTOTYPE — three radically different layouts for the live tournament operator screen,
+     switchable via ?variant=A|B|C and the floating bottom bar. Throwaway: wipe me.
+     Open by double-clicking this file (no build step; libraries come from CDN). -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tournament UI Prototype</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+  <style>html, body, #root { height: 100%; margin: 0; }</style>
+</head>
+<body class="bg-white text-slate-900">
+  <div id="root"></div>
+  <script>window.Variants = [];</script>
+  <script src="mock-data.js"></script>
+  <script src="store.js"></script>
+  <script src="switcher.js"></script>
+  <script src="variant-a.js"></script>
+  <script src="variant-b.js"></script>
+  <script src="variant-c.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
