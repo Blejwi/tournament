@@ -5,6 +5,7 @@ import {
   exportTournament,
   getCompetition,
   getCompetitions,
+  getExpectedDurations,
   getPlayers,
   getStage,
   getTables,
@@ -16,12 +17,14 @@ import { errorOf, newTournament, unwrap } from './helpers';
 import { drawnGroups, groupsOf, run, tableId } from './scenarios';
 import schemaV1 from './fixtures/schema-v1.json?raw';
 import schemaV2 from './fixtures/schema-v2.json?raw';
+import schemaV3 from './fixtures/schema-v3.json?raw';
 
 function setUpTournament(): TournamentState {
   let state = newTournament();
   state = unwrap(execute(state, { type: 'addTable', number: 1 }));
   state = unwrap(execute(state, { type: 'addTable', number: 2, name: 'Centre court' }));
   state = unwrap(execute(state, { type: 'setTableActive', table: 'table-2', active: false }));
+  state = unwrap(execute(state, { type: 'setExpectedDuration', gamesToWin: 4, minutes: 40 }));
   state = unwrap(execute(state, { type: 'addPlayer', firstName: 'Anna', lastName: 'Nowak', club: 'KS Orzeł', rating: 1520 }));
   state = unwrap(execute(state, { type: 'addPlayer', firstName: 'Jan', lastName: 'Kowalski', club: '', birthYear: 2011 }));
   return state;
@@ -50,6 +53,7 @@ describe('exporting and importing a tournament', () => {
     expect(getTournament(imported)).toEqual(getTournament(original));
     expect(getTables(imported)).toEqual(getTables(original));
     expect(getPlayers(imported)).toEqual(getPlayers(original));
+    expect(getExpectedDurations(imported)).toEqual({ 2: 15, 3: 25, 4: 40 });
   });
 
   it('gives back a competition with its entries, draw, results and matches in play', () => {
@@ -71,7 +75,7 @@ describe('exporting and importing a tournament', () => {
   it('writes the schema version, the tournament and an empty change log', () => {
     const file = JSON.parse(exportTournament(newTournament()));
     expect(file).toEqual({
-      schemaVersion: 3,
+      schemaVersion: 4,
       tournament: expect.objectContaining({ name: 'Spring Open' }),
       log: [],
     });
@@ -100,6 +104,13 @@ describe('importing a file with an older schema version', () => {
     expect(getCompetitions(imported)).toEqual([]);
     const next = unwrap(execute(imported, { type: 'addCompetition', name: 'Open' }));
     expect(getCompetitions(next).map((c) => c.id)).toEqual(['competition-3']);
+  });
+
+  it('migrates a version 3 file (before expected durations) to the default expected durations', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV3 }));
+
+    expect(getCompetitions(imported).map((c) => c.name)).toEqual(['Open']);
+    expect(getExpectedDurations(imported)).toEqual({ 2: 15, 3: 25, 4: 35 });
   });
 
   it('keeps allocating fresh ids after the migration', () => {

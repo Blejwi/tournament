@@ -6,7 +6,8 @@ import type { Competition, Entry, Group, GroupsStage, Match, MatchId, PlayerId, 
  * - pending: a slot isn't resolved to an entry yet (or the stage isn't confirmed)
  * - ready: both entries known, neither player is playing elsewhere
  * - busy: both known, but a player is in an in-progress match elsewhere
- * - in_progress / overdue: called to a table (overdue: past its expected duration, #0005)
+ * - in_progress / overdue: called to a table. `derive` has no clock, so it only says in_progress;
+ *   match views (which take `now`) turn it into overdue past the expected duration.
  * - finished / walkover: has a result (walkover: #0014)
  * - disabled: a place play-off that isn't switched on (#0012)
  */

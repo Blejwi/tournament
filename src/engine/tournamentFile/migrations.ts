@@ -9,6 +9,7 @@
  * - 1: `{ schemaVersion, tournament }`, the first saved format (tournament, tables, players).
  * - 2: adds the change log section `log` (empty until #0016).
  * - 3: adds `tournament.competitions` (entries, stage chain, draws and matches; #0003).
+ * - 4: adds `tournament.expectedDurations` (minutes per games-to-win value, the defaults; #0005).
  */
 
 /** A document parsed from JSON whose shape isn't trusted yet. */
@@ -19,4 +20,9 @@ type Migration = (file: RawFile) => RawFile;
 export const migrations: Record<number, Migration> = {
   1: (file) => ({ ...file, schemaVersion: 2, log: [] }),
   2: (file) => ({ ...file, schemaVersion: 3, tournament: { ...(file.tournament as object), competitions: [] } }),
+  3: (file) => ({
+    ...file,
+    schemaVersion: 4,
+    tournament: { ...(file.tournament as object), expectedDurations: { 2: 15, 3: 25, 4: 35 } },
+  }),
 };

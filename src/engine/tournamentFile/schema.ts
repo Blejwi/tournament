@@ -53,6 +53,7 @@ const playerSchema = z.object({
 const id = z.string().min(1);
 const timestamp = z.number().int().nullable();
 const points = z.number().int().min(0);
+const minutes = z.number().int().min(1);
 
 const entrySchema = z.object({
   id,
@@ -121,6 +122,7 @@ export const tournamentSchema = z.object({
   tables: uniqueArray(tableSchema, ['id', 'number']),
   players: uniqueArray(playerSchema, ['id']),
   competitions: uniqueArray(competitionSchema, ['id']),
+  expectedDurations: z.object({ 2: minutes, 3: minutes, 4: minutes }),
   nextId: z.number().int().min(1),
 }) satisfies z.ZodType<TournamentState>;
 

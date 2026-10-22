@@ -3,6 +3,7 @@ import type { TournamentState } from '../types';
 import * as competitions from './competitions';
 import * as matches from './matches';
 import * as players from './players';
+import * as settings from './settings';
 import * as stages from './stages';
 import * as tables from './tables';
 
@@ -12,7 +13,8 @@ export type Command =
   | players.PlayerCommand
   | competitions.CompetitionCommand
   | stages.StageCommand
-  | matches.MatchCommand;
+  | matches.MatchCommand
+  | settings.SettingsCommand;
 
 export type CommandType = Command['type'];
 
@@ -36,6 +38,7 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   assignMatch: matches.assignMatch,
   unassignMatch: matches.unassignMatch,
   recordResult: matches.recordResult,
+  setExpectedDuration: settings.setExpectedDuration,
 };
 
 /** Applies a command to the state: returns the new state, or a typed error. Never mutates `state`. */
