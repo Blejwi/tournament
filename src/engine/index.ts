@@ -91,6 +91,8 @@ export {
   getWaitingList,
   getFreeTables,
   validateResult,
+  getCorrectionPreview,
+  type CorrectionPreview,
   type FreeTableView,
   getTableOverview,
   getOverdueMatches,

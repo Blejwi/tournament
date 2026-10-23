@@ -179,6 +179,14 @@ const logEntrySchema = z.discriminatedUnion('type', [
     result: matchResultSchema,
     table: loggedTableSchema.nullable(),
   }),
+  z.object({
+    type: z.literal('resultCorrected'),
+    at,
+    match: loggedMatchSchema,
+    before: matchResultSchema,
+    after: matchResultSchema,
+    reset: z.array(loggedMatchSchema),
+  }),
 ]) satisfies z.ZodType<LogEntry>;
 
 /** The change log section (the state's `log`, kept out of `tournament` in the file), oldest first. */
