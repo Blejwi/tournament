@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
-import type { MatchId, MatchView } from '@/engine';
+import { useTranslation } from 'react-i18next';
+import type { MatchId, MatchView, PlaceRange } from '@/engine';
 import { cn } from '@/lib/utils';
 import { CARD_H, CARD_W, layoutBracket, type LayoutSection } from './bracketLayout';
+import { Switch } from '@/ui/components/ui/switch';
+import { formatPlace } from '@/ui/matchLabels';
 import { MatchCard } from './MatchCard';
 
 /**
@@ -15,7 +18,10 @@ export function BracketBoard(props: {
   onSelectMatch: (id: MatchId, el: HTMLElement) => void;
   /** Draws a card differently (e.g. draw editing); falls back to the match card when it returns null. */
   renderCard?: (match: MatchView) => ReactNode | null;
+  /** Switches a place play-off on or off (its block shows a switch). */
+  onTogglePlayOff?: (range: PlaceRange, enabled: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const layout = layoutBracket(props.sections);
   return (
     <div className="relative" style={{ width: layout.width, height: layout.height }}>
@@ -36,12 +42,21 @@ export function BracketBoard(props: {
           <span
             className={cn(
               'font-bold tracking-wide uppercase',
+              label.playOff && !label.playOff.enabled && 'opacity-40',
               label.kind === 'section' ? 'text-sm text-indigo-700' : 'text-[10px] text-slate-500',
             )}
           >
             {label.title}
           </span>
           {label.subtitle && <span className="text-xs text-slate-400">{label.subtitle}</span>}
+          {label.playOff && (
+            <Switch
+              checked={label.playOff.enabled}
+              aria-label={t('bracket.playOffToggle', { range: formatPlace(label.playOff.range) })}
+              onCheckedChange={(enabled) => props.onTogglePlayOff?.(label.playOff!.range, enabled)}
+              className="h-4 w-7 self-center"
+            />
+          )}
         </div>
       ))}
       {layout.cards.map(({ match, x, y }) => (

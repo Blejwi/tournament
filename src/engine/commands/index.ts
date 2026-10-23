@@ -5,6 +5,7 @@ import * as draws from './draws';
 import * as corrections from './corrections';
 import * as matches from './matches';
 import * as players from './players';
+import * as playOffs from './playOffs';
 import * as settings from './settings';
 import * as stages from './stages';
 import * as standings from './standings';
@@ -19,6 +20,7 @@ export type Command =
   | draws.DrawCommand
   | matches.MatchCommand
   | corrections.CorrectionCommand
+  | playOffs.PlayOffCommand
   | settings.SettingsCommand
   | standings.StandingsCommand;
 
@@ -50,6 +52,7 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   setMatchStart: matches.setMatchStart,
   recordResult: matches.recordResult,
   correctResult: corrections.correctResult,
+  setPlayOff: playOffs.setPlayOff,
   setExpectedDuration: settings.setExpectedDuration,
   resolveTie: standings.resolveTie,
 };

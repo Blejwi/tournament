@@ -35,7 +35,7 @@ export const doubleEliminationHandler: StageHandler<DoubleEliminationStage> = {
 
   validateConfig: () => ok(undefined),
 
-  create: (id) => ({ id, type: 'doubleElimination', drawState: 'notDrawn', matches: [] }),
+  create: (id) => ({ id, type: 'doubleElimination', drawState: 'notDrawn', matches: [], playOffs: [] }),
 
   config: () => ({ type: 'doubleElimination' }),
 
@@ -43,10 +43,10 @@ export const doubleEliminationHandler: StageHandler<DoubleEliminationStage> = {
     const size = directBracketSize(ctx.entrants.length);
     if (!size.ok) return size;
     const positions = placeBySeedPositions(numberEntrants(ctx.entrants, size.value, ctx.random));
-    return ok({ ...stage, drawState: 'drawn', matches: doubleEliminationMatches(positions, ctx.ids) });
+    return ok({ ...stage, drawState: 'drawn', matches: doubleEliminationMatches(positions, ctx.ids), playOffs: [] });
   },
 
-  clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', matches: [] }),
+  clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', matches: [], playOffs: [] }),
 
   // Draw editing moves the winners bracket's round-1 positions; the losers bracket follows through its slot sources.
   swapPositions: (stage, a, b) => withMatches(stage, swapFirstRoundPositions(stage.matches, 'winners', a, b)),

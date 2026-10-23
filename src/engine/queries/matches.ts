@@ -3,6 +3,7 @@ import { derive, resultGamesWon, type Derived, type DerivedMatch, type MatchStat
 import { gameScoresOf } from '../score';
 import type { EngineError } from '../errors';
 import { handlerFor } from '../stages';
+import { sameRange } from '../stages/playOffs';
 import type {
   BracketSection,
   Competition,
@@ -14,6 +15,7 @@ import type {
   MatchId,
   MatchPlaces,
   MatchResult,
+  PlaceRange,
   PlayerId,
   SlotSource,
   Stage,
@@ -57,7 +59,7 @@ export type MatchLocationView =
    * A bracket match. `roundMatches` is how many matches its round of the section has (1 = final,
    * 2 = semi-finals, 4 = quarter-finals, ...) and `rounds` how many rounds the section has.
    */
-  | { kind: 'bracket'; section: BracketSection; roundMatches: number; rounds: number };
+  | { kind: 'bracket'; section: BracketSection; roundMatches: number; rounds: number; playOff?: PlaceRange };
 
 export interface ResultView {
   /**
@@ -128,6 +130,8 @@ export function resultView(result: MatchResult, winner?: 0 | 1): ResultView {
   };
 }
 
+const sameOptionalRange = (a?: PlaceRange, b?: PlaceRange) => (a && b ? sameRange(a, b) : !a && !b);
+
 export function locationView(match: Match, stage: Stage): MatchLocationView {
   const { location } = match;
   switch (location.kind) {
@@ -136,12 +140,15 @@ export function locationView(match: Match, stage: Stage): MatchLocationView {
       return { kind: 'group', group: location.group, groupName: group?.name ?? '' };
     }
     case 'bracket': {
-      const section = stage.matches.filter((m) => m.location.kind === 'bracket' && m.location.section === location.section);
+      const section = stage.matches.filter(
+        (m) => m.location.kind === 'bracket' && m.location.section === location.section && sameOptionalRange(m.playOff, match.playOff),
+      );
       return {
         kind: 'bracket',
         section: location.section,
         roundMatches: section.filter((m) => m.round === match.round).length,
         rounds: new Set(section.map((m) => m.round)).size,
+        ...(match.playOff ? { playOff: { ...match.playOff } } : {}),
       };
     }
   }
@@ -232,7 +239,7 @@ export interface WaitingListOptions {
  * The matches that could be called now, in priority order: busy ones (a player is on another
  * table) last; then earlier stage, then earlier round, then the match that has been ready
  * longest (never-played players count as ready from the start); then competition and draw order.
- * Play-off ordering comes with #0012.
+ * Place play-off matches come after the main draw's.
  */
 export function getWaitingList(state: TournamentState, now: Timestamp, options: WaitingListOptions = {}): MatchView[] {
   const competitionOrder = new Map(state.competitions.map((c, i) => [c.id, i]));
@@ -243,6 +250,7 @@ export function getWaitingList(state: TournamentState, now: Timestamp, options: 
     .sort(
       (x, y) =>
         Number(x.m.status === 'busy') - Number(y.m.status === 'busy') ||
+        Number(x.m.match.playOff !== undefined) - Number(y.m.match.playOff !== undefined) ||
         x.m.stageIndex - y.m.stageIndex ||
         x.m.match.round - y.m.match.round ||
         (x.m.waitingSince ?? -Infinity) - (y.m.waitingSince ?? -Infinity) ||

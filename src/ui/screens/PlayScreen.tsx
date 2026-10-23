@@ -18,7 +18,7 @@ import {
   type StageView,
 } from '@/engine';
 import { DrawEditor, DrawGroupBox, DrawMatchCard } from '@/ui/play/DrawEditing';
-import { useQuery } from '@/app/useApp';
+import { useApp, useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
 import { Canvas } from '@/ui/play/Canvas';
@@ -27,7 +27,7 @@ import { BracketBoard } from '@/ui/play/BracketBoard';
 import type { LayoutSection } from '@/ui/play/bracketLayout';
 import { GroupBox } from '@/ui/play/GroupBox';
 import { GroupDetail } from '@/ui/play/GroupDetail';
-import { doubleEliminationRoundTitle, roundTitle } from '@/ui/matchLabels';
+import { doubleEliminationRoundTitle, formatPlace, roundTitle } from '@/ui/matchLabels';
 import { MatchPopover } from '@/ui/play/MatchPopover';
 import { PlacesPanel } from '@/ui/play/PlacesPanel';
 import { StatsDrawer } from '@/ui/play/StatsDrawer';
@@ -337,12 +337,14 @@ function BracketOnCanvas(props: {
   const canvas = useFocusPending(props, stage.sections.flatMap((s) => s.rounds.flatMap((r) => r.matches.map((m) => m.id))).join());
 
   const sections = bracketLayoutSections(t, stage);
+  const dispatch = useApp((s) => s.dispatch);
 
   return (
     <BracketBoard
       sections={sections}
       selectedMatch={props.selection?.match ?? null}
       onSelectMatch={(match, el) => props.onSelect({ match, rect: canvas.worldRectOf(el) })}
+      onTogglePlayOff={(range, enabled) => dispatch({ type: 'setPlayOff', stage: stage.id, range, enabled, at: Date.now() })}
     />
   );
 }
@@ -381,9 +383,30 @@ function GroupBoxOnCanvas(props: {
 
 /** The labelled sections of a bracket stage, as the layout wants them. */
 function bracketLayoutSections(t: TFunction, stage: BracketStageView): LayoutSection[] {
+  return [...bracketMainSections(t, stage), ...playOffSections(t, stage)];
+}
+
+/** One block per place play-off the stage can have: its matches once created, otherwise just the title and switch. */
+function playOffSections(t: TFunction, stage: BracketStageView): LayoutSection[] {
+  return stage.playOffs.map((playOff) => {
+    const range = formatPlace(playOff.range);
+    const created = stage.sections.find((s) => s.playOff?.from === playOff.range.from && s.playOff.to === playOff.range.to);
+    return {
+      key: `playOff-${playOff.range.from}-${playOff.range.to}`,
+      title: t('bracket.sections.playOff', { range }),
+      subtitle: t(playOff.enabled ? 'bracket.sectionHints.playOffOn' : 'bracket.sectionHints.playOffOff', { range }),
+      rounds: created?.rounds.map((r) => r.matches) ?? [],
+      playOff,
+    };
+  });
+}
+
+/** The format's own sections (not the play-offs). */
+function bracketMainSections(t: TFunction, stage: BracketStageView): LayoutSection[] {
+  const sections = stage.sections.filter((s) => s.section !== 'playOff');
   if (stage.type === 'doubleElimination') {
     const losersRounds = stage.sections.find((x) => x.section === 'losers')?.rounds.length ?? 0;
-    return stage.sections.map((section): LayoutSection => {
+    return sections.map((section): LayoutSection => {
       const base = { key: section.section, rounds: section.rounds.map((r) => r.matches) };
       switch (section.section) {
         case 'winners':
@@ -412,7 +435,7 @@ function bracketLayoutSections(t: TFunction, stage: BracketStageView): LayoutSec
   }
   const main = stage.sections.find((s) => s.section === 'main');
   const final = main?.rounds.at(-1)?.matches[0];
-  return stage.sections.map((section) =>
+  return sections.map((section) =>
     section.section === 'main'
       ? {
           key: section.section,

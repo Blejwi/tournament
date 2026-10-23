@@ -42,6 +42,9 @@ export function matchTitle(t: TFunction, match: Pick<MatchView, 'location' | 'ro
   if (location.kind === 'group') return t('match.where', { group: location.groupName, round: match.round });
   if (location.section === 'thirdPlace') return t('bracket.thirdPlace');
   if (location.section === 'secondFinal') return t('bracket.secondFinal');
+  if (location.section === 'playOff') {
+    return t('bracket.playOffMatch', { range: formatPlace(location.playOff ?? { from: 0, to: 0 }), round: match.round, order: match.order });
+  }
   const code = matchCode(t, location, match.round, match.order);
   if (location.section === 'winners') {
     return match.round === location.rounds ? t('bracket.wbFinal', { code }) : t('bracket.winnersMatch', { code });
@@ -58,6 +61,8 @@ export function matchCode(t: TFunction, location: MatchLocationView, round: numb
       return t('bracket.short.thirdPlace');
     case 'secondFinal':
       return t('bracket.short.secondFinal');
+    case 'playOff':
+      return t('bracket.short.playOff', { from: location.playOff?.from ?? 0, round, order });
     case 'winners':
       return round === 1 ? t('bracket.short.winnersFirst', { number: order }) : letters(doubleEliminationNumber(location, round, order));
     case 'losers':

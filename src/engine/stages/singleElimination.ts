@@ -22,7 +22,7 @@ export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
 
   validateConfig: ({ thirdPlace }) => (typeof thirdPlace === 'boolean' ? ok(undefined) : fail({ code: 'unsupportedStageChain' })),
 
-  create: (id, { thirdPlace }) => ({ id, type: 'singleElimination', thirdPlace, drawState: 'notDrawn', matches: [] }),
+  create: (id, { thirdPlace }) => ({ id, type: 'singleElimination', thirdPlace, drawState: 'notDrawn', matches: [], playOffs: [] }),
 
   config: (stage) => ({ type: 'singleElimination', thirdPlace: stage.thirdPlace }),
 
@@ -63,10 +63,10 @@ export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
         ),
       );
     }
-    return ok({ ...stage, drawState: 'drawn', matches });
+    return ok({ ...stage, drawState: 'drawn', matches, playOffs: [] });
   },
 
-  clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', matches: [] }),
+  clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', matches: [], playOffs: [] }),
 
   swapPositions: (stage, a, b) => withMatches(stage, swapFirstRoundPositions(stage.matches, 'main', a, b)),
   movePosition: (stage, from, to) => withMatches(stage, moveFirstRoundPosition(stage.matches, 'main', from, to)),

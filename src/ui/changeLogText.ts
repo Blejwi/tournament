@@ -2,7 +2,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import type { ChangeLogEntryView, LoggedDrawPlaceView, LoggedMatchView, MatchView, ResultView } from '@/engine';
 import { formatGames, playerName } from '@/ui/format';
-import { matchTitle } from '@/ui/matchLabels';
+import { formatPlace, matchTitle } from '@/ui/matchLabels';
 
 /** A logged match: "Open · Group A · Round 2 · J. Kowalski – A. Nowak". */
 function loggedMatchText(t: TFunction, match: LoggedMatchView): string {
@@ -47,6 +47,11 @@ export function entryText(t: TFunction, entry: ChangeLogEntryView): string {
         winner: winner.length ? winner.map((p) => playerName(p)).join(' / ') : t('match.unknown'),
       });
     }
+    case 'playOffSet':
+      return t(entry.enabled ? 'changeLog.playOffOn' : 'changeLog.playOffOff', {
+        competition: entry.competitionName,
+        range: formatPlace(entry.range),
+      });
     case 'playerWithdrew':
       return t('changeLog.playerWithdrew', { name: entry.players.map((p) => playerName(p)).join(' / '), competition: entry.competitionName });
     case 'resultCorrected':
