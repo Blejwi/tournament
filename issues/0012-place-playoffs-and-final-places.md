@@ -1,7 +1,7 @@
 ---
 id: 12
 title: Place play-offs and final places
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -35,3 +35,7 @@ Optional **place play-offs** that split a shared **place range** into single pla
 ## Blocked by
 
 - #0010
+
+## Resolution
+
+Done on `integration/v1` in 7a529e2 and 3624827. Place play-offs for shared loser ranges starting at place 5 or later, in single and double elimination. The `setPlayOff` command creates the play-off matches the first time it is switched on. Every match decides places (winners play for the upper ones, losers for the lower), paired by neighbouring matches. Unplayed or disabled play-offs leave the places shared. Play-off matches sort after main-draw matches, and the change log records `playOffSet`. The canvas shows a block per play-off with an on/off switch, faint when off. Schema v10 (`playOffs: []` on bracket stages). Not checked in the browser.

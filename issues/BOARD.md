@@ -19,7 +19,6 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 |---|---|---|
 | [#0013](0013-groups-to-groups-with-carry-over.md) | Groups → groups with carry-over | started 2026-10-23 |
 | [#0009](0009-groups-to-single-elimination.md) | Groups → single elimination | started 2026-10-23 |
-| [#0012](0012-place-playoffs-and-final-places.md) | Place play-offs and final places | started 2026-10-23 |
 
 ## ⛔ Blocked
 
@@ -31,6 +30,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0012](0012-place-playoffs-and-final-places.md) | Place play-offs and final places | 7a529e2, 3624827 |
 | [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | c89eaa8..0e82b0a, 5268571 |
 | [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | abf482c..b531e52 |
 | [#0010](0010-direct-double-elimination.md) | Direct double elimination | f0c6fdf..d6bbd58, 46dc025 |
