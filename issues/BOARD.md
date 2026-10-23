@@ -17,8 +17,8 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0016](0016-change-log-and-stats-drawer.md) | Change log and stats drawer | started 2026-10-23 |
 | [#0007](0007-direct-single-elimination.md) | Direct single elimination | started 2026-10-22 |
-| [#0005](0005-tables-panel-overdue-and-idle.md) | Tables panel, overdue and idle | started 2026-10-22 |
 
 ## ⛔ Blocked
 
@@ -32,12 +32,12 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 | [#0013](0013-groups-to-groups-with-carry-over.md) | Groups → groups with carry-over | #0004, #0008 |
 | [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | #0007 |
 | [#0015](0015-corrections.md) | Corrections | #0007 |
-| [#0016](0016-change-log-and-stats-drawer.md) | Change log and stats drawer | #0005 |
 
 ## ✅ Done
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0005](0005-tables-panel-overdue-and-idle.md) | Tables panel, overdue and idle | 5ba4faf..817b486 |
 | [#0004](0004-ittf-tiebreaks-and-group-detail.md) | ITTF tiebreaks and group detail | a9bcfc4, 12b8ba8 |
 | [#0006](0006-multiple-competitions-busy-players-waiting-list.md) | Multiple competitions: busy players and waiting-list order | e297c64, c1520e8 |
 | [#0002](0002-project-scaffold-tournaments-tables-players.md) | Project scaffold: tournaments, tables and players | 58e0dfa, fb6f34b |
