@@ -29,6 +29,7 @@ import { GroupBox } from '@/ui/play/GroupBox';
 import { GroupDetail } from '@/ui/play/GroupDetail';
 import { roundTitle } from '@/ui/matchLabels';
 import { MatchPopover } from '@/ui/play/MatchPopover';
+import { StatsDrawer } from '@/ui/play/StatsDrawer';
 import { TablesFullScreen, TablesPanel } from '@/ui/play/TablesPanel';
 import { WaitingList, type WaitingListScope } from '@/ui/play/WaitingList';
 import { useNow } from '@/ui/useNow';
@@ -83,7 +84,8 @@ export function PlayScreen() {
     return <Navigate to={`${base}/play/${competitions[0].id}`} replace />;
   }
 
-  const select = (match: MatchView) => {
+  /** Shows a match on the canvas (switching competition if needed) and opens its popover. */
+  const select = (match: Pick<MatchView, 'id' | 'competition'>) => {
     if (match.competition !== competitionId) {
       setSelection(null);
       navigate(`${base}/play/${match.competition}`);
@@ -156,6 +158,7 @@ export function PlayScreen() {
           onSelect={select}
         />
       </div>
+      <StatsDrawer now={now} onFocus={select} />
     </div>
   );
 }

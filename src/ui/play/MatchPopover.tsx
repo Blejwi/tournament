@@ -117,7 +117,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
             <span className="rounded bg-slate-900 px-2 py-0.5 font-bold text-white">{t('match.table', { number: match.table?.number })}</span>
             <span className={cn('text-base font-bold tabular-nums', overdueText(match))}>{formatClock(match.elapsedMs ?? 0)}</span>
             <span className="text-xs text-slate-400">{t('tablesPanel.expected', { minutes: Math.round(match.expectedMs / 60_000) })}</span>
-            <Button variant="ghost" size="sm" className="ml-auto text-red-600" onClick={() => setError(dispatch({ type: 'unassignMatch', match: match.id }))}>
+            <Button variant="ghost" size="sm" className="ml-auto text-red-600" onClick={() => setError(dispatch({ type: 'unassignMatch', match: match.id, at: Date.now() }))}>
               {t('match.takeOff')}
             </Button>
           </div>

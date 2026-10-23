@@ -27,6 +27,8 @@ export type {
   Timestamp,
   TournamentId,
   TournamentState,
+  LogEntry,
+  LogEntryType,
 } from './types';
 
 // Commands
@@ -99,6 +101,18 @@ export {
   type WaitingListOptions,
   getMatchCounts,
   type MatchCountsView,
+  getChangeLog,
+  type ChangeLogEntryView,
+  type LoggedMatchView,
+  getStats,
+  LONGEST_MATCHES,
+  type StatsView,
+  type ProgressView,
+  type DurationStatsView,
+  type CompetitionStatsView,
+  type StageStatsView,
+  type TableStatsView,
+  type LongestMatchView,
   type MatchView,
   type MatchStatus,
   type MatchLocationView,

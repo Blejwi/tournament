@@ -25,5 +25,6 @@ export function createTournament(input: CreateTournamentInput): Result<Tournamen
     competitions: [],
     expectedDurations: { ...DEFAULT_EXPECTED_DURATIONS },
     nextId: 1,
+    log: [],
   });
 }

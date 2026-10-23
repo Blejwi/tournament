@@ -78,7 +78,7 @@ describe('table overview', () => {
       { type: 'assignMatch', match: first, table: tableId(state, 1), at: T0 },
       { type: 'recordResult', match: first, result: { kind: 'games', games: win }, at: T0 + 20 * MIN },
       { type: 'assignMatch', match: matchBetween(state, stage, 'P2', 'P3').id, table: tableId(state, 1), at: T0 + 25 * MIN },
-      { type: 'unassignMatch', match: matchBetween(state, stage, 'P2', 'P3').id },
+      { type: 'unassignMatch', match: matchBetween(state, stage, 'P2', 'P3').id, at: T0 + 26 * MIN },
     );
 
     expect(row(getTableOverview(next, T0 + 30 * MIN), 1).idleMs).toBe(10 * MIN);
