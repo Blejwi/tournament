@@ -26,6 +26,14 @@ export type EngineError =
   | { code: 'stageNotDrawn' }
   | { code: 'stageConfirmed' }
   | { code: 'notEnoughEntries'; needed: number }
+  | { code: 'drawPositionNotFound' }
+  /** A bracket position already holds an entrant: move only onto a BYE (or swap). */
+  | { code: 'positionTaken' }
+  /** Moving out would leave the group with fewer than `min` entries. */
+  | { code: 'groupTooSmall'; min: number }
+  /** A first-round bracket match can't have a BYE on both sides. */
+  | { code: 'byeAgainstBye' }
+  | { code: 'drawEditNotSupported' }
   | { code: 'tooManyEntries'; max: number }
   | { code: 'matchNotFound'; match: MatchId }
   | { code: 'matchNotReady'; status: MatchStatus }
