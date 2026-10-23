@@ -1,15 +1,19 @@
-import { idSource } from '../ids';
-import { findStage, replaceCompetition, replaceStage } from '../locate';
+import { derive } from '../derive';
+import { idSource, type IdSource } from '../ids';
+import { findStage, replaceCompetition } from '../locate';
 import { seededRandom } from '../random';
 import { fail, ok, type Result } from '../result';
-import { handlerFor, type DrawEntrant } from '../stages';
-import type { Competition, CompetitionId, StageConfig, StageId, TournamentState } from '../types';
+import { advancersOf, handlerFor, isStageComplete, isSupportedChain, type DrawEntrant } from '../stages';
+import type { Competition, CompetitionId, Stage, StageConfig, StageId, TournamentState } from '../types';
 import { findCompetition } from './competitions';
 
 export type StageCommand =
   /** Replaces the competition's stage chain (only before the first stage is confirmed). */
   | { type: 'configureStages'; competition: CompetitionId; stages: StageConfig[] }
-  /** Draws (or re-draws) a stage that isn't confirmed yet. `randomSeed` makes the draw reproducible. */
+  /**
+   * Draws (or re-draws) a stage that isn't confirmed yet. `randomSeed` makes the draw reproducible.
+   * The stages after it are fed by its advancers, so they are drawn again too (as origin labels).
+   */
   | { type: 'generateDraw'; stage: StageId; randomSeed: number }
   /** Locks the draw; from then on the stage's matches can be played. */
   | { type: 'confirmStage'; stage: StageId };
@@ -30,15 +34,26 @@ export function configureStages(state: TournamentState, cmd: Cmd<'configureStage
   return ok(ids.commit(replaceCompetition(state, { ...competition.value, stages })));
 }
 
-/**
- * The stage chains v1 supports so far; it grows ticket by ticket (groups → bracket: #0009,
- * groups → double elimination: #0011, groups → groups: #0013): a single groups stage, or a direct
- * single or double elimination bracket.
- */
-const SUPPORTED_CHAINS: StageConfig['type'][][] = [['groups'], ['groups', 'groups'], ['singleElimination'], ['doubleElimination']];
+/** The entrants of stage `index`: the competition's entries for the first stage, else the advancers of the stage before. */
+function entrantsOf(competition: Competition, index: number): Result<DrawEntrant[]> {
+  if (index === 0) return ok(competition.entries.map((e) => ({ source: { kind: 'entry' as const, entry: e.id }, seed: e.seed })));
+  const previous = competition.stages[index - 1];
+  if (previous.drawState === 'notDrawn') return fail({ code: 'stageNotDrawn' });
+  const advancers = advancersOf(previous);
+  return advancers ? ok(advancers) : fail({ code: 'unsupportedStageChain' });
+}
 
-function isSupportedChain(stages: StageConfig[]): boolean {
-  return SUPPORTED_CHAINS.some((chain) => chain.length === stages.length && chain.every((type, i) => stages[i].type === type));
+/** Draws stage `index` and every stage after it, each from the advancers of the one before. */
+function drawChain(competition: Competition, index: number, randomSeed: number, ids: IdSource): Result<Stage[]> {
+  const stages = [...competition.stages];
+  for (let i = index; i < stages.length; i++) {
+    const entrants = entrantsOf({ ...competition, stages }, i);
+    if (!entrants.ok) return entrants;
+    const drawn = handlerFor(stages[i]).draw(stages[i], { entrants: entrants.value, random: seededRandom(randomSeed + i), ids });
+    if (!drawn.ok) return drawn;
+    stages[i] = drawn.value;
+  }
+  return ok(stages);
 }
 
 export function generateDraw(state: TournamentState, cmd: Cmd<'generateDraw'>): Result<TournamentState> {
@@ -46,31 +61,20 @@ export function generateDraw(state: TournamentState, cmd: Cmd<'generateDraw'>): 
   if (!located.ok) return located;
   const { competition, stage, index } = located.value;
   if (stage.drawState === 'confirmed') return fail({ code: 'stageConfirmed' });
-  const entrants = entrantsFor(competition, index);
-  if (!entrants.ok) return entrants;
   const ids = idSource(state);
-  const drawn = handlerFor(stage).draw(stage, { entrants: entrants.value, random: seededRandom(cmd.randomSeed), ids });
-  if (!drawn.ok) return drawn;
-  // A later stage was drawn from this stage's groups or matches: it has to be drawn again.
-  const stages = competition.stages.map((s, i) => (i < index ? s : i === index ? drawn.value : handlerFor(s).clearDraw(s)));
-  return ok(ids.commit(replaceCompetition(state, { ...competition, stages })));
-}
-
-/** Who is placed in the draw of stage `index`: the competition's entries, or the advancers of the stage before. */
-function entrantsFor(competition: Competition, index: number): Result<DrawEntrant[]> {
-  if (index === 0) return ok(competition.entries.map((e) => ({ source: { kind: 'entry' as const, entry: e.id }, seed: e.seed })));
-  const previous = competition.stages[index - 1];
-  const advancers = handlerFor(previous).advancers;
-  if (!advancers) return fail({ code: 'unsupportedStageChain' });
-  if (previous.drawState === 'notDrawn') return fail({ code: 'stageNotDrawn' });
-  return ok(advancers(previous));
+  const stages = drawChain(competition, index, cmd.randomSeed, ids);
+  if (!stages.ok) return stages;
+  return ok(ids.commit(replaceCompetition(state, { ...competition, stages: stages.value })));
 }
 
 export function confirmStage(state: TournamentState, cmd: Cmd<'confirmStage'>): Result<TournamentState> {
   const located = findStage(state, cmd.stage);
   if (!located.ok) return located;
-  const { competition, stage } = located.value;
+  const { competition, stage, index } = located.value;
   if (stage.drawState === 'confirmed') return fail({ code: 'stageConfirmed' });
   if (stage.drawState === 'notDrawn') return fail({ code: 'stageNotDrawn' });
-  return ok(replaceStage(state, competition, { ...stage, drawState: 'confirmed' }));
+  // A fed stage waits for its feeder: every advancer must be known.
+  if (index > 0 && !isStageComplete(derive(state), competition.stages[index - 1])) return fail({ code: 'previousStageNotComplete' });
+  const stages = competition.stages.map((s) => (s.id === stage.id ? { ...s, drawState: 'confirmed' as const } : s));
+  return ok(replaceCompetition(state, { ...competition, stages }));
 }

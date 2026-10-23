@@ -24,11 +24,6 @@ export const groupsHandler: StageHandler<GroupsStage> = {
 
   config: (stage) => ({ type: 'groups', grouping: stage.grouping, carryOver: stage.carryOver }),
 
-  advancers: (stage) =>
-    [1, 2].flatMap((place) =>
-      stage.groups.map((group): DrawEntrant => ({ source: { kind: 'groupPlace', stage: stage.id, group: group.id, place }, seed: null })),
-    ),
-
   draw(stage, ctx) {
     const sizes = groupSizes(ctx.entrants.length, stage);
     if (!sizes.ok) return sizes;
@@ -90,7 +85,8 @@ function snakeFill(ctx: DrawContext, sizes: number[]): SlotSource[][] {
  * where possible: one that would land next to a group-mate goes to the next group, in the snake's
  * direction, that has room and no group-mate.
  */
-function snakeFillFed(entrants: DrawEntrant[], sizes: number[]): SlotSource[][] {
+function snakeFillFed(all: DrawEntrant[], sizes: number[]): SlotSource[][] {
+  const entrants = [...all].sort((a, b) => (a.origin?.place ?? 0) - (b.origin?.place ?? 0) || (a.origin?.group ?? 0) - (b.origin?.group ?? 0));
   const groups: SlotSource[][] = sizes.map(() => []);
   const origin = (source: SlotSource) => (source.kind === 'groupPlace' ? `${source.stage}/${source.group}` : '');
   entrants.forEach(({ source }, i) => {

@@ -27,10 +27,11 @@ describe('configuring a groups stage', () => {
     }
   });
 
-  it('supports no stage chain beyond a groups stage and one groups stage after it, for now', () => {
+  it('rejects an empty chain and a bracket that is followed by another stage', () => {
     const { state, competition } = competitionWith(8);
     const groups = { type: 'groups', grouping: { by: 'count', groups: 2 } } as const;
-    for (const stages of [[], [groups, groups, groups]]) {
+    const bracket = { type: 'singleElimination', thirdPlace: false } as const;
+    for (const stages of [[], [groups, bracket, groups]]) {
       expect(errorOf(execute(state, { type: 'configureStages', competition, stages }))).toEqual({
         code: 'unsupportedStageChain',
       });

@@ -13,7 +13,7 @@ const threeNil: GameScore[] = [
 const flipped = (games: GameScore[]) => games.map(([a, b]) => [b, a] as GameScore);
 
 /** A competition of `count` seeded players in two chained groups stages; phase 1 is drawn and confirmed, phase 2 drawn. */
-function chain(count: number, first: Grouping, second: Grouping, options: { carryOver?: boolean; confirmFirst?: boolean; confirmSecond?: boolean } = {}) {
+function chain(count: number, first: Grouping, second: Grouping, options: { carryOver?: boolean; confirmFirst?: boolean } = {}) {
   const setup = competitionWith(count, { seeds: allSeeded(count) });
   let state = run(setup.state, {
     type: 'configureStages',
@@ -26,8 +26,6 @@ function chain(count: number, first: Grouping, second: Grouping, options: { carr
   const [one, two] = getCompetition(state, setup.competition)!.stages.map((s) => s.id);
   state = run(state, { type: 'generateDraw', stage: one, randomSeed: 1 });
   if (options.confirmFirst ?? true) state = run(state, { type: 'confirmStage', stage: one });
-  state = run(state, { type: 'generateDraw', stage: two, randomSeed: 1 });
-  if (options.confirmSecond) state = run(state, { type: 'confirmStage', stage: two });
   return { state, competition: setup.competition, one, two };
 }
 
@@ -52,8 +50,11 @@ function playOut(state: TournamentState, stage: string): TournamentState {
   return next;
 }
 
+/** Plays out the first stage, then confirms the second (which waits for its feeder). */
+const playFirst = (state: TournamentState, one: string, two: string) => run(playOut(state, one), { type: 'confirmStage', stage: two });
+
 const origins = (state: TournamentState, stage: string) =>
-  groupsOf(state, stage).map((g) => g.entries.map((slot) => (slot.origin ? `${slot.origin.place}${slot.origin.group}` : '?')));
+  groupsOf(state, stage).map((g) => g.entries.map((slot) => (slot.origin ? `${slot.origin.place}${slot.origin.groupName}` : '?')));
 const pairs = (matches: MatchView[]) => matches.map((m) => [slotName(m, 0), slotName(m, 1)].sort().join('-'));
 
 describe('configuring groups → groups', () => {
@@ -132,17 +133,17 @@ describe('filling the second groups stage', () => {
     expect(getStage(state, two, 0)).toMatchObject({ drawState: 'drawn' });
 
     const redrawn = run(state, { type: 'generateDraw', stage: one, randomSeed: 2 });
-    expect(getCompetition(redrawn, competition)!.stages.map((s) => s.drawState)).toEqual(['drawn', 'notDrawn']);
+    expect(getCompetition(redrawn, competition)!.stages.map((s) => s.drawState)).toEqual(['drawn', 'drawn']);
   });
 });
 
 describe('carry-over', () => {
   /** 8 players in two groups of 4 (A: P1 P4 P5 P8, B: P2 P3 P6 P7), the top 2 of each into one final group. */
-  const finalGroup = (carryOver?: boolean) => chain(8, { by: 'count', groups: 2 }, { by: 'count', groups: 1 }, { carryOver, confirmSecond: true });
+  const finalGroup = (carryOver?: boolean) => chain(8, { by: 'count', groups: 2 }, { by: 'count', groups: 1 }, { carryOver });
 
   it('does not make a match for two entries that already played each other', () => {
     const { state, one, two } = finalGroup();
-    const played = playOut(state, one);
+    const played = playFirst(state, one, two);
 
     expect(groupNames(played, two)).toEqual([['P1', 'P2', 'P4', 'P3']]);
     expect(pairs(groupsOf(played, two)[0].matches).sort()).toEqual(['P1-P2', 'P1-P3', 'P2-P4', 'P3-P4']);
@@ -150,7 +151,7 @@ describe('carry-over', () => {
 
   it('counts the first-stage result in the second-stage standings', () => {
     const { state, one, two } = finalGroup();
-    const played = playOut(state, one);
+    const played = playFirst(state, one, two);
 
     const rows = groupsOf(played, two)[0].standings.map((r) => [r.entry!.players[0].lastName, r.played, r.won]);
     expect(rows.sort()).toEqual([
@@ -164,7 +165,7 @@ describe('carry-over', () => {
 
   it('plays the stage out with the carried results in the final standings', () => {
     const { state, one, two } = finalGroup();
-    let next = playOut(state, one);
+    let next = playFirst(state, one, two);
     next = playOut(next, two);
 
     const group = groupsOf(next, two)[0];
@@ -179,7 +180,7 @@ describe('carry-over', () => {
 
   it('lets the pairing be played again when carry-over is off', () => {
     const { state, one, two } = finalGroup(false);
-    const played = playOut(state, one);
+    const played = playFirst(state, one, two);
 
     expect(pairs(groupsOf(played, two)[0].matches)).toHaveLength(6);
     expect(pairs(groupsOf(played, two)[0].matches)).toContain('P1-P4');
@@ -199,7 +200,7 @@ describe('carry-over', () => {
 
   it('reuses a first-stage result corrected afterwards', () => {
     const { state, one, two } = finalGroup();
-    const played = playOut(state, one);
+    const played = playFirst(state, one, two);
     const match = (getStage(played, one, 0) as GroupsStageView).groups[0].matches.find((m) => [slotName(m, 0), slotName(m, 1)].sort().join() === 'P1,P4')!;
     const corrected = run(played, { type: 'correctResult', match: match.id, result: { kind: 'games', games: slotName(match, 0) === 'P4' ? threeNil : flipped(threeNil) }, at: T0 + 1 });
 
@@ -210,8 +211,8 @@ describe('carry-over', () => {
 
 describe('a final group', () => {
   it('puts all advancers into one group that is played out to the final places', () => {
-    const { state, competition, one, two } = chain(8, { by: 'count', groups: 2 }, { by: 'count', groups: 1 }, { confirmSecond: true });
-    let next = playOut(state, one);
+    const { state, competition, one, two } = chain(8, { by: 'count', groups: 2 }, { by: 'count', groups: 1 }, {});
+    let next = playFirst(state, one, two);
     next = playOut(next, two);
 
     expect(groupsOf(next, two)).toHaveLength(1);
@@ -225,8 +226,40 @@ describe('a final group', () => {
   });
 
   it('does not let a second-stage match start before its entries are known', () => {
-    const { state, two } = chain(8, { by: 'count', groups: 2 }, { by: 'count', groups: 1 }, { confirmSecond: true });
+    const { state, two } = chain(8, { by: 'count', groups: 2 }, { by: 'count', groups: 1 }, {});
 
     expect(groupsOf(state, two)[0].matches.every((m) => m.status === 'pending')).toBe(true);
+  });
+});
+
+describe('the stage chain', () => {
+  it('does not confirm the second stage before the first stage has decided its advancers', () => {
+    const { state, two } = chain(8, { by: 'count', groups: 2 }, { by: 'count', groups: 1 });
+
+    expect(errorOf(execute(state, { type: 'confirmStage', stage: two }))).toEqual({ code: 'previousStageNotComplete' });
+  });
+
+  it('chains groups → groups → bracket: the second groups stage feeds a bracket', () => {
+    const setup = competitionWith(16, { seeds: allSeeded(16) });
+    let state = run(setup.state, {
+      type: 'configureStages',
+      competition: setup.competition,
+      stages: [
+        { type: 'groups', grouping: { by: 'count', groups: 4 } },
+        { type: 'groups', grouping: { by: 'count', groups: 2 } },
+        { type: 'singleElimination', thirdPlace: false },
+      ],
+    });
+    const [one, two, bracket] = getCompetition(state, setup.competition)!.stages.map((s) => s.id);
+    state = run(state, { type: 'generateDraw', stage: one, randomSeed: 3 }, { type: 'confirmStage', stage: one });
+    expect(getCompetition(state, setup.competition)!.stages.map((s) => s.drawState)).toEqual(['confirmed', 'drawn', 'drawn']);
+
+    state = run(playOut(state, one), { type: 'confirmStage', stage: two });
+    state = run(playOut(state, two), { type: 'confirmStage', stage: bracket });
+
+    const view = getStage(state, bracket, 0);
+    if (view?.type !== 'singleElimination') throw new Error('expected a bracket');
+    const names = view.sections[0].rounds[0].matches.flatMap((m) => [slotName(m, 0), slotName(m, 1)]);
+    expect(names.filter((n) => n !== '?')).toHaveLength(4);
   });
 });

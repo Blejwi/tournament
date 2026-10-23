@@ -190,13 +190,16 @@ function CompetitionCanvas(props: {
 }) {
   const { t } = useTranslation();
   const competition = useQuery((s) => getCompetition(s, props.competitionId), [props.competitionId]);
-  const stageIds = (competition?.stages ?? []).map((s) => s.id);
-  const stages = useQuery((s) => stageIds.map((id) => getStage(s, id, props.now)), [stageIds.join(','), props.now]) ?? [];
-  const stage = stages[0] ?? null;
-  const [detailGroup, setDetailGroup] = useState<{ stage: string; group: GroupId } | null>(null);
+  const stageIds = (competition?.stages ?? []).map((s) => s.id).join();
+  const stages = useQuery((s) => stageIds.split(',').filter(Boolean).map((id) => getStage(s, id, props.now)).filter((v): v is StageView => v !== null), [stageIds, props.now]) ?? [];
+  const stage = stages[0];
+  // The stages after the first are fed by it; one that is drawn but not confirmed can still be edited (its feeder is being played).
+  const editingLater = stages.slice(1).find((s) => s.drawState === 'drawn');
+  const [detailGroup, setDetailGroup] = useState<GroupId | null>(null);
+  const detailStage = stages.find((s) => s.type === 'groups' && s.groups.some((g) => g.id === detailGroup));
   if (!competition) return null;
 
-  if (stage?.drawState === 'drawn') return <DrawEditCanvas stage={stage} fitKey={competition.id} />;
+  if (stage?.drawState === 'drawn') return <DrawEditCanvas stage={stage} later={stages.slice(1)} fitKey={competition.id} />;
 
   if (!stage || stage.drawState !== 'confirmed') {
     return (
@@ -213,14 +216,11 @@ function CompetitionCanvas(props: {
     );
   }
 
-  // The first stage is confirmed. A later stage may still wait for its draw to be confirmed: it is edited right here.
-  const editing = stages.find((s) => s && s.drawState === 'drawn') ?? null;
-  const detailStage = detailGroup ? stages.find((s) => s?.id === detailGroup.stage) : null;
   const content = (
     <>
       <Canvas
         className="flex-1"
-        fitKey={`${competition.id}:${stages.length}`}
+        fitKey={competition.id}
         onBackgroundClick={() => props.onSelect(null)}
         overlay={(view) => {
           if (!props.selection || !props.selected) return null;
@@ -242,65 +242,48 @@ function CompetitionCanvas(props: {
           );
         }}
       >
-        <div className="flex items-start gap-16 p-8">
-          {stages.map((shown, index) =>
-            shown ? (
-              <div key={shown.id} className="grid gap-3">
-                {stages.length > 1 && (
-                  <h3 className="text-sm font-semibold tracking-wide text-slate-500 uppercase">
-                    {t('play.stageHeading', { number: index + 1, type: t(`statsDrawer.stageType.${shown.type}`) })}
-                  </h3>
-                )}
-                {shown.drawState === 'notDrawn' ? (
-                  <div className="grid w-80 gap-2 rounded-lg border-2 border-dashed border-slate-300 p-4 text-sm text-slate-500">
-                    <p>{t('play.stageNotDrawn')}</p>
-                    <Button asChild size="sm" variant="outline">
-                      <Link to={`../../competitions/${competition.id}`} relative="path">
-                        {t('play.goToDraw')}
-                      </Link>
-                    </Button>
-                  </div>
-                ) : shown.type === 'groups' ? (
-                  <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupColumns(shown.groups.length)}, auto)` }}>
-                    {shown.groups.map((group) =>
-                      shown.drawState === 'drawn' ? (
-                        <DrawGroupBox key={group.id} group={group} />
-                      ) : (
-                        <GroupBoxOnCanvas
-                          key={group.id}
-                          group={group}
-                          selection={props.selection}
-                          onSelect={props.onSelect}
-                          pendingFocus={props.pendingFocus}
-                          onFocused={props.onFocused}
-                          onOpenDetail={() => setDetailGroup({ stage: shown.id, group: group.id })}
-                        />
-                      ),
-                    )}
-                  </div>
-                ) : shown.drawState === 'drawn' ? (
-                  <p className="w-80 text-sm text-slate-500">{t('play.stageNotConfirmed')}</p>
-                ) : (
-                  <BracketOnCanvas
-                    stage={shown}
-                    selection={props.selection}
-                    onSelect={props.onSelect}
-                    pendingFocus={props.pendingFocus}
-                    onFocused={props.onFocused}
-                  />
+        <div className="flex items-start gap-20 p-8">
+          {stages.map((s) =>
+            s.type === 'groups' ? (
+              <div key={s.id} className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupColumns(s.groups.length)}, auto)` }}>
+                {s.groups.map((group) =>
+                  s.drawState === 'drawn' ? (
+                    <DrawGroupBox key={group.id} group={group} />
+                  ) : (
+                    <GroupBoxOnCanvas
+                      key={group.id}
+                      group={group}
+                      selection={props.selection}
+                      onSelect={props.onSelect}
+                      pendingFocus={props.pendingFocus}
+                      onFocused={props.onFocused}
+                      onOpenDetail={() => setDetailGroup(group.id)}
+                    />
+                  ),
                 )}
               </div>
-            ) : null,
+            ) : (
+              <div key={s.id}>
+                <BracketOnCanvas
+                  stage={s}
+                  editing={s.drawState === 'drawn'}
+                  selection={props.selection}
+                  onSelect={props.onSelect}
+                  pendingFocus={props.pendingFocus}
+                  onFocused={props.onFocused}
+                />
+              </div>
+            ),
           )}
         </div>
       </Canvas>
       {detailStage?.type === 'groups' && (
-        <GroupDetail stage={detailStage.id} group={detailStage.groups.find((g) => g.id === detailGroup?.group) ?? null} onClose={() => setDetailGroup(null)} />
+        <GroupDetail stage={detailStage.id} group={detailStage.groups.find((g) => g.id === detailGroup) ?? null} onClose={() => setDetailGroup(null)} />
       )}
     </>
   );
-  return editing?.type === 'groups' ? (
-    <DrawEditor stage={editing.id} bracket={false}>
+  return editingLater ? (
+    <DrawEditor stage={editingLater.id} bracket={editingLater.type !== 'groups'}>
       {content}
     </DrawEditor>
   ) : (
@@ -308,21 +291,24 @@ function CompetitionCanvas(props: {
   );
 }
 
-/** The canvas while a stage's draw is drawn but not confirmed: drag-and-drop editing, re-draw and confirm. */
-function DrawEditCanvas({ stage, fitKey }: { stage: StageView; fitKey: string }) {
+/**
+ * The canvas while the first stage's draw is drawn but not confirmed: drag-and-drop editing, re-draw
+ * and confirm. The stages after it (fed by its advancers) are shown as origin-label placeholders.
+ */
+function DrawEditCanvas({ stage, later, fitKey }: { stage: StageView; later: StageView[]; fitKey: string }) {
   const { t } = useTranslation();
   const bracket = stage.type !== 'groups';
   return (
     <DrawEditor stage={stage.id} bracket={bracket}>
       <Canvas className="flex-1" fitKey={`${fitKey}:edit`} hint={t('drawEdit.canvasHint')}>
-        {stage.type === 'groups' ? (
-          <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>
-            {stage.groups.map((group) => (
-              <DrawGroupBox key={group.id} group={group} />
-            ))}
-          </div>
-        ) : (
-          <div className="p-8">
+        <div className="flex items-start gap-20 p-8">
+          {stage.type === 'groups' ? (
+            <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>
+              {stage.groups.map((group) => (
+                <DrawGroupBox key={group.id} group={group} />
+              ))}
+            </div>
+          ) : (
             <BracketBoard
               sections={bracketLayoutSections(t, stage)}
               selectedMatch={null}
@@ -331,8 +317,19 @@ function DrawEditCanvas({ stage, fitKey }: { stage: StageView; fitKey: string })
                 match.location.kind === 'bracket' && (match.location.section === 'main' || match.location.section === 'winners') && match.round === 1 ? <DrawMatchCard match={match} /> : null
               }
             />
-          </div>
-        )}
+          )}
+          {later.map((s) =>
+            s.type === 'groups' ? (
+              <div key={s.id} className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupColumns(s.groups.length)}, auto)` }}>
+                {s.groups.map((group) => (
+                  <GroupBox key={group.id} group={group} selectedMatch={null} onSelectMatch={() => {}} onOpenDetail={() => {}} />
+                ))}
+              </div>
+            ) : (
+              <BracketBoard key={s.id} sections={bracketLayoutSections(t, s)} selectedMatch={null} onSelectMatch={() => {}} />
+            ),
+          )}
+        </div>
       </Canvas>
     </DrawEditor>
   );
@@ -364,6 +361,8 @@ function useFocusPending(
 /** A bracket stage: single elimination (main tree, 3rd-place match under the final) or double elimination (winners bracket, losers bracket, 2nd final). */
 function BracketOnCanvas(props: {
   stage: BracketStageView;
+  /** The bracket's draw is not confirmed yet (its groups are being played): round 1 is edited by drag and drop. */
+  editing?: boolean;
   selection: Selection | null;
   onSelect: (selection: Selection | null) => void;
   pendingFocus: MatchId | null;
@@ -381,6 +380,14 @@ function BracketOnCanvas(props: {
       sections={sections}
       selectedMatch={props.selection?.match ?? null}
       onSelectMatch={(match, el) => props.onSelect({ match, rect: canvas.worldRectOf(el) })}
+      renderCard={
+        props.editing
+          ? (match) =>
+              match.location.kind === 'bracket' && (match.location.section === 'main' || match.location.section === 'winners') && match.round === 1 ? (
+                <DrawMatchCard match={match} />
+              ) : null
+          : undefined
+      }
       onTogglePlayOff={(range, enabled) => dispatch({ type: 'setPlayOff', stage: stage.id, range, enabled, at: Date.now() })}
     />
   );

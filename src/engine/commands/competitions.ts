@@ -127,10 +127,11 @@ function changeEntries(
   competition: Competition,
   change: (entries: Competition['entries']) => Result<Competition['entries']>,
 ): Result<TournamentState> {
-  const [first] = competition.stages;
+  const [first, ...rest] = competition.stages;
   if (first?.drawState === 'confirmed') return fail({ code: 'stageConfirmed' });
   const entries = change(competition.entries);
   if (!entries.ok) return entries;
-  const stages = competition.stages.map((s) => handlerFor(s).clearDraw(s));
+  // Later stages are fed by the first one, so its draw going stale clears theirs too.
+  const stages = first ? [first, ...rest].map((stage) => handlerFor(stage).clearDraw(stage)) : [];
   return ok(replaceCompetition(state, { ...competition, entries: entries.value, stages }));
 }

@@ -38,14 +38,11 @@ export interface SlotView {
    * source (e.g. "W QF1"); null for other sources.
    */
   feeder: FeederView | null;
-  /** For a "place in a group" source: the origin label, e.g. "1A" (place 1, group A); null for other sources. */
-  origin: OriginView | null;
-}
-
-export interface OriginView {
-  place: number;
-  /** The name of the group of the earlier stage, e.g. "A". */
-  group: string;
+  /**
+   * For an origin label (a group place, "1A"): the group's name and the place, so the slot shows
+   * "Kowalski · 1A", or just "1A" while undecided; null for other sources.
+   */
+  origin: { groupName: string; place: number } | null;
 }
 
 export interface FeederView {
@@ -157,11 +154,11 @@ export function locationView(match: Match, stage: Stage): MatchLocationView {
   }
 }
 
-export function originView(competition: Competition, source: SlotSource): OriginView | null {
+export function originView(competition: Competition, source: SlotSource): SlotView['origin'] {
   if (source.kind !== 'groupPlace') return null;
   const stage = competition.stages.find((s) => s.id === source.stage);
   const group = stage?.type === 'groups' ? stage.groups.find((g) => g.id === source.group) : undefined;
-  return group ? { place: source.place, group: group.name } : null;
+  return group ? { groupName: group.name, place: source.place } : null;
 }
 
 function feederView(competition: Competition, source: SlotSource): FeederView | null {

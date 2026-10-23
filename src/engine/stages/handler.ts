@@ -13,6 +13,11 @@ export type DrawPosition = { kind: 'group'; group: GroupId; position: number } |
 export interface DrawEntrant {
   source: SlotSource;
   seed: number | null;
+  /**
+   * For an advancer from a groups stage: the 0-based index of its group (in group order) and its
+   * place there, so a bracket can place it by origin ("1A", "2C") instead of by seed.
+   */
+  origin?: { group: number; place: number };
 }
 
 export interface DrawContext {
@@ -35,12 +40,6 @@ export interface StageHandler<S extends Stage = Stage> {
   config(stage: S): Extract<StageConfig, { type: S['type'] }>;
   /** Places the entrants and creates the stage's matches; the result has `drawState: 'drawn'`. */
   draw(stage: S, ctx: DrawContext): Result<S>;
-  /**
-   * Who goes on from this stage to the next one, as origin labels in the order the next stage is
-   * filled (e.g. all winners in group order, then all runners-up). A stage type that can't feed
-   * another stage leaves this out.
-   */
-  advancers?(stage: S): DrawEntrant[];
   /** Discards the draw (back to `notDrawn`), e.g. when the entries change. */
   clearDraw(stage: S): S;
   /**
