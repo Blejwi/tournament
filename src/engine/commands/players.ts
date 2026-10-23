@@ -2,7 +2,7 @@ import { allocateId } from '../ids';
 import { fail, ok, type Result } from '../result';
 import type { Player, PlayerId, TournamentState } from '../types';
 
-interface PlayerFields {
+export interface PlayerFields {
   firstName: string;
   lastName: string;
   club: string;

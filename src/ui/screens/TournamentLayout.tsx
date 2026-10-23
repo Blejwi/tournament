@@ -13,7 +13,7 @@ export interface TournamentRouteHandle {
   fullBleed?: boolean;
 }
 
-/** Opens the tournament named in the URL and frames its screens (play, competitions, tables, players). */
+/** Opens the tournament named in the URL and frames its screens (play, competitions, tables). */
 export function TournamentLayout() {
   const { tournamentId = '' } = useParams();
   const { t, i18n } = useTranslation();
@@ -89,7 +89,6 @@ function TournamentNav() {
     { to: 'play', label: t('nav.play') },
     { to: 'competitions', label: t('nav.competitions') },
     { to: 'tables', label: t('nav.tables') },
-    { to: 'players', label: t('nav.players') },
   ];
   return (
     <nav className="flex gap-1">
