@@ -11,6 +11,7 @@ import type {
   Match,
   MatchResult,
   PlaceRange,
+  PlayOff,
   Player,
   SingleEliminationStage,
   SlotSource,
@@ -88,7 +89,7 @@ const matchSchema = z.object({
   id,
   location: z.discriminatedUnion('kind', [
     z.object({ kind: z.literal('group'), group: id }),
-    z.object({ kind: z.literal('bracket'), section: z.enum(['main', 'thirdPlace', 'winners', 'losers', 'secondFinal']) }),
+    z.object({ kind: z.literal('bracket'), section: z.enum(['main', 'thirdPlace', 'winners', 'losers', 'secondFinal', 'playOff']) }),
   ]),
   round: z.number().int().min(1),
   order: z.number().int().min(1),
@@ -98,6 +99,7 @@ const matchSchema = z.object({
   result: matchResultSchema.nullable(),
   finishedAt: timestamp,
   places: z.object({ winner: placeRangeSchema.nullable(), loser: placeRangeSchema.nullable() }).optional(),
+  playOff: placeRangeSchema.optional(),
 }) satisfies z.ZodType<Match>;
 
 const tieResolutionSchema = z.object({
@@ -127,11 +129,14 @@ const groupsStageSchema = z.object({
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<GroupsStage>;
 
+const playOffSchema = z.object({ range: placeRangeSchema, enabled: z.boolean() }) satisfies z.ZodType<PlayOff>;
+
 const singleEliminationStageSchema = z.object({
   id,
   type: z.literal('singleElimination'),
   drawState: z.enum(['notDrawn', 'drawn', 'confirmed']),
   thirdPlace: z.boolean(),
+  playOffs: z.array(playOffSchema),
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<SingleEliminationStage>;
 
@@ -139,6 +144,7 @@ const doubleEliminationStageSchema = z.object({
   id,
   type: z.literal('doubleElimination'),
   drawState: z.enum(['notDrawn', 'drawn', 'confirmed']),
+  playOffs: z.array(playOffSchema),
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<DoubleEliminationStage>;
 
@@ -199,6 +205,7 @@ const logEntrySchema = z.discriminatedUnion('type', [
     after: matchResultSchema,
     reset: z.array(loggedMatchSchema),
   }),
+  z.object({ type: z.literal('playOffSet'), at, competition: id, stage: id, range: placeRangeSchema, enabled: z.boolean() }),
 ]) satisfies z.ZodType<LogEntry>;
 
 /** The change log section (the state's `log`, kept out of `tournament` in the file), oldest first. */

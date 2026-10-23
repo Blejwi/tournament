@@ -180,7 +180,7 @@ describe('double elimination: structure for 8, 32 and 64', () => {
 
   it('is configured as a stage with no options', () => {
     const { state, competition } = drawnDoubleElimination(8, { confirm: false });
-    expect(getCompetition(state, competition)!.stages).toEqual([{ id: expect.any(String), drawState: 'drawn', type: 'doubleElimination' }]);
+    expect(getCompetition(state, competition)!.stages).toEqual([{ id: expect.any(String), drawState: 'drawn', type: 'doubleElimination', matches: expect.any(Array), playOffs: [] }]);
   });
 });
 

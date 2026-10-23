@@ -81,6 +81,7 @@ export {
   type BracketStageView,
   type BracketSectionView,
   type BracketRoundView,
+  type PlayOffView,
   type TiebreakStepView,
   type TiedRecordView,
   type TieView,

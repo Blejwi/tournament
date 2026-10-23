@@ -78,9 +78,9 @@ export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'games
  * - main: the single elimination tree
  * - thirdPlace: the optional 3rd-place match
  * - winners, losers, secondFinal: the three parts of a double elimination bracket (ADR 0002)
- * Place play-offs add their sections here.
+ * - playOff: a place play-off's mini-bracket (one block per shared place range; `Match.playOff` says which)
  */
-export type BracketSection = 'main' | 'thirdPlace' | 'winners' | 'losers' | 'secondFinal';
+export type BracketSection = 'main' | 'thirdPlace' | 'winners' | 'losers' | 'secondFinal' | 'playOff';
 
 /** Where a match sits inside its stage: a group, or a section of a bracket. */
 export type MatchLocation = { kind: 'group'; group: GroupId } | { kind: 'bracket'; section: BracketSection };
@@ -116,10 +116,23 @@ export interface Match {
   finishedAt: Timestamp | null;
   /** The final places this match decides; bracket matches only (group places come from the standings). */
   places?: MatchPlaces;
+  /** Play-off matches only (section `playOff`): the shared place range the play-off splits. */
+  playOff?: PlaceRange;
 }
 
 /** notDrawn → drawn (editable, re-drawable) → confirmed (locked, playable). */
 export type DrawState = 'notDrawn' | 'drawn' | 'confirmed';
+
+/**
+ * A place play-off the operator has switched on at least once (#0012): an optional mini-bracket
+ * that splits a shared place range. Its matches are created the first time it is switched on and
+ * kept when it is switched off (they show as disabled), so finished results survive a toggle.
+ */
+export interface PlayOff {
+  /** The shared range it splits, e.g. 9–12. */
+  range: PlaceRange;
+  enabled: boolean;
+}
 
 interface StageBase {
   id: StageId;
@@ -168,6 +181,8 @@ export interface SingleEliminationStage extends StageBase {
   type: 'singleElimination';
   /** Whether the semi-final losers play a 3rd-place match (otherwise they share 3–4). */
   thirdPlace: boolean;
+  /** The place play-offs switched on so far (see `PlayOff`). */
+  playOffs: PlayOff[];
 }
 
 /**
@@ -178,6 +193,8 @@ export interface SingleEliminationStage extends StageBase {
  */
 export interface DoubleEliminationStage extends StageBase {
   type: 'doubleElimination';
+  /** The place play-offs switched on so far (see `PlayOff`). */
+  playOffs: PlayOff[];
 }
 
 /**
@@ -253,6 +270,8 @@ export type LogEntry =
   /** A score was entered (`recordResult`); `table` is where it was played, if it was called. */
   | { type: 'resultRecorded'; at: Timestamp; match: LoggedMatch; result: MatchResult; table: LoggedTable | null }
   /** A recorded result was changed (`correctResult`); `reset` are the later matches that were reset, as they were before. */
-  | { type: 'resultCorrected'; at: Timestamp; match: LoggedMatch; before: MatchResult; after: MatchResult; reset: LoggedMatch[] };
+  | { type: 'resultCorrected'; at: Timestamp; match: LoggedMatch; before: MatchResult; after: MatchResult; reset: LoggedMatch[] }
+  /** A place play-off was switched on or off (`setPlayOff`). */
+  | { type: 'playOffSet'; at: Timestamp; competition: CompetitionId; stage: StageId; range: PlaceRange; enabled: boolean };
 
 export type LogEntryType = LogEntry['type'];

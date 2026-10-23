@@ -28,6 +28,10 @@ export type EngineError =
   | { code: 'notEnoughEntries'; needed: number }
   | { code: 'tooManyEntries'; max: number }
   | { code: 'matchNotFound'; match: MatchId }
+  /** The range isn't a shared place range of this stage that can have a play-off. */
+  | { code: 'playOffNotFound'; from: number; to: number }
+  /** A play-off can't be switched off while one of its matches is on a table. */
+  | { code: 'playOffInProgress' }
   | { code: 'matchNotReady'; status: MatchStatus }
   | { code: 'matchNotOnTable' }
   | { code: 'matchFinished' }

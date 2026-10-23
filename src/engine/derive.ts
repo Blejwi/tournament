@@ -1,4 +1,5 @@
 import { groupStandings, type Standings } from './stages/groups';
+import { isDisabledPlayOffMatch } from './stages/playOffs';
 import type { Competition, Entry, Group, GroupsStage, Match, MatchId, PlayerId, SlotSource, Stage, Timestamp, TournamentState } from './types';
 
 /**
@@ -239,6 +240,7 @@ function statusOf(
   decidedByBye: boolean,
   playing: Map<PlayerId, MatchId>,
 ): MatchStatus {
+  if (isDisabledPlayOffMatch(stage, match)) return 'disabled'; // its result (if any) is kept, but it doesn't count
   if (match.result) return 'finished';
   if (match.table !== null) return 'in_progress';
   if (stage.drawState !== 'confirmed') return 'pending';

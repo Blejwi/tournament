@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { execute, getChangeLog } from '@/engine';
+import { execute, getChangeLog, type ChangeLogEntryView, type TournamentState } from '@/engine';
 import { errorOf } from './helpers';
 import { drawnGroups, matchBetween, run, tableId } from './scenarios';
 
@@ -13,6 +13,10 @@ function setup() {
   return { state, stage, competition, match: match.id, slotA: match.slots[0].entry!.players[0].lastName };
 }
 
+/** The log entries about a match (every type except play-off switches). */
+const matchEntries = (state: TournamentState) =>
+  getChangeLog(state).filter((e): e is Extract<ChangeLogEntryView, { match: unknown }> => 'match' in e);
+
 const lastNames = (players: { lastName: string }[]) => players.map((p) => p.lastName);
 
 describe('change log', () => {
@@ -24,7 +28,7 @@ describe('change log', () => {
     const { state, match, competition, slotA } = setup();
     const next = run(state, { type: 'assignMatch', match, table: tableId(state, 2), at: T0 });
 
-    const [entry] = getChangeLog(next);
+    const [entry] = matchEntries(next);
     expect(entry).toMatchObject({ type: 'matchAssigned', at: T0, table: 2, match: { id: match, competition, competitionName: 'Open' } });
     expect(lastNames(entry.match.players[0])).toEqual([slotA]);
     expect(entry.match.players.flat().map((p) => p.lastName).sort()).toEqual(['P1', 'P4']);
@@ -66,7 +70,7 @@ describe('change log', () => {
       { type: 'assignMatch', match: other, table: tableId(state, 2), at: T0 + MIN },
       { type: 'recordResult', match, result: { kind: 'games', games: [[11, 1], [11, 2], [11, 3]] }, at: T0 + 10 * MIN },
     );
-    expect(getChangeLog(next).map((e) => [e.type, e.match.id, e.at])).toEqual([
+    expect(matchEntries(next).map((e) => [e.type, e.match.id, e.at])).toEqual([
       ['resultRecorded', match, T0 + 10 * MIN],
       ['matchAssigned', other, T0 + MIN],
       ['matchAssigned', match, T0],

@@ -17,6 +17,8 @@
  *   else found there is dropped, as it was never written by the app.
  * - 8: adds double elimination stages and the `winners`, `losers` and `secondFinal` bracket
  *   sections (#0010). Older files need no change; the bump lets older apps refuse them.
+ * - 9: every single and double elimination stage gets `playOffs` (the place play-offs switched on,
+ *   none so far) and bracket matches may be in section `playOff` (#0012).
  */
 
 /** A document parsed from JSON whose shape isn't trusted yet. */
@@ -51,4 +53,18 @@ export const migrations: Record<number, Migration> = {
   5: (file) => ({ ...file, schemaVersion: 6 }),
   6: (file) => ({ ...file, schemaVersion: 7, log: [] }),
   7: (file) => ({ ...file, schemaVersion: 8 }),
+  8: (file) => {
+    const tournament = file.tournament as { competitions?: unknown };
+    const competitions = Array.isArray(tournament?.competitions)
+      ? tournament.competitions.map((competition: { stages?: unknown }) => ({
+          ...competition,
+          stages: Array.isArray(competition?.stages)
+            ? competition.stages.map((stage: { type?: unknown }) =>
+                stage?.type === 'singleElimination' || stage?.type === 'doubleElimination' ? { ...stage, playOffs: [] } : stage,
+              )
+            : competition?.stages,
+        }))
+      : tournament?.competitions;
+    return { ...file, schemaVersion: 9, tournament: { ...tournament, competitions } };
+  },
 };
