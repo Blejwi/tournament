@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { getCompetition, getCompetitions, getMatch, getStage, type MatchId, type MatchView } from '@/engine';
+import { getCompetition, getCompetitions, getMatch, getStage, type GroupId, type MatchId, type MatchView } from '@/engine';
 import { useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
 import { Canvas } from '@/ui/play/Canvas';
 import { useCanvas, type WorldRect } from '@/ui/play/canvasContext';
 import { GroupBox } from '@/ui/play/GroupBox';
+import { GroupDetail } from '@/ui/play/GroupDetail';
 import { MatchPopover } from '@/ui/play/MatchPopover';
 import { WaitingList } from '@/ui/play/WaitingList';
 import { useNowMs } from '@/ui/useNow';
@@ -108,6 +109,7 @@ function CompetitionCanvas(props: {
   const competition = useQuery((s) => getCompetition(s, props.competitionId), [props.competitionId]);
   const stageId = competition?.stages[0]?.id;
   const stage = useQuery((s) => (stageId ? getStage(s, stageId, props.now) : null), [stageId, props.now]);
+  const [detailGroup, setDetailGroup] = useState<GroupId | null>(null);
   if (!competition) return null;
 
   if (!stage || stage.drawState !== 'confirmed') {
@@ -127,38 +129,47 @@ function CompetitionCanvas(props: {
 
   const columns = Math.min(stage.groups.length, Math.max(1, Math.ceil(Math.sqrt(stage.groups.length))));
   return (
-    <Canvas
-      className="flex-1"
-      fitKey={competition.id}
-      onBackgroundClick={() => props.onSelect(null)}
-      overlay={(view) => {
-        if (!props.selection || !props.selected) return null;
-        const { rect } = props.selection;
-        const left = view.x + (rect.x + rect.w) * view.k + 10;
-        const top = Math.max(8, view.y + rect.y * view.k - 10);
-        return (
-          <MatchPopover
-            key={props.selected.id}
-            match={props.selected}
-            style={{ left, top, width: POPOVER_WIDTH - 10, maxHeight: `calc(100% - ${top + 8}px)` }}
-            onClose={() => props.onSelect(null)}
-          />
-        );
-      }}
-    >
-      <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${columns}, auto)` }}>
-        {stage.groups.map((group) => (
-          <GroupBoxOnCanvas
-            key={group.id}
-            group={group}
-            selection={props.selection}
-            onSelect={props.onSelect}
-            pendingFocus={props.pendingFocus}
-            onFocused={props.onFocused}
-          />
-        ))}
-      </div>
-    </Canvas>
+    <>
+      <Canvas
+        className="flex-1"
+        fitKey={competition.id}
+        onBackgroundClick={() => props.onSelect(null)}
+        overlay={(view) => {
+          if (!props.selection || !props.selected) return null;
+          const { rect } = props.selection;
+          const left = view.x + (rect.x + rect.w) * view.k + 10;
+          const top = Math.max(8, view.y + rect.y * view.k - 10);
+          return (
+            <MatchPopover
+              key={props.selected.id}
+              match={props.selected}
+              style={{
+                left,
+                top,
+                width: POPOVER_WIDTH - 10,
+                maxHeight: `calc(100% - ${top + 8}px)`,
+              }}
+              onClose={() => props.onSelect(null)}
+            />
+          );
+        }}
+      >
+        <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${columns}, auto)` }}>
+          {stage.groups.map((group) => (
+            <GroupBoxOnCanvas
+              key={group.id}
+              group={group}
+              selection={props.selection}
+              onSelect={props.onSelect}
+              pendingFocus={props.pendingFocus}
+              onFocused={props.onFocused}
+              onOpenDetail={() => setDetailGroup(group.id)}
+            />
+          ))}
+        </div>
+      </Canvas>
+      <GroupDetail stage={stage.id} group={stage.groups.find((g) => g.id === detailGroup) ?? null} onClose={() => setDetailGroup(null)} />
+    </>
   );
 }
 
@@ -169,6 +180,7 @@ function GroupBoxOnCanvas(props: {
   onSelect: (selection: Selection | null) => void;
   pendingFocus: MatchId | null;
   onFocused: () => void;
+  onOpenDetail: () => void;
 }) {
   const canvas = useCanvas();
   const { pendingFocus, onFocused, onSelect, group } = props;
@@ -188,6 +200,7 @@ function GroupBoxOnCanvas(props: {
       group={group}
       selectedMatch={props.selection?.match ?? null}
       onSelectMatch={(match, el) => onSelect({ match, rect: canvas.worldRectOf(el) })}
+      onOpenDetail={props.onOpenDetail}
     />
   );
 }
