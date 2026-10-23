@@ -86,8 +86,11 @@ export function roundTitle(t: TFunction, roundMatches: number): string {
 /** Who plays in a slot, or what it waits for: a name, "BYE", "W QF1", or "TBD". */
 export function slotText(t: TFunction, slot: SlotView): { text: string; placeholder: boolean } {
   const name = entryName(slot.entry);
-  if (name) return { text: name, placeholder: false };
+  // An origin label ("1A") stays next to the name once the group has decided it.
+  const origin = slot.origin ? `${slot.origin.place}${slot.origin.groupName}` : null;
+  if (name) return { text: origin ? `${name} · ${origin}` : name, placeholder: false };
   if (slot.bye) return { text: t('bracket.bye'), placeholder: true };
+  if (origin) return { text: origin, placeholder: true };
   if (slot.feeder) {
     const code = matchCode(t, slot.feeder.location, slot.feeder.round, slot.feeder.order);
     return { text: t(slot.feeder.take === 'winner' ? 'bracket.winnerOf' : 'bracket.loserOf', { match: code }), placeholder: true };

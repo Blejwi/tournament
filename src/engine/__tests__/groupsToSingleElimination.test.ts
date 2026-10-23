@@ -15,7 +15,7 @@ const half = (labels: string[], label: string) => (labels.indexOf(label) < label
 const groupName = (i: number) => String.fromCharCode(65 + i);
 
 /** Makes a circle in group A (first beats second beats third beats first, all 3:0): a tie nobody can break. */
-function circleInFirstGroup(state: TournamentState, groupsStage: string): { state: TournamentState; names: string[] } {
+function circleInFirstGroup(state: TournamentState, groupsStage: string): { state: TournamentState; names: string[]; ids: string[] } {
   const [a] = groupsOf(state, groupsStage);
   const names = a.entries.map((e) => e.entry!.players[0].lastName);
   const beat = (s: TournamentState, w: string, l: string) => {
@@ -26,7 +26,7 @@ function circleInFirstGroup(state: TournamentState, groupsStage: string): { stat
   let next = beat(state, names[0], names[1]);
   next = beat(next, names[1], names[2]);
   next = beat(next, names[2], names[0]);
-  return { state: next, names };
+  return { state: next, names, ids: a.entries.map((e) => e.entry!.id) };
 }
 
 describe('groups → single elimination: the draw', () => {
@@ -166,8 +166,8 @@ describe('groups → single elimination: placeholders fill as groups complete', 
     expect(slots(circle.state).every((s) => s.entry === null)).toBe(true);
 
     const group = groupsOf(circle.state, groupsStage)[0];
-    const { names } = circle;
-    const next = run(circle.state, { type: 'resolveTie', stage: groupsStage, group: group.id, order: [names[1], names[0], names[2]], method: 'decision' });
+    const { names, ids } = circle;
+    const next = run(circle.state, { type: 'resolveTie', stage: groupsStage, group: group.id, order: [ids[1], ids[0], ids[2]], method: 'decision' });
     expect(slots(next).find((s) => s.origin?.place === 1)!.entry?.players[0].lastName).toBe(names[1]);
     expect(slots(next).find((s) => s.origin?.place === 2)!.entry?.players[0].lastName).toBe(names[0]);
   });
