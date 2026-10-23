@@ -113,6 +113,19 @@ export interface Group {
    * fixed entries in a first stage, origin labels when fed by an earlier stage.
    */
   entries: SlotSource[];
+  /** The operator's orders for ties the tiebreak rules can't break (see `resolveTie`). */
+  tieResolutions: TieResolution[];
+}
+
+/**
+ * The operator's order for a set of entries the ITTF tiebreak can't separate. It applies while
+ * exactly these entries are tied; if a correction changes the tie, the tie is flagged again.
+ */
+export interface TieResolution {
+  /** Best first. */
+  entries: EntryId[];
+  /** A manual decision, or drawn by lot. */
+  method: 'decision' | 'lot';
 }
 
 export interface GroupsStage extends StageBase {

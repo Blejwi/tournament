@@ -1,7 +1,7 @@
 ---
 id: 4
 title: ITTF tiebreaks and group detail
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -34,3 +34,7 @@ This repeats for any subset still tied. If the rules can't break a tie, the **op
 ## Blocked by
 
 - #0003
+
+## Resolution
+
+Done on `integration/v1` in a9bcfc4 (engine: ITTF tiebreaks among the tied entries with a trace, and a `resolveTie` command; schema v4 adds `Group.tieResolutions`) and 12b8ba8 (UI: group detail with standings, cross table, trace and tie settling). A `groupPlace` slot doesn't resolve while its tie is unsettled. A lot is drawn in the UI and recorded with `method: 'lot'`.
