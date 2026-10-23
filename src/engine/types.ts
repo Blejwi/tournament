@@ -237,6 +237,8 @@ export type LogEntry =
   /** A match was taken off its table (`unassignMatch`). */
   | { type: 'matchUnassigned'; at: Timestamp; match: LoggedMatch; table: LoggedTable }
   /** A score was entered (`recordResult`); `table` is where it was played, if it was called. */
-  | { type: 'resultRecorded'; at: Timestamp; match: LoggedMatch; result: MatchResult; table: LoggedTable | null };
+  | { type: 'resultRecorded'; at: Timestamp; match: LoggedMatch; result: MatchResult; table: LoggedTable | null }
+  /** A recorded result was changed (`correctResult`); `reset` are the later matches that were reset, as they were before. */
+  | { type: 'resultCorrected'; at: Timestamp; match: LoggedMatch; before: MatchResult; after: MatchResult; reset: LoggedMatch[] };
 
 export type LogEntryType = LogEntry['type'];
