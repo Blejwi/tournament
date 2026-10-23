@@ -219,7 +219,7 @@ export function TablesFullScreen(props: { overview: TableOverview; onFocus: (mat
   const dispatch = useApp((s) => s.dispatch);
 
   return (
-    <div className="absolute inset-0 z-30 overflow-auto bg-slate-50 p-5" role="dialog" aria-label={t('tablesPanel.fullHeading')}>
+    <div className="fixed inset-0 z-50 overflow-auto bg-slate-50 p-5" role="dialog" aria-label={t('tablesPanel.fullHeading')}>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-bold">{t('tablesPanel.fullHeading')}</h2>
         <span className="text-xs text-slate-500">{t('tablesPanel.fullHint')}</span>

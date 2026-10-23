@@ -68,7 +68,8 @@ export function getTableOverview(state: TournamentState, now: Timestamp): TableO
         status,
         match,
         elapsedMs: match?.elapsedMs ?? null,
-        idleMs: status === 'free' && lastFinishedAt !== null ? now - lastFinishedAt : null,
+        // `now` can lag a moment behind a result just recorded: never negative.
+        idleMs: status === 'free' && lastFinishedAt !== null ? Math.max(0, now - lastFinishedAt) : null,
         idleAlert: status === 'free' && readyWaiting,
         matchesPlayed: finished.length,
       };

@@ -84,6 +84,17 @@ describe('table overview', () => {
     expect(row(getTableOverview(next, T0 + 30 * MIN), 1).idleMs).toBe(10 * MIN);
   });
 
+  it('never shows negative idle time when `now` lags just behind the result', () => {
+    const { state, stage } = groupOfFour();
+    const first = matchBetween(state, stage, 'P1', 'P4').id;
+    const next = run(
+      state,
+      { type: 'assignMatch', match: first, table: tableId(state, 1), at: T0 },
+      { type: 'recordResult', match: first, result: { kind: 'games', games: win }, at: T0 + 20 * MIN },
+    );
+    expect(row(getTableOverview(next, T0 + 20 * MIN - 500), 1).idleMs).toBe(0);
+  });
+
   it('has no idle time for a table that has not had a match yet', () => {
     const { state } = groupOfFour();
     expect(row(getTableOverview(state, T0), 3)).toMatchObject({ status: 'free', idleMs: null });
