@@ -1,14 +1,17 @@
 import type { IdSource } from '../ids';
 import { ok, type Result } from '../result';
-import type { DoubleEliminationStage, Match, PlaceRange, SlotSource } from '../types';
+import type { DoubleEliminationStage, Match, SlotSource } from '../types';
 import {
   directBracketSize,
   knockoutTree,
+  loserOf,
   moveFirstRoundPosition,
   newBracketMatch,
   numberEntrants,
   placeBySeedPositions,
+  placeRange as place,
   swapFirstRoundPositions,
+  winnerOf,
 } from './bracket';
 import { placeGroupAdvancers } from './advancerPlacement';
 import type { StageHandler } from './handler';
@@ -68,9 +71,6 @@ export const doubleEliminationHandler: StageHandler<DoubleEliminationStage> = {
 const withMatches = (stage: DoubleEliminationStage, matches: Result<Match[]>): Result<DoubleEliminationStage> =>
   matches.ok ? ok({ ...stage, matches: matches.value }) : matches;
 
-const place = (from: number, to = from): PlaceRange => ({ from, to });
-const winnerOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'winner' });
-const loserOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'loser' });
 
 /** All matches of a double elimination bracket on the given first-round positions. */
 function doubleEliminationMatches(positions: SlotSource[], ids: IdSource): Match[] {

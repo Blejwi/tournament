@@ -1,5 +1,5 @@
 import { derive } from '../derive';
-import { findStage, replaceStage } from '../locate';
+import { findGroup, findStage, replaceStage } from '../locate';
 import { fail, ok, type Result } from '../result';
 import type { EntryId, GroupId, StageId, TieResolution, TournamentState } from '../types';
 
@@ -16,7 +16,7 @@ export function resolveTie(state: TournamentState, cmd: Cmd<'resolveTie'>): Resu
   const located = findStage(state, cmd.stage);
   if (!located.ok) return located;
   const { competition, stage } = located.value;
-  const group = stage.type === 'groups' ? stage.groups.find((g) => g.id === cmd.group) : undefined;
+  const group = findGroup(stage, cmd.group);
   if (stage.type !== 'groups' || !group) return fail({ code: 'groupNotFound', group: cmd.group });
   const standings = derive(state).standings(stage, group);
   if (!standings.complete) return fail({ code: 'groupNotComplete' });

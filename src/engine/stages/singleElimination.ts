@@ -1,5 +1,5 @@
 import { fail, ok, type Result } from '../result';
-import type { Match, MatchPlaces, PlaceRange, SingleEliminationStage, SlotSource } from '../types';
+import type { Match, MatchPlaces, SingleEliminationStage, SlotSource } from '../types';
 import { placeGroupAdvancers } from './advancerPlacement';
 import {
   directBracketSize,
@@ -8,11 +8,10 @@ import {
   newBracketMatch,
   numberEntrants,
   placeBySeedPositions,
+  placeRange as place,
   swapFirstRoundPositions,
 } from './bracket';
 import type { StageHandler } from './handler';
-
-const place = (from: number, to = from): PlaceRange => ({ from, to });
 
 const withMatches = (stage: SingleEliminationStage, matches: Result<Match[]>): Result<SingleEliminationStage> =>
   matches.ok ? ok({ ...stage, matches: matches.value }) : matches;

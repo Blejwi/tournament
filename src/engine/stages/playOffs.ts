@@ -1,6 +1,6 @@
 import type { IdSource } from '../ids';
 import type { Match, PlaceRange, PlayOff, SlotSource, Stage } from '../types';
-import { newBracketMatch, sharedPlaceRanges } from './bracket';
+import { loserOf, newBracketMatch, placeRange, sharedPlaceRanges, winnerOf } from './bracket';
 
 /**
  * Place play-offs (#0012): optional mini-brackets that split a shared place range into single
@@ -48,7 +48,7 @@ export function buildPlayOff(stage: Stage, range: PlaceRange, ids: IdSource): Ma
   const main: Stage = { ...stage, matches: stage.matches.filter((m) => !m.playOff) };
   const sources = sharedPlaceRanges(main).find((s) => s.take === 'loser' && sameRange(s.range, range))!;
   const slots: SlotSource[] = sources.matches.map((m) => ({ kind: 'matchResult', match: m.id, take: 'loser' }));
-  return classify(slots, range.from, ids).flatMap((matches, r) =>
+  return placeRounds(slots, range.from, ids).flatMap((matches, r) =>
     matches.map((match, k) => {
       match.round = r + 1;
       match.order = k + 1;
@@ -58,22 +58,17 @@ export function buildPlayOff(stage: Stage, range: PlaceRange, ids: IdSource): Ma
   );
 }
 
-const winnerOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'winner' });
-const loserOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'loser' });
-
-/** Rounds of matches (round and order are set by the caller): pair neighbours, then classify the winners above the losers. */
-function classify(slots: SlotSource[], from: number, ids: IdSource): Match[][] {
+/** Rounds of matches (round and order are set by the caller): pair neighbours, then place the winners above the losers. */
+function placeRounds(slots: SlotSource[], from: number, ids: IdSource): Match[][] {
   if (slots.length === 2) {
-    return [[newBracketMatch(ids, 'playOff', 1, 1, [slots[0], slots[1]], { winner: single(from), loser: single(from + 1) })]];
+    return [[newBracketMatch(ids, 'playOff', 1, 1, [slots[0], slots[1]], { winner: placeRange(from), loser: placeRange(from + 1) })]];
   }
   const first = Array.from({ length: slots.length / 2 }, (_, k) =>
     newBracketMatch(ids, 'playOff', 1, k + 1, [slots[2 * k], slots[2 * k + 1]]),
   );
-  const top = classify(first.map(winnerOf), from, ids);
-  const bottom = classify(first.map(loserOf), from + slots.length / 2, ids);
+  const top = placeRounds(first.map(winnerOf), from, ids);
+  const bottom = placeRounds(first.map(loserOf), from + slots.length / 2, ids);
   return [first, ...top.map((round, i) => [...round, ...bottom[i]])];
 }
-
-const single = (place: number): PlaceRange => ({ from: place, to: place });
 
 const isPowerOfTwo = (n: number) => n >= 2 && (n & (n - 1)) === 0;

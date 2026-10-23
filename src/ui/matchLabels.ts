@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import type { MatchLocationView, MatchView, PlaceRange, SlotView } from '@/engine';
+import { letterName, type MatchLocationView, type MatchView, type PlaceRange, type SlotView } from '@/engine';
 import { entryName } from '@/ui/format';
 
 /** Which name a bracket round gets, from how many matches it has. */
@@ -8,13 +8,6 @@ function roundKind(roundMatches: number): 'final' | 'semiFinal' | 'quarterFinal'
 }
 
 type BracketLocation = Extract<MatchLocationView, { kind: 'bracket' }>;
-
-/** "A", "B", ..., "Z", "AA", "AB", ... for 1, 2, ... */
-function letters(n: number): string {
-  let text = '';
-  for (let k = n; k > 0; k = Math.floor((k - 1) / 26)) text = String.fromCharCode(65 + ((k - 1) % 26)) + text;
-  return text;
-}
 
 /**
  * Double elimination codes as on the paper sheet: winners round 1 is M1, M2, ...; the later winners
@@ -64,7 +57,7 @@ export function matchCode(t: TFunction, location: MatchLocationView, round: numb
     case 'playOff':
       return t('bracket.short.playOff', { from: location.playOff?.from ?? 0, round, order });
     case 'winners':
-      return round === 1 ? t('bracket.short.winnersFirst', { number: order }) : letters(doubleEliminationNumber(location, round, order));
+      return round === 1 ? t('bracket.short.winnersFirst', { number: order }) : letterName(doubleEliminationNumber(location, round, order));
     case 'losers':
       return t('bracket.short.losers', { number: doubleEliminationNumber(location, round, order) });
     case 'main':
@@ -92,7 +85,7 @@ export function originLabel(origin: { place: number; groupName: string }): strin
 export function slotText(t: TFunction, slot: SlotView): { text: string; placeholder: boolean } {
   const name = entryName(slot.entry);
   // An origin label ("1A") stays next to the name once the group has decided it.
-  const origin = slot.origin ? `${slot.origin.place}${slot.origin.groupName}` : null;
+  const origin = slot.origin ? originLabel(slot.origin) : null;
   if (name) return { text: origin ? `${name} · ${origin}` : name, placeholder: false };
   if (slot.bye) return { text: t('bracket.bye'), placeholder: true };
   if (origin) return { text: origin, placeholder: true };

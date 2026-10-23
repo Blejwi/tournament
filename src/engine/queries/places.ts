@@ -33,7 +33,7 @@ interface PlaceSlot {
 }
 
 /**
- * The classification of a competition: its last stage gives every entry a place or a shared range,
+ * The final places of a competition: its last stage gives every entry a place or a shared range,
  * live while the stage is played. Each stage type turns its own state into `PlaceSlot`s (bracket
  * matches carry `places` metadata, groups rank by standings position); everything below that is
  * shared. A shared range only counts the entries that can land in it, so with BYEs 13 entries in 16

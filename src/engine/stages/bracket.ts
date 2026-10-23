@@ -15,6 +15,13 @@ export const DIRECT_BRACKET_SIZES = [8, 16, 32, 64] as const;
 export const MIN_DIRECT_BRACKET_ENTRIES = DIRECT_BRACKET_SIZES[0];
 export const MAX_BRACKET_ENTRIES = DIRECT_BRACKET_SIZES[DIRECT_BRACKET_SIZES.length - 1];
 
+/** A single place or a range of places. */
+export const placeRange = (from: number, to = from): PlaceRange => ({ from, to });
+
+/** A slot fed by the winner (or loser) of `match`. */
+export const winnerOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'winner' });
+export const loserOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'loser' });
+
 /** The size of a direct bracket (8, 16, 32 or 64) for `count` entrants, or why there can't be one. */
 export function directBracketSize(count: number): Result<number> {
   if (count < MIN_DIRECT_BRACKET_ENTRIES) return fail({ code: 'notEnoughEntries', needed: MIN_DIRECT_BRACKET_ENTRIES });
@@ -88,7 +95,7 @@ export function knockoutTree({ positions, section, ids, places }: KnockoutOption
       matches.push(newBracketMatch(ids, section, round, k + 1, [slots[2 * k], slots[2 * k + 1]], places?.(round, rounds)));
     }
     tree.push(matches);
-    slots = matches.map((m) => ({ kind: 'matchResult', match: m.id, take: 'winner' }));
+    slots = matches.map(winnerOf);
   }
   return tree;
 }

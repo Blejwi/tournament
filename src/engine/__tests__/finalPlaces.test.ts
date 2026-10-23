@@ -6,7 +6,7 @@ const allSeeded = (n: number) => Object.fromEntries(Array.from({ length: n }, (_
 const range = (r: { from: number; to: number }) => (r.from === r.to ? `${r.from}` : `${r.from}–${r.to}`);
 const number = (label: string) => Number(label.slice(1));
 
-/** "1 P1", "5–8 P8": the classification rows as text. */
+/** "1 P1", "5–8 P8": the final-places rows as text. */
 const rowsOf = (state: TournamentState, competition: string) =>
   getFinalPlaces(state, competition)!.rows.map((r) => `${range(r.place)} ${r.entry.players[0].lastName}`);
 /** "5–8×3": places still open, with how many entries are still to land in them. */
@@ -41,7 +41,7 @@ function playGroups(state: TournamentState, stage: string, names: string[]): Tou
   return state;
 }
 
-describe('classification: single elimination', () => {
+describe('final places: single elimination', () => {
   it('a finished 8-entry bracket with a 3rd-place match: 1, 2, 3, 4, then 5–8', () => {
     const { state, competition, stage } = drawnBracket(8, { seeds: allSeeded(8), thirdPlace: true });
     let played = playRound(playRound(playRound(state, stage, 1), stage, 2), stage, 3);
@@ -77,7 +77,7 @@ describe('classification: single elimination', () => {
   });
 });
 
-describe('classification: groups only', () => {
+describe('final places: groups only', () => {
   it('a single group gives individual places from the standings', () => {
     const { state, competition, stage } = drawnGroups(4, { by: 'count', groups: 1 }, { seeds: allSeeded(4) });
     expect(rowsOf(state, competition)).toEqual([]);

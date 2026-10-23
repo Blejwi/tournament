@@ -41,7 +41,7 @@ export type GamesToWin = 2 | 3 | 4;
 /** Expected duration of a match in whole minutes, for each games-to-win value (overdue detection). */
 export type ExpectedDurations = Record<GamesToWin, number>;
 
-/** A player's place in one competition. Singles only in v1, but the shape allows 1..n players. */
+/** A player's place in one competition. */
 export interface Entry {
   id: EntryId;
   players: PlayerId[];

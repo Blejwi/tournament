@@ -1,5 +1,6 @@
 import { checkResult } from '../commands/matches';
 import { derive, resultGamesWon, type Derived, type DerivedMatch, type MatchStatus } from '../derive';
+import { findGroup } from '../locate';
 import { gameScoresOf } from '../score';
 import type { EngineError } from '../errors';
 import { handlerFor } from '../stages';
@@ -136,7 +137,7 @@ export function locationView(match: Match, stage: Stage): MatchLocationView {
   const { location } = match;
   switch (location.kind) {
     case 'group': {
-      const group = stage.type === 'groups' ? stage.groups.find((g) => g.id === location.group) : undefined;
+      const group = findGroup(stage, location.group);
       return { kind: 'group', group: location.group, groupName: group?.name ?? '' };
     }
     case 'bracket': {
@@ -157,7 +158,7 @@ export function locationView(match: Match, stage: Stage): MatchLocationView {
 export function originView(competition: Competition, source: SlotSource): SlotView['origin'] {
   if (source.kind !== 'groupPlace') return null;
   const stage = competition.stages.find((s) => s.id === source.stage);
-  const group = stage?.type === 'groups' ? stage.groups.find((g) => g.id === source.group) : undefined;
+  const group = stage ? findGroup(stage, source.group) : undefined;
   return group ? { groupName: group.name, place: source.place } : null;
 }
 

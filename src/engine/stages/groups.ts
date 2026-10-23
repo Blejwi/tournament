@@ -1,4 +1,5 @@
 import type { IdSource } from '../ids';
+import { letterName } from '../letters';
 import { shuffle } from '../random';
 import { fail, ok, type Result } from '../result';
 import { gameScoresOf } from '../score';
@@ -238,11 +239,8 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
   return { rows: ordered, complete: matches.every((m) => m.decided), steps: tiebreak.steps, ties: tiebreak.ties };
 }
 
-/** "A".."Z", then "AA", "AB", ... */
-function groupName(index: number): string {
-  const letter = String.fromCharCode(65 + (index % 26));
-  return index < 26 ? letter : groupName(Math.floor(index / 26) - 1) + letter;
-}
+/** "A".."Z", then "AA", "AB", ... for the 0-based group index. */
+const groupName = (index: number): string => letterName(index + 1);
 
 /**
  * Draw editing (before confirm): a group position's occupant, its group's index and the

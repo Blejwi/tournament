@@ -1,5 +1,5 @@
 import { fail, ok, type Result } from './result';
-import type { Competition, Match, MatchId, Stage, StageId, TournamentState } from './types';
+import type { Competition, Group, GroupId, Match, MatchId, Stage, StageId, TournamentState } from './types';
 
 /** Where a stage lives. */
 export interface StageLocation {
@@ -15,6 +15,11 @@ export function findStage(state: TournamentState, id: StageId): Result<StageLoca
     if (index !== -1) return ok({ competition, stage: competition.stages[index], index });
   }
   return fail({ code: 'stageNotFound', stage: id });
+}
+
+/** A group of a stage by id; undefined when the stage has no such group (or is no groups stage). */
+export function findGroup(stage: Stage, id: GroupId): Group | undefined {
+  return stage.type === 'groups' ? stage.groups.find((g) => g.id === id) : undefined;
 }
 
 export interface MatchLocated extends StageLocation {

@@ -49,12 +49,14 @@ export function getCompetition(state: TournamentState, id: CompetitionId): Compe
   return { id: competition.id, name: competition.name, gamesToWin: competition.gamesToWin, entries, stages: competition.stages.map((s) => ({ id: s.id, drawState: s.drawState, ...structuredClone(handlerFor(s).config(s)) })) };
 }
 
+/** A player by id; empty names when the player no longer exists. */
+export function playerView(state: TournamentState, id: PlayerId): EntryPlayerView {
+  const p = state.players.find((x) => x.id === id);
+  return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
+}
+
 export function entryView(state: TournamentState, entry: Entry): EntryView {
-  const players = entry.players.map((id) => {
-    const p = state.players.find((x) => x.id === id);
-    return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
-  });
-  return { id: entry.id, seed: entry.seed, players, withdrawnAt: entry.withdrawnAt };
+  return { id: entry.id, seed: entry.seed, players: entry.players.map((id) => playerView(state, id)), withdrawnAt: entry.withdrawnAt };
 }
 
 export function findEntry(competition: Competition, id: EntryId): Entry | undefined {

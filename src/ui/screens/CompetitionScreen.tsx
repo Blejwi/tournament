@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/ui/components/ui/car
 import { Input } from '@/ui/components/ui/input';
 import { ConfirmDialog } from '@/ui/components/ConfirmDialog';
 import { FormError } from '@/ui/components/FormField';
-import { entryName, newRandomSeed } from '@/ui/format';
+import { entryName, newRandomSeed, playerName } from '@/ui/format';
 import { slotText } from '@/ui/matchLabels';
 
 /** Setting up one competition: entries and seeds, the groups format, and the draw. */
@@ -184,7 +184,7 @@ function ExistingPlayerDialog({ competition, onClose }: { competition: Competiti
   const entered = new Set(competition.entries.flatMap((e) => e.players.map((p) => p.id)));
   const needle = search.trim().toLowerCase();
   const available = players.filter(
-    (p) => !entered.has(p.id) && `${p.firstName} ${p.lastName} ${p.club}`.toLowerCase().includes(needle),
+    (p) => !entered.has(p.id) && `${playerName(p)} ${p.club}`.toLowerCase().includes(needle),
   );
 
   return (
@@ -202,7 +202,7 @@ function ExistingPlayerDialog({ competition, onClose }: { competition: Competiti
               {available.map((p) => (
                 <li key={p.id} className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate">
-                    {p.firstName} {p.lastName}
+                    {playerName(p)}
                     {p.club && <span className="text-muted-foreground text-xs"> · {p.club}</span>}
                   </span>
                   <Button

@@ -1,6 +1,6 @@
 import { idSource } from '../ids';
 import { appendLog } from '../log';
-import { findStage, replaceStage } from '../locate';
+import { findGroup, findStage, replaceStage } from '../locate';
 import { firstRoundSource } from '../stages/bracket';
 import { fail, ok, type Result } from '../result';
 import { handlerFor, type DrawPosition, type StageHandler } from '../stages';
@@ -66,7 +66,7 @@ export function movePlayer(state: TournamentState, cmd: Cmd<'movePlayer'>): Resu
 
 /** A draw position as it is in `stage` (take it before the edit): its group's name and who sits there. */
 function loggedPlace(competition: Competition, stage: Stage, at: DrawPosition): LoggedDrawPlace {
-  const group = at.kind === 'group' && stage.type === 'groups' ? stage.groups.find((g) => g.id === at.group) : undefined;
+  const group = at.kind === 'group' ? findGroup(stage, at.group) : undefined;
   const source = group ? group.entries[at.position - 1] : at.kind === 'bracket' ? firstRoundSource(stage.matches, stage.type === 'doubleElimination' ? 'winners' : 'main', at) : null;
   const players = source?.kind === 'entry' ? (competition.entries.find((e) => e.id === source.entry)?.players ?? []) : [];
   return { group: group?.name ?? null, position: at.position, players: [...players] };

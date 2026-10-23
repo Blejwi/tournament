@@ -1,3 +1,4 @@
+import { findGroup } from './locate';
 import { groupStandings, type PlayedMatch, type Standings } from './stages/groups';
 import { isDisabledPlayOffMatch } from './stages/playOffs';
 import type {
@@ -72,8 +73,8 @@ export interface Derived {
   resolve(competition: Competition, source: SlotSource): Entry | null;
 }
 
-/** Slot index of the winner of a result. */
-export function winnerOf(result: MatchResult | null): 0 | 1 | null {
+/** Slot index (0 = A, 1 = B) of the winner of a result. */
+export function winningSlotOf(result: MatchResult | null): 0 | 1 | null {
   if (!result) return null;
   if (result.kind !== 'games' && result.kind !== 'gamesOnly') return result.winner;
   const [a, b] = result.kind === 'games' ? gamesWon(result.games) : result.games;
@@ -117,7 +118,7 @@ const undecided: Outcome = { winner: null, decidedByBye: false, empty: false, re
  * walkover for the opponent; if both withdrew, nobody goes through (like a BYE against a BYE).
  */
 function outcomeOf(match: Match, stage: Stage, slots: [Resolved, Resolved]): Outcome {
-  const recorded = winnerOf(match.result);
+  const recorded = winningSlotOf(match.result);
   if (recorded !== null) return { ...undecided, winner: recorded, result: match.result };
   const [a, b] = slots;
   if (a === 'bye' && b === 'bye') return { ...undecided, decidedByBye: true, empty: true };
@@ -220,7 +221,7 @@ export function derive(state: TournamentState): Derived {
       }
       case 'groupPlace': {
         const stage = competition.stages.find((s) => s.id === source.stage);
-        const group = stage?.type === 'groups' ? stage.groups.find((g) => g.id === source.group) : undefined;
+        const group = stage ? findGroup(stage, source.group) : undefined;
         if (!stage || stage.type !== 'groups' || !group) return null;
         const table = standings(stage, group);
         if (!table.complete) return null;

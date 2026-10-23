@@ -1,5 +1,5 @@
 import type { SpecialResultKind, LogEntry, LoggedDrawPlace, LoggedMatch, MatchId, PlaceRange, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
-import type { EntryPlayerView } from './competitions';
+import { playerView, type EntryPlayerView } from './competitions';
 import { locationView, resultView, type MatchLocationView, type ResultView } from './matches';
 
 /** The match a log entry is about, with names resolved for display. */
@@ -124,11 +124,6 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
 }
 
 const competitionName = (state: TournamentState, id: CompetitionId) => state.competitions.find((c) => c.id === id)?.name ?? '';
-
-function playerView(state: TournamentState, id: string): EntryPlayerView {
-  const p = state.players.find((x) => x.id === id);
-  return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
-}
 
 function loggedPlaceView(state: TournamentState, place: LoggedDrawPlace): LoggedDrawPlaceView {
   return { group: place.group, position: place.position, players: place.players.map((id) => playerView(state, id)) };

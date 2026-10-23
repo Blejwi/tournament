@@ -14,7 +14,7 @@ export function playerName(player: EntryPlayerView): string {
   return `${player.firstName} ${player.lastName}`;
 }
 
-/** An entry's full name, e.g. "Jan Kowalski" (doubles: "A / B"); null when the slot is not decided. */
+/** An entry's full name, e.g. "Jan Kowalski"; null when the slot is not decided. */
 export function entryName(entry: EntryView | null): string | null {
   if (!entry) return null;
   return entry.players.map((p) => playerName(p)).join(' / ');
