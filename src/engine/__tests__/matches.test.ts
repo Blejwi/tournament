@@ -84,7 +84,7 @@ describe('calling a match to a table', () => {
     const { state, stage } = groupOfFour();
     const match = matchBetween(state, stage, 'P1', 'P4');
     let next = run(state, { type: 'assignMatch', match: match.id, table: tableId(state, 1), at: T0 });
-    next = run(next, { type: 'unassignMatch', match: match.id });
+    next = run(next, { type: 'unassignMatch', match: match.id, at: T0 + 60_000 });
 
     expect(getMatch(next, match.id, T0)).toMatchObject({ status: 'ready', table: null, assignedAt: null });
     expect(getFreeTables(next).map((t) => t.number)).toEqual([1, 2, 3]);
