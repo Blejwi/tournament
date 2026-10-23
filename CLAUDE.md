@@ -57,7 +57,7 @@ How to add a change-log entry (one per operator action such as a correction, a w
 2. Add the variant's Zod object to `logEntrySchema` in `tournamentFile/schema.ts` (its `satisfies` fails until you do). A new entry type needs no migration or version bump: older files stay valid.
 3. In the command handler, build the new state, then `return ok(appendLog(next, { type: 'thingDone', at: cmd.at, match: loggedMatch(state, cmd.match), ... }))` (helpers in `log.ts`). Take snapshots from the state before the change. The command must have an `at`; add one if it lacks it. Log only on success.
 4. Add its view to `ChangeLogEntryView` and the `entryView` switch in `queries/changeLog.ts` (TypeScript fails until you do; resolve names there, e.g. with `resultView`).
-5. Show it: add a case to `entryText` in `src/ui/play/ChangeLog.tsx` and the `changeLog.thingDone` key in `en.ts` and `pl.ts`.
+5. Show it: add a case to `entryText` in `src/ui/changeLogText.ts` and the `changeLog.thingDone` key in `en.ts` and `pl.ts`.
 6. Test first in `__tests__/changeLog.test.ts`: run the command, assert on `getChangeLog(state)[0]`.
 
 The UI runs commands with `useApp((s) => s.dispatch)(command)`, which returns the `EngineError` or `null`; show it with `errorMessage(t, error)`. Read data with `useQuery(getThing)`, never by calling queries inside a `useApp` selector (new objects each call make Zustand loop).
