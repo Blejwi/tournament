@@ -332,6 +332,15 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     collapse: 'Ukryj',
     expand: 'Pokaż listę oczekujących',
   },
+  places: {
+    heading: 'Miejsca końcowe',
+    expand: 'Pokaż miejsca końcowe',
+    collapse: 'Ukryj',
+    empty: 'Brak jeszcze miejsc.',
+    open_one: 'Do rozstrzygnięcia: {{count}}',
+    open_few: 'Do rozstrzygnięcia: {{count}}',
+    open_many: 'Do rozstrzygnięcia: {{count}}',
+  },
   tables: {
     heading: 'Stoły',
     add: 'Dodaj stół',
