@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pause, X } from 'lucide-react';
-import { gamesWon, getFreeTables, parseGames, validateResult, type EngineError, type MatchView } from '@/engine';
+import { gamesWon, getFreeTables, parseResult, validateResult, type EngineError, type MatchView } from '@/engine';
 import { useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
 import { entryName, formatClock, formatGames } from '@/ui/format';
+import { formatPlace, matchTitle, slotText } from '@/ui/matchLabels';
 
 /** Actions for one match, one click from the draw: call to a free table, enter the score. */
 export function MatchPopover(props: { match: MatchView; style: CSSProperties; onClose: () => void }) {
@@ -22,13 +23,13 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
     <div
       data-nopan
       role="dialog"
-      aria-label={t('match.where', { group: match.location.groupName, round: match.round })}
+      aria-label={matchTitle(t, match)}
       style={props.style}
       onPointerDown={(e) => e.stopPropagation()}
       className="absolute z-20 w-[340px] overflow-y-auto rounded-xl bg-white text-sm shadow-2xl ring-1 ring-slate-300"
     >
       <div className="flex items-center gap-2 rounded-t-xl border-b bg-slate-50 px-3 py-2">
-        <span className="font-semibold">{t('match.where', { group: match.location.groupName, round: match.round })}</span>
+        <span className="font-semibold">{matchTitle(t, match)}</span>
         <span className="ml-auto rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 uppercase">
           {t(`match.status.${match.status}`)}
         </span>
@@ -44,7 +45,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
               <div key={side} className={cn('flex items-center gap-2', match.result?.winner === side && 'font-semibold')}>
                 <span className="w-4 text-[10px] text-slate-400">{side === 0 ? 'A' : 'B'}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate">{entryName(entry, false) ?? <i className="text-slate-400">{t('match.unknown')}</i>}</div>
+                  <div className="truncate">{entry ? entryName(entry, false) : <i className="text-slate-400">{slotText(t, match.slots[side], false).text}</i>}</div>
                   {entry?.players[0]?.club && <div className="text-xs font-normal text-slate-400">{entry.players[0].club}</div>}
                 </div>
                 {match.result && <span className="text-lg tabular-nums">{match.result.gamesWon[side]}</span>}
@@ -53,6 +54,21 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
           })}
         </div>
 
+        {match.places && (match.places.winner || match.places.loser) && (
+          <p className="text-xs text-slate-500">
+            {[
+              match.places.winner && t('bracket.winnerPlace', { place: formatPlace(match.places.winner) }),
+              match.places.loser && t('bracket.loserPlace', { place: formatPlace(match.places.loser) }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        )}
+        {match.decidedByBye && (
+          <p className="rounded bg-slate-50 p-2 text-xs text-slate-500">
+            {t('bracket.decidedByBye', { name: entryName(match.slots[0].entry ?? match.slots[1].entry, false) ?? t('bracket.bye') })}
+          </p>
+        )}
         {match.status === 'pending' && (
           <p className="rounded bg-slate-50 p-2 text-xs text-slate-500">{match.slots.every((s) => s.entry) ? t('match.pendingDraw') : t('match.pendingPlayers')}</p>
         )}
@@ -133,22 +149,22 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; onDone: () =>
     if (props.autoFocus) input.current?.focus();
   }, [props.autoFocus]);
 
-  const parsed = text.trim() ? parseGames(text) : null;
-  const games = parsed?.ok ? parsed.value : null;
-  const validation = useQuery((s) => (games ? validateResult(s, match.id, { kind: 'games', games }) : null), [match.id, text]);
+  const parsed = text.trim() ? parseResult(text) : null;
+  const result = parsed?.ok ? parsed.value : null;
+  const validation = useQuery((s) => (result ? validateResult(s, match.id, result) : null), [match.id, text]);
   const error = saveError ?? (parsed && !parsed.ok ? parsed.error : validation);
-  const valid = games !== null && !error;
+  const valid = result !== null && !error;
 
   function save() {
-    if (!games || !valid) return;
-    const failure = dispatch({ type: 'recordResult', match: match.id, result: { kind: 'games', games }, at: Date.now() });
+    if (!result || !valid) return;
+    const failure = dispatch({ type: 'recordResult', match: match.id, result, at: Date.now() });
     if (failure) setSaveError(failure);
     else props.onDone();
   }
 
   let preview: string | null = null;
   if (valid) {
-    const [a, b] = gamesWon(games);
+    const [a, b] = result.kind === 'games' ? gamesWon(result.games) : result.games;
     preview = t('match.scorePreview', { games: `${a}:${b}`, name: entryName(match.slots[a > b ? 0 : 1].entry) });
   }
 
@@ -190,7 +206,7 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; onDone: () =>
         </Button>
       </div>
       <p id={`score-help-${match.id}`} className={cn('mt-1 min-h-4 text-xs', error ? 'text-red-600' : valid ? 'font-medium text-emerald-700' : 'text-slate-400')}>
-        {text.trim() && error ? errorMessage(t, error) : (preview ?? t('match.scoreHint', { name: entryName(match.slots[0].entry) }))}
+        {text.trim() && error ? errorMessage(t, error) : (preview ?? t(match.gamesOnlyAllowed ? 'match.scoreHintQuick' : 'match.scoreHint', { name: entryName(match.slots[0].entry) }))}
       </p>
     </div>
   );

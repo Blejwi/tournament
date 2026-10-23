@@ -5,6 +5,7 @@ import { getCompetitions, getFreeTables, getWaitingList, type MatchId, type Matc
 import { useApp, useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { entryName } from '@/ui/format';
+import { matchTitle } from '@/ui/matchLabels';
 
 /** The matches that can be called now (all competitions), ready first, busy last. */
 export function WaitingList(props: { now: number; onSelect: (match: MatchView) => void; selectedMatch: MatchId | null }) {
@@ -46,7 +47,7 @@ export function WaitingList(props: { now: number; onSelect: (match: MatchView) =
           <span className="flex items-center gap-1 text-xs text-slate-500">
             {index !== null && <span className="w-4 text-slate-400">{index + 1}.</span>}
             {competitionName(m.competition) && <b className="text-slate-700">{competitionName(m.competition)}</b>}
-            <span className="truncate">{t('match.where', { group: m.location.groupName, round: m.round })}</span>
+            <span className="truncate">{matchTitle(t, m)}</span>
           </span>
           <span className="block truncate text-sm font-medium">
             {entryName(m.slots[0].entry)} <span className="font-normal text-slate-400">–</span> {entryName(m.slots[1].entry)}

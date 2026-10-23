@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { getCompetition, getCompetitions, getMatch, getStage, type MatchId, type MatchView } from '@/engine';
+import { getCompetition, getCompetitions, getMatch, getStage, type MatchId, type MatchView, type SingleEliminationStageView } from '@/engine';
 import { useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
 import { Canvas } from '@/ui/play/Canvas';
 import { useCanvas, type WorldRect } from '@/ui/play/canvasContext';
+import { BracketBoard } from '@/ui/play/BracketBoard';
+import type { LayoutSection } from '@/ui/play/bracketLayout';
 import { GroupBox } from '@/ui/play/GroupBox';
+import { roundTitle } from '@/ui/matchLabels';
 import { MatchPopover } from '@/ui/play/MatchPopover';
 import { WaitingList } from '@/ui/play/WaitingList';
 import { useNowMs } from '@/ui/useNow';
@@ -125,7 +128,6 @@ function CompetitionCanvas(props: {
     );
   }
 
-  const columns = Math.min(stage.groups.length, Math.max(1, Math.ceil(Math.sqrt(stage.groups.length))));
   return (
     <Canvas
       className="flex-1"
@@ -146,19 +148,95 @@ function CompetitionCanvas(props: {
         );
       }}
     >
-      <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${columns}, auto)` }}>
-        {stage.groups.map((group) => (
-          <GroupBoxOnCanvas
-            key={group.id}
-            group={group}
+      {stage.type === 'groups' ? (
+        <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>
+          {stage.groups.map((group) => (
+            <GroupBoxOnCanvas
+              key={group.id}
+              group={group}
+              selection={props.selection}
+              onSelect={props.onSelect}
+              pendingFocus={props.pendingFocus}
+              onFocused={props.onFocused}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="p-8">
+          <BracketOnCanvas
+            stage={stage}
             selection={props.selection}
             onSelect={props.onSelect}
             pendingFocus={props.pendingFocus}
             onFocused={props.onFocused}
           />
-        ))}
-      </div>
+        </div>
+      )}
     </Canvas>
+  );
+}
+
+/** Groups in a roughly square grid. */
+const groupColumns = (count: number) => Math.min(count, Math.max(1, Math.ceil(Math.sqrt(count))));
+
+/** Opens the popover for a match picked elsewhere (the waiting list) once its card is on the canvas. */
+function useFocusPending(
+  props: { pendingFocus: MatchId | null; onFocused: () => void; onSelect: (selection: Selection | null) => void },
+  /** The ids of the matches drawn by the caller, comma-separated (a stable effect dependency). */
+  matchIds: string,
+) {
+  const canvas = useCanvas();
+  const { pendingFocus, onFocused, onSelect } = props;
+  useEffect(() => {
+    if (!pendingFocus || !matchIds.split(',').includes(pendingFocus)) return;
+    const el = document.querySelector(`[data-match-id="${pendingFocus}"]`);
+    if (!el) return;
+    const rect = canvas.worldRectOf(el);
+    canvas.reveal(rect);
+    onSelect({ match: pendingFocus, rect });
+    onFocused();
+  }, [pendingFocus, matchIds, canvas, onSelect, onFocused]);
+  return canvas;
+}
+
+/** A single elimination bracket: the main tree, and the 3rd-place match under the final. */
+function BracketOnCanvas(props: {
+  stage: SingleEliminationStageView;
+  selection: Selection | null;
+  onSelect: (selection: Selection | null) => void;
+  pendingFocus: MatchId | null;
+  onFocused: () => void;
+}) {
+  const { t } = useTranslation();
+  const { stage } = props;
+  const canvas = useFocusPending(props, stage.sections.flatMap((s) => s.rounds.flatMap((r) => r.matches.map((m) => m.id))).join());
+
+  const main = stage.sections.find((s) => s.section === 'main');
+  const final = main?.rounds.at(-1)?.matches[0];
+  const sections: LayoutSection[] = stage.sections.map((section) =>
+    section.section === 'main'
+      ? {
+          key: section.section,
+          title: t('bracket.sections.main'),
+          subtitle: t('bracket.size', { size: stage.size }),
+          rounds: section.rounds.map((r) => r.matches),
+          roundTitles: section.rounds.map((r) => roundTitle(t, r.matches.length)),
+        }
+      : {
+          key: section.section,
+          title: t('bracket.sections.thirdPlace'),
+          rounds: section.rounds.map((r) => r.matches),
+          column: (main?.rounds.length ?? 1) - 1,
+          below: final?.id,
+        },
+  );
+
+  return (
+    <BracketBoard
+      sections={sections}
+      selectedMatch={props.selection?.match ?? null}
+      onSelectMatch={(match, el) => props.onSelect({ match, rect: canvas.worldRectOf(el) })}
+    />
   );
 }
 

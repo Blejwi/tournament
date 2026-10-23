@@ -2,7 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { Pause } from 'lucide-react';
 import type { MatchStatus, MatchView } from '@/engine';
 import { cn } from '@/lib/utils';
-import { entryName, formatClock } from '@/ui/format';
+import { formatClock } from '@/ui/format';
+import { matchCode, slotText } from '@/ui/matchLabels';
 
 /** Card frame by derived match status (spec user story 86). */
 const STATUS_STYLE: Record<MatchStatus, string> = {
@@ -31,13 +32,14 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
       )}
     >
       <span className="flex h-[18px] items-center gap-1 px-1.5 text-[10px] leading-none">
-        <b className="text-slate-700">R{match.round}</b>
+        <b className="text-slate-700">{matchCode(t, match.location, match.round, match.order)}</b>
         <span className="ml-auto shrink-0">
           <StatusChip match={match} />
         </span>
       </span>
       {([0, 1] as const).map((side) => {
         const won = match.result?.winner === side;
+        const slot = slotText(t, match.slots[side]);
         return (
           <span
             key={side}
@@ -47,9 +49,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
               match.result && !won && 'text-slate-400',
             )}
           >
-            <span className={cn('truncate', !match.slots[side].entry && 'italic')}>
-              {entryName(match.slots[side].entry) ?? t('match.unknown')}
-            </span>
+            <span className={cn('truncate', slot.placeholder && 'text-slate-400 italic')}>{slot.text}</span>
             <span className="ml-auto font-bold tabular-nums">{match.result?.gamesWon[side] ?? ''}</span>
           </span>
         );
@@ -81,7 +81,7 @@ function StatusChip({ match }: { match: MatchView }) {
       );
     case 'finished':
     case 'walkover':
-      return <span className="text-slate-400">✓</span>;
+      return match.decidedByBye ? <span className="text-slate-400">{t('bracket.bye')}</span> : <span className="text-slate-400">✓</span>;
     default:
       return null;
   }
