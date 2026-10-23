@@ -83,11 +83,17 @@ export function roundTitle(t: TFunction, roundMatches: number): string {
   return t(`bracket.rounds.${roundKind(roundMatches)}`, { size: roundMatches * 2 });
 }
 
+/** An origin label: "1A" for the winner of group A, "2C" for the runner-up of group C. */
+export function originLabel(origin: { place: number; group: string }): string {
+  return `${origin.place}${origin.group}`;
+}
+
 /** Who plays in a slot, or what it waits for: a name, "BYE", "W QF1", or "TBD". */
 export function slotText(t: TFunction, slot: SlotView): { text: string; placeholder: boolean } {
   const name = entryName(slot.entry);
   if (name) return { text: name, placeholder: false };
   if (slot.bye) return { text: t('bracket.bye'), placeholder: true };
+  if (slot.origin) return { text: originLabel(slot.origin), placeholder: true };
   if (slot.feeder) {
     const code = matchCode(t, slot.feeder.location, slot.feeder.round, slot.feeder.order);
     return { text: t(slot.feeder.take === 'winner' ? 'bracket.winnerOf' : 'bracket.loserOf', { match: code }), placeholder: true };

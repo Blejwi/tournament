@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/ui/components/ui/dialog';
 import { entryName } from '@/ui/format';
+import { originLabel } from '@/ui/matchLabels';
 
 const ratio = (won: number, lost: number) => (lost === 0 ? (won === 0 ? '–' : '∞') : (won / lost).toFixed(2));
 
@@ -74,7 +75,7 @@ function Standings({ group }: { group: GroupView }) {
             <tr key={row.position} className="border-t text-right tabular-nums">
               <td className={cn('py-1 text-left font-bold', row.tied && 'text-amber-600')}>{row.place}</td>
               <td className="text-left">
-                {entryName(row.entry) ?? t('match.unknown')}{' '}
+                {entryName(row.entry) ?? (group.entries[row.position - 1]?.origin ? originLabel(group.entries[row.position - 1].origin!) : t('match.unknown'))}{' '}
                 {row.entry?.players[0]?.club && <span className="text-xs text-slate-400">{row.entry.players[0].club}</span>}
               </td>
               <td>
@@ -151,7 +152,7 @@ function CrossTable({ group }: { group: GroupView }) {
             <tr key={i} className="border-t">
               <td className="py-1 pr-3">
                 <span className="mr-1 text-slate-400">{i + 1}</span>
-                {entryName(slot.entry) ?? t('match.unknown')}
+                {entryName(slot.entry) ?? (slot.origin ? originLabel(slot.origin) : t('match.unknown'))}
               </td>
               {ids.map((column, j) => cell(ids[i], column, i, j))}
             </tr>

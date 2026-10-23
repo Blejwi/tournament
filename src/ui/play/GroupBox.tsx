@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { GroupView, MatchId } from '@/engine';
 import { cn } from '@/lib/utils';
 import { entryName } from '@/ui/format';
+import { originLabel } from '@/ui/matchLabels';
 import { MatchCard } from './MatchCard';
 
 /** A group on the canvas: standings, then the group's matches in play order. */
@@ -47,7 +48,9 @@ export function GroupBox(props: {
           </tr>
         </thead>
         <tbody>
-          {group.standings.map((row) => (
+          {group.standings.map((row) => {
+            const origin = group.entries[row.position - 1]?.origin;
+            return (
             <tr key={row.position} className="border-t border-slate-100">
               <td
                 className={cn(
@@ -59,7 +62,8 @@ export function GroupBox(props: {
                 {row.place}
               </td>
               <td className="py-[2px] break-words">
-                {entryName(row.entry) ?? t('match.unknown')}{' '}
+                {entryName(row.entry) ?? (origin ? originLabel(origin) : t('match.unknown'))}{' '}
+                {row.entry && origin && <span className="text-[10px] font-semibold text-indigo-500">{originLabel(origin)}</span>}{' '}
                 {row.entry?.players[0]?.club && <span className="text-[10px] text-slate-400">{row.entry.players[0].club}</span>}
               </td>
               <td className="text-center tabular-nums">
@@ -70,7 +74,8 @@ export function GroupBox(props: {
               </td>
               <td className="text-center font-semibold">{row.groupPoints}</td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
       <div className="grid grid-cols-2 gap-2">

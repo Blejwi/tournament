@@ -190,9 +190,10 @@ function CompetitionCanvas(props: {
 }) {
   const { t } = useTranslation();
   const competition = useQuery((s) => getCompetition(s, props.competitionId), [props.competitionId]);
-  const stageId = competition?.stages[0]?.id;
-  const stage = useQuery((s) => (stageId ? getStage(s, stageId, props.now) : null), [stageId, props.now]);
-  const [detailGroup, setDetailGroup] = useState<GroupId | null>(null);
+  const stageIds = (competition?.stages ?? []).map((s) => s.id);
+  const stages = useQuery((s) => stageIds.map((id) => getStage(s, id, props.now)), [stageIds.join(','), props.now]) ?? [];
+  const stage = stages[0] ?? null;
+  const [detailGroup, setDetailGroup] = useState<{ stage: string; group: GroupId } | null>(null);
   if (!competition) return null;
 
   if (stage?.drawState === 'drawn') return <DrawEditCanvas stage={stage} fitKey={competition.id} />;
@@ -212,11 +213,14 @@ function CompetitionCanvas(props: {
     );
   }
 
-  return (
+  // The first stage is confirmed. A later stage may still wait for its draw to be confirmed: it is edited right here.
+  const editing = stages.find((s) => s && s.drawState === 'drawn') ?? null;
+  const detailStage = detailGroup ? stages.find((s) => s?.id === detailGroup.stage) : null;
+  const content = (
     <>
       <Canvas
         className="flex-1"
-        fitKey={competition.id}
+        fitKey={`${competition.id}:${stages.length}`}
         onBackgroundClick={() => props.onSelect(null)}
         overlay={(view) => {
           if (!props.selection || !props.selected) return null;
@@ -238,36 +242,69 @@ function CompetitionCanvas(props: {
           );
         }}
       >
-        {stage.type === 'groups' ? (
-          <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>
-            {stage.groups.map((group) => (
-              <GroupBoxOnCanvas
-                key={group.id}
-                group={group}
-                selection={props.selection}
-                onSelect={props.onSelect}
-                pendingFocus={props.pendingFocus}
-                onFocused={props.onFocused}
-                onOpenDetail={() => setDetailGroup(group.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="p-8">
-            <BracketOnCanvas
-              stage={stage}
-              selection={props.selection}
-              onSelect={props.onSelect}
-              pendingFocus={props.pendingFocus}
-              onFocused={props.onFocused}
-            />
-          </div>
-        )}
+        <div className="flex items-start gap-16 p-8">
+          {stages.map((shown, index) =>
+            shown ? (
+              <div key={shown.id} className="grid gap-3">
+                {stages.length > 1 && (
+                  <h3 className="text-sm font-semibold tracking-wide text-slate-500 uppercase">
+                    {t('play.stageHeading', { number: index + 1, type: t(`statsDrawer.stageType.${shown.type}`) })}
+                  </h3>
+                )}
+                {shown.drawState === 'notDrawn' ? (
+                  <div className="grid w-80 gap-2 rounded-lg border-2 border-dashed border-slate-300 p-4 text-sm text-slate-500">
+                    <p>{t('play.stageNotDrawn')}</p>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to={`../../competitions/${competition.id}`} relative="path">
+                        {t('play.goToDraw')}
+                      </Link>
+                    </Button>
+                  </div>
+                ) : shown.type === 'groups' ? (
+                  <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupColumns(shown.groups.length)}, auto)` }}>
+                    {shown.groups.map((group) =>
+                      shown.drawState === 'drawn' ? (
+                        <DrawGroupBox key={group.id} group={group} />
+                      ) : (
+                        <GroupBoxOnCanvas
+                          key={group.id}
+                          group={group}
+                          selection={props.selection}
+                          onSelect={props.onSelect}
+                          pendingFocus={props.pendingFocus}
+                          onFocused={props.onFocused}
+                          onOpenDetail={() => setDetailGroup({ stage: shown.id, group: group.id })}
+                        />
+                      ),
+                    )}
+                  </div>
+                ) : shown.drawState === 'drawn' ? (
+                  <p className="w-80 text-sm text-slate-500">{t('play.stageNotConfirmed')}</p>
+                ) : (
+                  <BracketOnCanvas
+                    stage={shown}
+                    selection={props.selection}
+                    onSelect={props.onSelect}
+                    pendingFocus={props.pendingFocus}
+                    onFocused={props.onFocused}
+                  />
+                )}
+              </div>
+            ) : null,
+          )}
+        </div>
       </Canvas>
-      {stage.type === 'groups' && (
-        <GroupDetail stage={stage.id} group={stage.groups.find((g) => g.id === detailGroup) ?? null} onClose={() => setDetailGroup(null)} />
+      {detailStage?.type === 'groups' && (
+        <GroupDetail stage={detailStage.id} group={detailStage.groups.find((g) => g.id === detailGroup?.group) ?? null} onClose={() => setDetailGroup(null)} />
       )}
     </>
+  );
+  return editing?.type === 'groups' ? (
+    <DrawEditor stage={editing.id} bracket={false}>
+      {content}
+    </DrawEditor>
+  ) : (
+    content
   );
 }
 
