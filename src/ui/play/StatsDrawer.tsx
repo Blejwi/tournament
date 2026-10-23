@@ -141,7 +141,7 @@ export function StatsDrawer(props: { now: number; onFocus: Focus }) {
                   {stats.competitions.length > 1 && `${stats.competitions.find((c) => c.competition === match.competition)?.name} · `}
                   {matchTitle(t, match)}
                 </b>
-                <span className="truncate text-slate-500">
+                <span className="break-words text-slate-500">
                   {entryName(match.slots[0].entry)} – {entryName(match.slots[1].entry)}
                 </span>
                 <span className="ml-auto shrink-0 tabular-nums">

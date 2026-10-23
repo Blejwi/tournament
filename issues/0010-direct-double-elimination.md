@@ -1,7 +1,7 @@
 ---
 id: 10
 title: Direct double elimination
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -45,3 +45,7 @@ Other sizes follow the same rules. On the canvas, the winners bracket, losers br
 ## Blocked by
 
 - #0007
+
+## Resolution
+
+Done on `integration/v1` in f0c6fdf, 8631587, 6c0f945 and d6bbd58, plus the coordinator test fix 46dc025. Double elimination for 8/16/32/64 per ADR 0002: golden test against the 16-player sheet, crossed drop-ins, losers-round place ranges, and the WB final winner as champion with the 2nd final deciding 2nd and 3rd. Schema v8. On the canvas the winners bracket, losers bracket and 2nd final are labelled sections, and drop-ins between sections show as slot labels rather than lines. For #0012: `bracketRound(stage, 'losers', k)` and `sharedPlaceRanges(stage)`. Not checked in the browser.

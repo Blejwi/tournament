@@ -39,6 +39,13 @@ export function entryText(t: TFunction, entry: ChangeLogEntryView): string {
       return t('changeLog.drawSlotsSwapped', { competition: entry.competitionName, a: drawPlaceText(t, entry.a), b: drawPlaceText(t, entry.b) });
     case 'drawPlayerMoved':
       return t('changeLog.drawPlayerMoved', { competition: entry.competitionName, from: drawPlaceText(t, entry.from), to: drawPlaceText(t, entry.to) });
+    case 'resultCorrected':
+      return t(entry.reset.length ? 'changeLog.resultCorrectedResets' : 'changeLog.resultCorrected', {
+        match: loggedMatchText(t, entry.match),
+        before: scoreText(entry.before),
+        after: scoreText(entry.after),
+        count: entry.reset.length,
+      });
   }
 }
 

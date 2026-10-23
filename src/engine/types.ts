@@ -77,9 +77,10 @@ export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'games
  * A part of a bracket stage, drawn as its own labelled block on the canvas.
  * - main: the single elimination tree
  * - thirdPlace: the optional 3rd-place match
- * Double elimination (winners, losers, 2nd final) and place play-offs add their sections here.
+ * - winners, losers, secondFinal: the three parts of a double elimination bracket (ADR 0002)
+ * Place play-offs add their sections here.
  */
-export type BracketSection = 'main' | 'thirdPlace';
+export type BracketSection = 'main' | 'thirdPlace' | 'winners' | 'losers' | 'secondFinal';
 
 /** Where a match sits inside its stage: a group, or a section of a bracket. */
 export type MatchLocation = { kind: 'group'; group: GroupId } | { kind: 'bracket'; section: BracketSection };
@@ -170,14 +171,27 @@ export interface SingleEliminationStage extends StageBase {
 }
 
 /**
- * One phase of a competition. Each stage type has a handler behind a common stage interface
- * (see stages/); double elimination and play-offs join this union.
+ * A double elimination bracket of 8, 16, 32 or 64 positions, built like the 16-player paper sheet
+ * (ADR 0002): the winners bracket (section `winners`, round 1 holds the draw), the losers bracket
+ * (`losers`, round r = losers round LRr) and the 2nd final (`secondFinal`). The WB final winner is
+ * champion; there is no grand final. Every match carries its `places`.
  */
-export type Stage = GroupsStage | SingleEliminationStage;
+export interface DoubleEliminationStage extends StageBase {
+  type: 'doubleElimination';
+}
+
+/**
+ * One phase of a competition. Each stage type has a handler behind a common stage interface
+ * (see stages/); play-offs join this union.
+ */
+export type Stage = GroupsStage | SingleEliminationStage | DoubleEliminationStage;
 export type StageType = Stage['type'];
 
 /** The options the operator picks per stage when configuring the chain. */
-export type StageConfig = { type: 'groups'; grouping: Grouping } | { type: 'singleElimination'; thirdPlace: boolean };
+export type StageConfig =
+  | { type: 'groups'; grouping: Grouping }
+  | { type: 'singleElimination'; thirdPlace: boolean }
+  | { type: 'doubleElimination' };
 
 export interface Competition {
   id: CompetitionId;
@@ -250,6 +264,8 @@ export type LogEntry =
   /** Two draw positions traded places before the draw was confirmed (`swapSlots`); players as they were before. */
   | { type: 'drawSlotsSwapped'; at: Timestamp; competition: CompetitionId; stage: StageId; a: LoggedDrawPlace; b: LoggedDrawPlace }
   /** A player was moved to another draw position (`movePlayer`); `from` and `to` as they were before. */
-  | { type: 'drawPlayerMoved'; at: Timestamp; competition: CompetitionId; stage: StageId; from: LoggedDrawPlace; to: LoggedDrawPlace };
+  | { type: 'drawPlayerMoved'; at: Timestamp; competition: CompetitionId; stage: StageId; from: LoggedDrawPlace; to: LoggedDrawPlace }
+  /** A recorded result was changed (`correctResult`); `reset` are the later matches that were reset, as they were before. */
+  | { type: 'resultCorrected'; at: Timestamp; match: LoggedMatch; before: MatchResult; after: MatchResult; reset: LoggedMatch[] };
 
 export type LogEntryType = LogEntry['type'];

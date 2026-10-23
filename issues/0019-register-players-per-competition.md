@@ -1,7 +1,7 @@
 ---
 id: 19
 title: Register players per competition
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-23
 ---
@@ -36,3 +36,7 @@ The spec (user stories 7–8, Domain model) and GLOSSARY.md (Player) were update
 ## Blocked by
 
 None (can start immediately)
+
+## Resolution
+
+Done on `integration/v1` in d7e2492 and 4afbf49. The `registerPlayer` command creates a player and their entry in one step, and `removeEntry` drops a player when their last entry is removed. Competition setup has "Add player" and "Add existing player", with editing from any competition. The tournament Players tab and route are removed. No schema change. Not checked in the browser.

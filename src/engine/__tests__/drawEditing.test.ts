@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { execute, getChangeLog, getCompetition, getStage, type DrawPosition } from '@/engine';
 import { errorOf } from './helpers';
-import { drawnBracket, drawnGroups, groupNames, groupsOf, roundsOf, run, slotLabel, slotName } from './scenarios';
+import { bracketOf, drawnBracket, drawnDoubleElimination, drawnGroups, groupNames, groupsOf, roundsOf, run, slotLabel, slotName } from './scenarios';
 
 const T0 = Date.UTC(2026, 4, 1, 9, 0);
 const allSeeded = (count: number) => Object.fromEntries(Array.from({ length: count }, (_, i) => [i + 1, i + 1]));
@@ -236,5 +236,22 @@ describe('change log of draw edits', () => {
     const { state, stage } = bracket13();
     expect(errorOf(execute(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(99) }))).toEqual({ code: 'drawPositionNotFound' });
     expect(getChangeLog(state)).toEqual([]);
+  });
+});
+
+describe('editing a double elimination draw before confirming', () => {
+  const winnersRound1 = (state: Parameters<typeof bracketOf>[0], stage: string) =>
+    bracketOf(state, stage).sections.find((s) => s.section === 'winners')!.rounds[0].matches.map((m) => `${slotLabel(m, 0)} v ${slotLabel(m, 1)}`);
+
+  it('swaps winners bracket round-1 positions and logs it', () => {
+    const { state, stage } = drawnDoubleElimination(8, { seeds: allSeeded(8), confirm: false });
+    const before = winnersRound1(state, stage);
+    const next = run(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(3) });
+
+    const after = winnersRound1(next, stage);
+    expect(after[0].split(' v ')[0]).toBe(before[1].split(' v ')[0]);
+    expect(after[1].split(' v ')[0]).toBe(before[0].split(' v ')[0]);
+    expect(getChangeLog(next)[0]).toMatchObject({ type: 'drawSlotsSwapped' });
+    expect(errorOf(execute(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(99) }))).toEqual({ code: 'drawPositionNotFound' });
   });
 });

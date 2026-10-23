@@ -1,6 +1,7 @@
 import type { Stage, StageConfig, StageType } from '../types';
 import { groupsHandler } from './groups';
 import { singleEliminationHandler } from './singleElimination';
+import { doubleEliminationHandler } from './doubleElimination';
 import type { StageHandler } from './handler';
 
 export type { DrawContext, DrawEntrant, DrawPosition, StageHandler } from './handler';
@@ -9,6 +10,7 @@ export type { DrawContext, DrawEntrant, DrawPosition, StageHandler } from './han
 const handlers: { [T in StageType]: StageHandler<Extract<Stage, { type: T }>> } = {
   groups: groupsHandler,
   singleElimination: singleEliminationHandler,
+  doubleElimination: doubleEliminationHandler,
 };
 
 /** The handler for a stage (or stage config) of any type. */

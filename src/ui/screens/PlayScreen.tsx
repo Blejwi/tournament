@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
@@ -13,10 +14,9 @@ import {
   type MatchCountsView,
   type MatchId,
   type MatchView,
-  type SingleEliminationStageView,
+  type BracketStageView,
   type StageView,
 } from '@/engine';
-import type { TFunction } from 'i18next';
 import { DrawEditor, DrawGroupBox, DrawMatchCard } from '@/ui/play/DrawEditing';
 import { useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
@@ -27,8 +27,9 @@ import { BracketBoard } from '@/ui/play/BracketBoard';
 import type { LayoutSection } from '@/ui/play/bracketLayout';
 import { GroupBox } from '@/ui/play/GroupBox';
 import { GroupDetail } from '@/ui/play/GroupDetail';
-import { roundTitle } from '@/ui/matchLabels';
+import { doubleEliminationRoundTitle, roundTitle } from '@/ui/matchLabels';
 import { MatchPopover } from '@/ui/play/MatchPopover';
+import { PlacesPanel } from '@/ui/play/PlacesPanel';
 import { StatsDrawer } from '@/ui/play/StatsDrawer';
 import { TablesFullScreen, TablesPanel } from '@/ui/play/TablesPanel';
 import { WaitingList, type WaitingListScope } from '@/ui/play/WaitingList';
@@ -157,6 +158,7 @@ export function PlayScreen() {
           selectedMatch={selection?.match ?? null}
           onSelect={select}
         />
+        <PlacesPanel competition={competitionId} />
       </div>
       <StatsDrawer now={now} onFocus={select} />
     </div>
@@ -285,11 +287,11 @@ function DrawEditCanvas({ stage, fitKey }: { stage: StageView; fitKey: string })
         ) : (
           <div className="p-8">
             <BracketBoard
-              sections={bracketSections(t, stage)}
+              sections={bracketLayoutSections(t, stage)}
               selectedMatch={null}
               onSelectMatch={() => {}}
               renderCard={(match) =>
-                match.location.kind === 'bracket' && match.location.section === 'main' && match.round === 1 ? <DrawMatchCard match={match} /> : null
+                match.location.kind === 'bracket' && (match.location.section === 'main' || match.location.section === 'winners') && match.round === 1 ? <DrawMatchCard match={match} /> : null
               }
             />
           </div>
@@ -322,32 +324,9 @@ function useFocusPending(
   return canvas;
 }
 
-/** A single elimination bracket's layout sections: the main tree, and the 3rd-place match under the final. */
-function bracketSections(t: TFunction, stage: SingleEliminationStageView): LayoutSection[] {
-  const main = stage.sections.find((s) => s.section === 'main');
-  const final = main?.rounds.at(-1)?.matches[0];
-  return stage.sections.map((section) =>
-    section.section === 'main'
-      ? {
-          key: section.section,
-          title: t('bracket.sections.main'),
-          subtitle: t('bracket.size', { size: stage.size }),
-          rounds: section.rounds.map((r) => r.matches),
-          roundTitles: section.rounds.map((r) => roundTitle(t, r.matches.length)),
-        }
-      : {
-          key: section.section,
-          title: t('bracket.sections.thirdPlace'),
-          rounds: section.rounds.map((r) => r.matches),
-          column: (main?.rounds.length ?? 1) - 1,
-          below: final?.id,
-        },
-  );
-}
-
-/** A single elimination bracket: the main tree, and the 3rd-place match under the final. */
+/** A bracket stage: single elimination (main tree, 3rd-place match under the final) or double elimination (winners bracket, losers bracket, 2nd final). */
 function BracketOnCanvas(props: {
-  stage: SingleEliminationStageView;
+  stage: BracketStageView;
   selection: Selection | null;
   onSelect: (selection: Selection | null) => void;
   pendingFocus: MatchId | null;
@@ -357,9 +336,11 @@ function BracketOnCanvas(props: {
   const { stage } = props;
   const canvas = useFocusPending(props, stage.sections.flatMap((s) => s.rounds.flatMap((r) => r.matches.map((m) => m.id))).join());
 
+  const sections = bracketLayoutSections(t, stage);
+
   return (
     <BracketBoard
-      sections={bracketSections(t, stage)}
+      sections={sections}
       selectedMatch={props.selection?.match ?? null}
       onSelectMatch={(match, el) => props.onSelect({ match, rect: canvas.worldRectOf(el) })}
     />
@@ -396,4 +377,57 @@ function GroupBoxOnCanvas(props: {
       onOpenDetail={props.onOpenDetail}
     />
   );
+}
+
+/** The labelled sections of a bracket stage, as the layout wants them. */
+function bracketLayoutSections(t: TFunction, stage: BracketStageView): LayoutSection[] {
+  if (stage.type === 'doubleElimination') {
+    const losersRounds = stage.sections.find((x) => x.section === 'losers')?.rounds.length ?? 0;
+    return stage.sections.map((section): LayoutSection => {
+      const base = { key: section.section, rounds: section.rounds.map((r) => r.matches) };
+      switch (section.section) {
+        case 'winners':
+          return {
+            ...base,
+            title: t('bracket.sections.winners'),
+            subtitle: t('bracket.size', { size: stage.size }),
+            roundTitles: section.rounds.map((r) => doubleEliminationRoundTitle(t, 'winners', r.round, section.rounds.length)),
+          };
+        case 'losers':
+          return {
+            ...base,
+            title: t('bracket.sections.losers'),
+            subtitle: t('bracket.sectionHints.losers'),
+            roundTitles: section.rounds.map((r) => doubleEliminationRoundTitle(t, 'losers', r.round, section.rounds.length)),
+          };
+        default:
+          return {
+            ...base,
+            title: t('bracket.sections.secondFinal'),
+            subtitle: t('bracket.sectionHints.secondFinal'),
+            column: Math.max(0, losersRounds - 1),
+          };
+      }
+    });
+  }
+  const main = stage.sections.find((s) => s.section === 'main');
+  const final = main?.rounds.at(-1)?.matches[0];
+  return stage.sections.map((section) =>
+    section.section === 'main'
+      ? {
+          key: section.section,
+          title: t('bracket.sections.main'),
+          subtitle: t('bracket.size', { size: stage.size }),
+          rounds: section.rounds.map((r) => r.matches),
+          roundTitles: section.rounds.map((r) => roundTitle(t, r.matches.length)),
+        }
+      : {
+          key: section.section,
+          title: t('bracket.sections.thirdPlace'),
+          rounds: section.rounds.map((r) => r.matches),
+          column: (main?.rounds.length ?? 1) - 1,
+          below: final?.id,
+        },
+  );
+
 }

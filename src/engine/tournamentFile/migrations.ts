@@ -15,6 +15,8 @@
  *   (#0007). Older files need no change; the bump lets older apps refuse files with brackets.
  * - 7: the change log `log` gets its entries (#0016). Older files only ever had `[]`; anything
  *   else found there is dropped, as it was never written by the app.
+ * - 8: adds double elimination stages and the `winners`, `losers` and `secondFinal` bracket
+ *   sections (#0010). Older files need no change; the bump lets older apps refuse them.
  */
 
 /** A document parsed from JSON whose shape isn't trusted yet. */
@@ -48,4 +50,5 @@ export const migrations: Record<number, Migration> = {
   }),
   5: (file) => ({ ...file, schemaVersion: 6 }),
   6: (file) => ({ ...file, schemaVersion: 7, log: [] }),
+  7: (file) => ({ ...file, schemaVersion: 8 }),
 };

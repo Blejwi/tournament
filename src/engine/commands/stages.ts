@@ -32,10 +32,10 @@ export function configureStages(state: TournamentState, cmd: Cmd<'configureStage
 
 /**
  * The stage chains v1 supports so far; it grows ticket by ticket (groups → bracket: #0009,
- * double elimination: #0010, groups → groups: #0013): a single groups stage, or a direct
- * single elimination bracket.
+ * groups → double elimination: #0011, groups → groups: #0013): a single groups stage, or a direct
+ * single or double elimination bracket.
  */
-const SUPPORTED_CHAINS: StageConfig['type'][][] = [['groups'], ['singleElimination']];
+const SUPPORTED_CHAINS: StageConfig['type'][][] = [['groups'], ['singleElimination'], ['doubleElimination']];
 
 function isSupportedChain(stages: StageConfig[]): boolean {
   return SUPPORTED_CHAINS.some((chain) => chain.length === stages.length && chain.every((type, i) => stages[i].type === type));

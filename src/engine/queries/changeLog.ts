@@ -38,6 +38,7 @@ export type ChangeLogEntryView = { seq: number; at: Timestamp } & (
   | { type: 'resultRecorded'; match: LoggedMatchView; result: ResultView; table: number | null }
   | { type: 'drawSlotsSwapped'; competition: CompetitionId; competitionName: string; stage: StageId; a: LoggedDrawPlaceView; b: LoggedDrawPlaceView }
   | { type: 'drawPlayerMoved'; competition: CompetitionId; competitionName: string; stage: StageId; from: LoggedDrawPlaceView; to: LoggedDrawPlaceView }
+  | { type: 'resultCorrected'; match: LoggedMatchView; before: ResultView; after: ResultView; reset: LoggedMatchView[] }
 );
 
 /** The change log, newest first. */
@@ -79,6 +80,15 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
         stage: entry.stage,
         from: loggedPlaceView(state, entry.from),
         to: loggedPlaceView(state, entry.to),
+      };
+    case 'resultCorrected':
+      return {
+        ...base,
+        type: entry.type,
+        match: loggedMatchView(state, entry.match),
+        before: resultView(entry.before),
+        after: resultView(entry.after),
+        reset: entry.reset.map((m) => loggedMatchView(state, m)),
       };
   }
 }

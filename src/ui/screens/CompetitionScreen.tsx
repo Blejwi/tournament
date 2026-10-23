@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Shuffle, UserMinus, UserPlus } from 'lucide-react';
+import { ArrowLeft, Pencil, Shuffle, UserMinus, UserPlus } from 'lucide-react';
 import {
   getCompetition,
   getPlayers,
@@ -9,6 +9,7 @@ import {
   type CompetitionView,
   type EngineError,
   type EntryView,
+  type PlayerView,
   type Grouping,
   type StageConfig,
   type StageSummaryView,
@@ -17,6 +18,8 @@ import {
 import { useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { Button } from '@/ui/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/components/ui/dialog';
+import { PlayerDialog } from '@/ui/components/PlayerDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/components/ui/card';
 import { Input } from '@/ui/components/ui/input';
 import { ConfirmDialog } from '@/ui/components/ConfirmDialog';
@@ -44,10 +47,7 @@ export function CompetitionScreen() {
         <p className="text-muted-foreground text-sm">{t('competitions.gamesToWinOption', { count: competition.gamesToWin, best: 2 * competition.gamesToWin - 1 })}</p>
       </div>
       {locked && <p className="bg-muted rounded-md p-3 text-sm">{t('competition.locked')}</p>}
-      <div className="grid gap-6 md:grid-cols-2">
-        <EntriesCard competition={competition} locked={locked} />
-        <PlayersCard competition={competition} locked={locked} />
-      </div>
+      <EntriesCard competition={competition} locked={locked} />
       <FormatCard competition={competition} stage={stage} locked={locked} />
       {stage && <DrawCard competition={competition} stage={stage} />}
     </section>
@@ -57,15 +57,26 @@ export function CompetitionScreen() {
 function EntriesCard({ competition, locked }: { competition: CompetitionView; locked: boolean }) {
   const { t } = useTranslation();
   const dispatch = useApp((s) => s.dispatch);
+  const players = useQuery(getPlayers) ?? [];
   const [error, setError] = useState<EngineError | null>(null);
+  const [dialog, setDialog] = useState<'add' | 'existing' | PlayerView | null>(null);
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
         <CardTitle>{t('competition.entriesHeading', { count: competition.entries.length })}</CardTitle>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" disabled={locked} onClick={() => setDialog('add')}>
+            <UserPlus />
+            {t('players.add')}
+          </Button>
+          <Button variant="outline" size="sm" disabled={locked} onClick={() => setDialog('existing')}>
+            {t('competition.addExisting')}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="grid gap-3">
-        <p className="text-muted-foreground text-sm">{t(competition.stages[0]?.type === 'singleElimination' ? 'competition.seedHintBracket' : 'competition.seedHint')}</p>
+        <p className="text-muted-foreground text-sm">{t(competition.stages[0]?.type !== 'groups' ? 'competition.seedHintBracket' : 'competition.seedHint')}</p>
         {competition.entries.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t('competition.noEntries')}</p>
         ) : (
@@ -74,9 +85,21 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
               <li key={entry.id} className="flex items-center gap-2">
                 <SeedInput key={`${entry.id}:${entry.seed}`} competition={competition.id} entry={entry} disabled={locked} onError={setError} />
                 <span className="min-w-0 flex-1 truncate">
-                  {entryName(entry, false)}
+                  {entryName(entry)}
                   {entry.players[0]?.club && <span className="text-muted-foreground text-xs"> · {entry.players[0].club}</span>}
                 </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t('common.edit')}
+                  title={t('common.edit')}
+                  onClick={() => {
+                    const player = players.find((p) => p.id === entry.players[0]?.id);
+                    if (player) setDialog(player);
+                  }}
+                >
+                  <Pencil />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -93,6 +116,10 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
         )}
         <FormError message={error && errorMessage(t, error)} />
       </CardContent>
+      {dialog === 'existing' && <ExistingPlayerDialog competition={competition} onClose={() => setDialog(null)} />}
+      {dialog !== null && dialog !== 'existing' && (
+        <PlayerDialog competition={competition.id} player={dialog === 'add' ? null : dialog} onClose={() => setDialog(null)} />
+      )}
     </Card>
   );
 }
@@ -122,7 +149,7 @@ function SeedInput(props: { competition: string; entry: EntryView; disabled: boo
       value={value}
       disabled={props.disabled}
       aria-invalid={invalid || undefined}
-      aria-label={t('competition.seedLabel', { name: entryName(props.entry, false) })}
+      aria-label={t('competition.seedLabel', { name: entryName(props.entry) })}
       title={t('competition.seed')}
       onChange={(e) => setValue(e.target.value)}
       onBlur={save}
@@ -131,58 +158,64 @@ function SeedInput(props: { competition: string; entry: EntryView; disabled: boo
   );
 }
 
-function PlayersCard({ competition, locked }: { competition: CompetitionView; locked: boolean }) {
+/** Picks players already registered in other competitions of this tournament (same person, no re-registration). */
+function ExistingPlayerDialog({ competition, onClose }: { competition: CompetitionView; onClose: () => void }) {
   const { t } = useTranslation();
   const dispatch = useApp((s) => s.dispatch);
   const players = useQuery(getPlayers) ?? [];
-  const entered = new Set(competition.entries.flatMap((e) => e.players.map((p) => p.id)));
-  const available = players.filter((p) => !entered.has(p.id));
+  const [search, setSearch] = useState('');
   const [error, setError] = useState<EngineError | null>(null);
-
-  const enter = (ids: string[]) => {
-    for (const player of ids) {
-      const failure = dispatch({ type: 'enterPlayer', competition: competition.id, player });
-      setError(failure);
-      if (failure) return;
-    }
-  };
+  const entered = new Set(competition.entries.flatMap((e) => e.players.map((p) => p.id)));
+  const needle = search.trim().toLowerCase();
+  const available = players.filter(
+    (p) => !entered.has(p.id) && `${p.firstName} ${p.lastName} ${p.club}`.toLowerCase().includes(needle),
+  );
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-2">
-        <CardTitle>{t('competition.playersHeading')}</CardTitle>
-        {available.length > 0 && (
-          <Button variant="outline" size="sm" disabled={locked} onClick={() => enter(available.map((p) => p.id))}>
-            {t('competition.enterAll')}
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent className="grid gap-3">
-        {players.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t('competition.noPlayers')}</p>
-        ) : available.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t('competition.allEntered')}</p>
-        ) : (
-          <ul className="grid gap-1">
-            {available.map((p) => (
-              <li key={p.id} className="flex items-center gap-2">
-                <span className="min-w-0 flex-1 truncate">
-                  {p.firstName} {p.lastName}
-                  {p.club && <span className="text-muted-foreground text-xs"> · {p.club}</span>}
-                </span>
-                <Button variant="ghost" size="sm" disabled={locked} onClick={() => enter([p.id])}>
-                  <UserPlus />
-                  {t('competition.enter')}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <FormError message={error && errorMessage(t, error)} />
-      </CardContent>
-    </Card>
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent closeLabel={t('common.close')} aria-describedby={undefined}>
+        <DialogHeader>
+          <DialogTitle>{t('competition.addExisting')}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <Input type="search" value={search} placeholder={t('competition.searchPlayers')} aria-label={t('competition.searchPlayers')} onChange={(e) => setSearch(e.target.value)} />
+          {available.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{t('competition.noExisting')}</p>
+          ) : (
+            <ul className="grid max-h-72 gap-1 overflow-y-auto">
+              {available.map((p) => (
+                <li key={p.id} className="flex items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate">
+                    {p.firstName} {p.lastName}
+                    {p.club && <span className="text-muted-foreground text-xs"> · {p.club}</span>}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const failure = dispatch({ type: 'enterPlayer', competition: competition.id, player: p.id });
+                      setError(failure);
+                    }}
+                  >
+                    <UserPlus />
+                    {t('competition.enter')}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <FormError message={error && errorMessage(t, error)} />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
+
+const formatLabelKeys = {
+  groups: 'competition.formatGroups',
+  singleElimination: 'competition.formatSingleElimination',
+  doubleElimination: 'competition.formatDoubleElimination',
+} as const;
 
 function FormatCard({ competition, stage, locked }: { competition: CompetitionView; stage: StageSummaryView | null; locked: boolean }) {
   const { t } = useTranslation();
@@ -199,7 +232,12 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
     event.preventDefault();
     const n = Number(value);
     const grouping: Grouping = by === 'count' ? { by, groups: n } : { by, size: n };
-    const config: StageConfig = format === 'groups' ? { type: 'groups', grouping } : { type: 'singleElimination', thirdPlace };
+    const config: StageConfig =
+      format === 'groups'
+        ? { type: 'groups', grouping }
+        : format === 'doubleElimination'
+          ? { type: 'doubleElimination' }
+          : { type: 'singleElimination', thirdPlace };
     const failure = dispatch({ type: 'configureStages', competition: competition.id, stages: [config] });
     setError(failure);
     setSaved(!failure);
@@ -214,10 +252,10 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
         <form onSubmit={submit} noValidate className="grid gap-3">
           <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
             <legend className="sr-only">{t('competition.formatHeading')}</legend>
-            {(['groups', 'singleElimination'] as const).map((option) => (
+            {(['groups', 'singleElimination', 'doubleElimination'] as const).map((option) => (
               <label key={option} className="flex items-center gap-2 text-sm font-medium">
                 <input type="radio" name="format" checked={format === option} onChange={() => setFormat(option)} />
-                {option === 'groups' ? t('competition.formatGroups') : t('competition.formatSingleElimination')}
+                {t(formatLabelKeys[option])}
               </label>
             ))}
           </fieldset>
@@ -240,6 +278,11 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                 />
+              </>
+            ) : format === 'doubleElimination' ? (
+              <>
+                <legend className="sr-only">{t('competition.formatDoubleElimination')}</legend>
+                <span className="text-muted-foreground text-xs">{t('competition.doubleEliminationHint')}</span>
               </>
             ) : (
               <>
@@ -311,17 +354,17 @@ function DrawCard({ competition, stage }: { competition: CompetitionView; stage:
           )}
         </div>
         <FormError message={error && errorMessage(t, error)} />
-        {view?.type === 'singleElimination' && view.size > 0 && (
+        {(view?.type === 'singleElimination' || view?.type === 'doubleElimination') && view.size > 0 && (
           <div className="grid gap-1">
             <p className="font-medium">{t('competition.firstRound', { size: view.size })}</p>
             <ol className="grid gap-x-6 gap-y-0.5 text-sm sm:grid-cols-2">
-              {(view.sections.find((s) => s.section === 'main')?.rounds[0]?.matches ?? []).map((match, i) => (
+              {(view.sections.find((s) => s.section === 'main' || s.section === 'winners')?.rounds[0]?.matches ?? []).map((match, i) => (
                 <li key={match.id} className="flex gap-2">
                   <span className="text-muted-foreground w-5 tabular-nums">{i + 1}.</span>
                   {match.slots.map((slot, side) => (
                     <span key={side} className={side === 0 ? 'min-w-0 flex-1 truncate' : 'min-w-0 flex-1 truncate text-right'}>
                       {slot.entry?.seed != null && <span className="text-muted-foreground text-xs">[{slot.entry.seed}] </span>}
-                      <span className={slot.entry ? undefined : 'text-muted-foreground italic'}>{slotText(t, slot, false).text}</span>
+                      <span className={slot.entry ? undefined : 'text-muted-foreground italic'}>{slotText(t, slot).text}</span>
                     </span>
                   ))}
                 </li>
@@ -338,7 +381,7 @@ function DrawCard({ competition, stage }: { competition: CompetitionView; stage:
                   {group.entries.map((slot, i) => (
                     <li key={i} className="flex gap-2">
                       <span className="text-muted-foreground w-4 tabular-nums">{i + 1}</span>
-                      <span className="truncate">{entryName(slot.entry, false) ?? t('match.unknown')}</span>
+                      <span className="truncate">{entryName(slot.entry) ?? t('match.unknown')}</span>
                       {slot.entry?.seed != null && <span className="text-muted-foreground ml-auto text-xs">[{slot.entry.seed}]</span>}
                     </li>
                   ))}

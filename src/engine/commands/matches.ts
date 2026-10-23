@@ -1,5 +1,5 @@
 import { derive } from '../derive';
-import { findMatch, replaceMatch } from '../locate';
+import { findMatch, replaceMatch, type StageLocation } from '../locate';
 import { appendLog, loggedMatch, loggedTable } from '../log';
 import { fail, ok, type Result } from '../result';
 import { validateScore } from '../score';
@@ -9,7 +9,9 @@ import type { MatchId, MatchResult, TableId, Timestamp, TournamentState } from '
 export type MatchCommand =
   /** Calls a ready match to a free table; the match clock starts at `at`. */
   | { type: 'assignMatch'; match: MatchId; table: TableId; at: Timestamp }
+  /** Moves the start of a match on its table, e.g. "started 5 min ago" when the players came late. */
   /** Takes a match off its table (a wrong call) at `at`; it goes back to the waiting list. */
+  | { type: 'setMatchStart'; match: MatchId; at: Timestamp }
   | { type: 'unassignMatch'; match: MatchId; at: Timestamp }
   /** Records the result; the match finishes at `at` and its table is free again. */
   | { type: 'recordResult'; match: MatchId; result: MatchResult; at: Timestamp };
@@ -39,6 +41,14 @@ export function unassignMatch(state: TournamentState, cmd: Cmd<'unassignMatch'>)
   return ok(appendLog(next, { type: 'matchUnassigned', at: cmd.at, match: loggedMatch(state, cmd.match), table: loggedTable(state, match.table)! }));
 }
 
+export function setMatchStart(state: TournamentState, cmd: Cmd<'setMatchStart'>): Result<TournamentState> {
+  const located = findMatch(state, cmd.match);
+  if (!located.ok) return located;
+  const { match } = located.value;
+  if (match.table === null || match.result) return fail({ code: 'matchNotOnTable' });
+  return ok(replaceMatch(state, located.value, { ...match, assignedAt: cmd.at }));
+}
+
 export function recordResult(state: TournamentState, cmd: Cmd<'recordResult'>): Result<TournamentState> {
   const valid = checkResult(state, cmd.match, cmd.result);
   if (!valid.ok) return valid;
@@ -61,10 +71,14 @@ export function recordResult(state: TournamentState, cmd: Cmd<'recordResult'>): 
 export function checkResult(state: TournamentState, matchId: MatchId, result: MatchResult): Result<void> {
   const located = findMatch(state, matchId);
   if (!located.ok) return located;
-  const { competition, stage } = located.value;
   const status = derive(state).match(matchId)!.status;
   if (status === 'finished' || status === 'walkover') return fail({ code: 'matchFinished' });
   if (status === 'pending' || status === 'disabled') return fail({ code: 'matchNotReady', status });
+  return checkScore(located.value, result);
+}
+
+/** Whether `result` is a valid score for a match of this stage (the scoring rules only, not the match's status). */
+export function checkScore({ competition, stage }: StageLocation, result: MatchResult): Result<void> {
   if (result.kind === 'gamesOnly' && !handlerFor(stage).allowsGamesOnly) return fail({ code: 'gamePointsRequired' });
   return validateScore(result, competition.gamesToWin);
 }

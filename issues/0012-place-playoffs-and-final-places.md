@@ -1,7 +1,7 @@
 ---
 id: 12
 title: Place play-offs and final places
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

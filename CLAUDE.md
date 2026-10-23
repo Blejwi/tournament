@@ -49,7 +49,7 @@ How to change the tournament state shape (new section such as `competitions`, ne
 3. Add a fixture `__tests__/fixtures/schema-v<n>.json` (a file as the previous version wrote it) and a test in `exportImport.test.ts` that imports it. Extend the round-trip test's setup so it covers the new section.
 4. Stored tournaments go through the same migrations on load, so nothing else is needed for localStorage.
 
-The change log (#0016) is `state.log` (`LogEntry[]`, oldest first). The file keeps it in its own top-level `log` section, not inside `tournament`. Commands write the entries themselves, so the log is tested through `execute` + `getChangeLog`. Logged today: `matchAssigned`, `matchUnassigned`, `resultRecorded`, `drawSlotsSwapped`, `drawPlayerMoved`.
+The change log (#0016) is `state.log` (`LogEntry[]`, oldest first). The file keeps it in its own top-level `log` section, not inside `tournament`. Commands write the entries themselves, so the log is tested through `execute` + `getChangeLog`. Logged today: `matchAssigned`, `matchUnassigned`, `resultRecorded`, `resultCorrected`, `drawSlotsSwapped`, `drawPlayerMoved`.
 
 How to add a change-log entry (one per operator action such as a correction, a walkover, a manual swap or a play-off toggle):
 

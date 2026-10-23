@@ -39,6 +39,10 @@ export type EngineError =
   | { code: 'matchNotReady'; status: MatchStatus }
   | { code: 'matchNotOnTable' }
   | { code: 'matchFinished' }
+  /** A correction needs a recorded result to change. */
+  | { code: 'matchNotFinished' }
+  /** Later matches already started or finished with a player the correction replaces: confirm with `force` to reset them. */
+  | { code: 'correctionNeedsForce'; matches: MatchId[] }
   | { code: 'tableBusy'; number: number }
   | { code: 'tableInactive'; number: number }
   | { code: 'tableInUse'; number: number }

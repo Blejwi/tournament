@@ -1,7 +1,7 @@
 import type { IdSource } from '../ids';
 import { shuffle, type Random } from '../random';
-import type { BracketSection, Match, MatchPlaces, SlotSource } from '../types';
 import { fail, ok, type Result } from '../result';
+import type { BracketSection, Match, MatchPlaces, PlaceRange, SlotSource, Stage } from '../types';
 import type { DrawEntrant, DrawPosition } from './handler';
 
 /**
@@ -14,6 +14,13 @@ import type { DrawEntrant, DrawPosition } from './handler';
 export const DIRECT_BRACKET_SIZES = [8, 16, 32, 64] as const;
 export const MIN_DIRECT_BRACKET_ENTRIES = DIRECT_BRACKET_SIZES[0];
 export const MAX_BRACKET_ENTRIES = DIRECT_BRACKET_SIZES[DIRECT_BRACKET_SIZES.length - 1];
+
+/** The size of a direct bracket (8, 16, 32 or 64) for `count` entrants, or why there can't be one. */
+export function directBracketSize(count: number): Result<number> {
+  if (count < MIN_DIRECT_BRACKET_ENTRIES) return fail({ code: 'notEnoughEntries', needed: MIN_DIRECT_BRACKET_ENTRIES });
+  if (count > MAX_BRACKET_ENTRIES) return fail({ code: 'tooManyEntries', max: MAX_BRACKET_ENTRIES });
+  return ok(bracketSize(count));
+}
 
 /** The smallest power of two that holds `count` entries (at least 2). */
 export function bracketSize(count: number): number {
@@ -131,6 +138,43 @@ export function moveFirstRoundPosition(matches: Match[], section: BracketSection
   if (!firstRoundSource(matches, section, from) || !target) return fail({ code: 'drawPositionNotFound' });
   if (target.kind !== 'bye') return fail({ code: 'positionTaken' });
   return swapFirstRoundPositions(matches, section, from, to);
+}
+
+/**
+ * The matches of one round of a bracket section, top to bottom: the stable address of a bracket
+ * match is (section, round, order), e.g. "the k-th LR2 match" is `bracketRound(stage, 'losers', 2)[k - 1]`.
+ */
+export function bracketRound(stage: Stage, section: BracketSection, round: number): Match[] {
+  return stage.matches
+    .filter((m) => m.location.kind === 'bracket' && m.location.section === section && m.round === round)
+    .sort((a, b) => a.order - b.order);
+}
+
+/** A place range shared by the losers (or winners) of several matches, e.g. 9–12 by the four LR2 losers. */
+export interface SharedPlaceRange {
+  range: PlaceRange;
+  take: 'winner' | 'loser';
+  /** The matches whose `take` side lands in the range, in stage order (round by round, top to bottom). */
+  matches: Match[];
+}
+
+/**
+ * The shared place ranges of a bracket stage, from its matches' `places` (the ranges place
+ * play-offs can split), best range first. Single places (from === to) are left out.
+ */
+export function sharedPlaceRanges(stage: Stage): SharedPlaceRange[] {
+  const ranges = new Map<string, SharedPlaceRange>();
+  for (const match of stage.matches) {
+    for (const take of ['winner', 'loser'] as const) {
+      const range = match.places?.[take];
+      if (!range || range.from === range.to) continue;
+      const key = `${take}:${range.from}-${range.to}`;
+      const shared = ranges.get(key) ?? { range: { ...range }, take, matches: [] };
+      shared.matches.push(match);
+      ranges.set(key, shared);
+    }
+  }
+  return [...ranges.values()].sort((a, b) => a.range.from - b.range.from);
 }
 
 export function newBracketMatch(

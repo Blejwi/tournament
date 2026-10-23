@@ -163,7 +163,7 @@ function DrawSlot(props: { at: DrawPosition; slot: SlotView; label?: string; cla
   const target: DropTarget = { kind: moveOntoBye ? 'move' : 'swap', at };
   const drop = useDropTarget(target);
   const picked = api.picked !== null && samePosition(api.picked, at);
-  const text = slotText(t, slot, true);
+  const text = slotText(t, slot);
   const draggable = !slot.bye;
   const name = text.text;
 
