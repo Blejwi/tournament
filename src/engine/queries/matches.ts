@@ -4,6 +4,7 @@ import { findGroup } from '../locate';
 import { gameScoresOf } from '../score';
 import type { EngineError } from '../errors';
 import { handlerFor } from '../stages';
+import { matchDepths } from '../stages/bracket';
 import { sameRange } from '../stages/playOffs';
 import type {
   BracketSection,
@@ -238,12 +239,20 @@ export interface WaitingListOptions {
 
 /**
  * The matches that could be called now, in priority order: busy ones (a player is on another
- * table) last; then earlier stage, then earlier round, then the match that has been ready
+ * table) last; then earlier stage, then earlier round (in a bracket: the match that comes earlier
+ * in the progression, so double elimination's winners and losers rounds interleave), then the match that has been ready
  * longest (never-played players count as ready from the start); then competition and draw order.
  * Place play-off matches come after the main draw's.
  */
 export function getWaitingList(state: TournamentState, now: Timestamp, options: WaitingListOptions = {}): MatchView[] {
   const competitionOrder = new Map(state.competitions.map((c, i) => [c.id, i]));
+  // Rounds are numbered per bracket section, so bracket matches are compared by depth instead.
+  const depths = new Map<Stage, Map<string, number>>();
+  const progression = ({ match, stage }: DerivedMatch) => {
+    if (match.location.kind !== 'bracket') return match.round;
+    if (!depths.has(stage)) depths.set(stage, matchDepths(stage));
+    return depths.get(stage)!.get(match.id)!;
+  };
   return derive(state)
     .matches.map((m, drawOrder) => ({ m, drawOrder }))
     .filter(({ m }) => m.status === 'ready' || m.status === 'busy')
@@ -253,7 +262,7 @@ export function getWaitingList(state: TournamentState, now: Timestamp, options: 
         Number(x.m.status === 'busy') - Number(y.m.status === 'busy') ||
         Number(x.m.match.playOff !== undefined) - Number(y.m.match.playOff !== undefined) ||
         x.m.stageIndex - y.m.stageIndex ||
-        x.m.match.round - y.m.match.round ||
+        progression(x.m) - progression(y.m) ||
         (x.m.waitingSince ?? -Infinity) - (y.m.waitingSince ?? -Infinity) ||
         competitionOrder.get(x.m.competition.id)! - competitionOrder.get(y.m.competition.id)! ||
         x.drawOrder - y.drawOrder,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { execute, getCompetition, getFinalPlaces, type MatchView, type PlaceRange, type SlotView, type TournamentState } from '@/engine';
+import { execute, getCompetition, getFinalPlaces, getWaitingList, type MatchView, type PlaceRange, type SlotView, type TournamentState } from '@/engine';
 import { errorOf } from './helpers';
-import { bracketOf, competitionWith, drawnDoubleElimination, run, slotLabel } from './scenarios';
+import { bracketOf, competitionWith, drawnBracket, drawnDoubleElimination, run, slotLabel } from './scenarios';
 
 /** Seeds 1..n given to P1..Pn. */
 const allSeeded = (n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [i + 1, i + 1]));
@@ -305,5 +305,35 @@ describe('double elimination: special results and withdrawal', () => {
     const [, m2] = sectionRounds(next, stage, 'winners')[0];
     const after = run(next, { type: 'recordResult', match: m2.id, result: quick(0), at: 0 });
     expect(firstMatch(after, stage, 'losers')).toMatchObject({ status: 'walkover', result: { kind: 'walkover', winner: 1 } });
+  });
+});
+describe('double elimination: the waiting list follows the progression, not the round numbers', () => {
+  /** Plays one round of a section, the better seed winning; `at(order)` is when each match finished. */
+  function playRound(state: TournamentState, stage: string, section: string, round: number, at: (order: number) => number): TournamentState {
+    return sectionRounds(state, stage, section)[round - 1].reduce((next, m) => {
+      const match = sectionRounds(next, stage, section)[round - 1][m.order - 1];
+      const [a, b] = [0, 1].map((slot) => Number(slotLabel(match, slot as 0 | 1).slice(1)));
+      return run(next, { type: 'recordResult', match: match.id, result: quick(a < b ? 0 : 1), at: at(m.order) });
+    }, state);
+  }
+
+  it('puts the WB final before LR4 although both are round 4 and LR4 has waited longer', () => {
+    const { state, stage } = drawnDoubleElimination(16, { seeds: allSeeded(16) });
+    let next = state;
+    for (const [section, round] of [['winners', 1], ['winners', 2], ['losers', 1], ['losers', 2]] as const) {
+      next = playRound(next, stage, section, round, () => 10);
+    }
+    next = playRound(next, stage, 'winners', 3, (order) => (order === 1 ? 300 : 100));
+    next = playRound(next, stage, 'losers', 3, () => 100);
+
+    // The WB final is at depth 4 and LR4 at depth 5 (it also waits for WB3), whatever their round numbers say.
+    const waiting = getWaitingList(next, 1000).map((m) => `${m.location.kind === 'bracket' ? m.location.section : ''}${m.round}`);
+    expect(waiting).toEqual(['winners4', 'losers4', 'losers4']);
+  });
+
+  it('keeps single elimination ordered by round', () => {
+    const { state } = drawnBracket(16, { seeds: allSeeded(16) });
+    const rounds = getWaitingList(state, 0).map((m) => m.round);
+    expect(rounds).toEqual([...rounds].sort((a, b) => a - b));
   });
 });

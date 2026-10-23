@@ -157,6 +157,27 @@ export function bracketRound(stage: Stage, section: BracketSection, round: numbe
     .sort((a, b) => a.order - b.order);
 }
 
+/**
+ * How far along the tournament a stage's matches come, comparable across sections whose rounds are
+ * numbered differently (double elimination: winners round r, losers round j, the 2nd final): 1 plus
+ * the deepest match whose winner or loser feeds it, so a match never comes before one it waits for.
+ * A match without feeders (a first round, a group match) is at 1.
+ */
+export function matchDepths(stage: Stage): Map<string, number> {
+  const byId = new Map(stage.matches.map((m) => [m.id, m]));
+  const depths = new Map<string, number>();
+  const depthOf = (match: Match): number => {
+    const known = depths.get(match.id);
+    if (known !== undefined) return known;
+    const feeders = match.slots.flatMap((slot) => (slot.kind === 'matchResult' && byId.has(slot.match) ? [byId.get(slot.match)!] : []));
+    const depth = 1 + Math.max(0, ...feeders.map(depthOf));
+    depths.set(match.id, depth);
+    return depth;
+  };
+  stage.matches.forEach(depthOf);
+  return depths;
+}
+
 /** A place range shared by the losers (or winners) of several matches, e.g. 9–12 by the four LR2 losers. */
 export interface SharedPlaceRange {
   range: PlaceRange;
