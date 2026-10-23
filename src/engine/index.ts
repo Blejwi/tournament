@@ -18,6 +18,8 @@ export type {
   Grouping,
   MatchId,
   MatchResult,
+  SpecialResult,
+  SpecialResultKind,
   PlayerId,
   SlotSource,
   StageConfig,

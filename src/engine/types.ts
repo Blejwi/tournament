@@ -47,6 +47,11 @@ export interface Entry {
   players: PlayerId[];
   /** Explicit ranking number that fixes the entry's place in the draw; null = placed at random. */
   seed: number | null;
+  /**
+   * When the player withdrew from the competition (`withdrawPlayer`); null while still in it.
+   * Every match of a withdrawn entry that has no result is a walkover for the opponent (derived, never stored).
+   */
+  withdrawnAt: Timestamp | null;
 }
 
 /**
@@ -68,10 +73,21 @@ export type GameScore = [number, number];
 
 /**
  * The recorded outcome of a match, slot A first. `gamesOnly` (e.g. 3:1) is for stages that allow it
- * (brackets); groups need the points of every game. Walkover, retirement and disqualification
- * join this union with #0014.
+ * (brackets); groups need the points of every game. The special results name their winner (slot index).
  */
-export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'gamesOnly'; games: [number, number] };
+export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'gamesOnly'; games: [number, number] } | SpecialResult;
+
+/**
+ * - walkover: won without playing, because the opponent did not play
+ * - retirement: the opponent stopped part-way; `games` are the games completed so far (they count in the ratios)
+ * - disqualification: the opponent was disqualified
+ */
+export type SpecialResult =
+  | { kind: 'walkover'; winner: 0 | 1 }
+  | { kind: 'retirement'; winner: 0 | 1; games: GameScore[] }
+  | { kind: 'disqualification'; winner: 0 | 1 };
+
+export type SpecialResultKind = SpecialResult['kind'];
 
 /**
  * A part of a bracket stage, drawn as its own labelled block on the canvas.
@@ -265,6 +281,10 @@ export type LogEntry =
   | { type: 'drawSlotsSwapped'; at: Timestamp; competition: CompetitionId; stage: StageId; a: LoggedDrawPlace; b: LoggedDrawPlace }
   /** A player was moved to another draw position (`movePlayer`); `from` and `to` as they were before. */
   | { type: 'drawPlayerMoved'; at: Timestamp; competition: CompetitionId; stage: StageId; from: LoggedDrawPlace; to: LoggedDrawPlace }
+  /** A walkover, retirement or disqualification was entered (`recordResult`); `table` is where it was called, if it was. */
+  | { type: 'specialResultRecorded'; at: Timestamp; match: LoggedMatch; result: SpecialResult; table: LoggedTable | null }
+  /** A player withdrew from a competition (`withdrawPlayer`); `players` are the entry's players. */
+  | { type: 'playerWithdrew'; at: Timestamp; competition: CompetitionId; players: PlayerId[] }
   /** A recorded result was changed (`correctResult`); `reset` are the later matches that were reset, as they were before. */
   | { type: 'resultCorrected'; at: Timestamp; match: LoggedMatch; before: MatchResult; after: MatchResult; reset: LoggedMatch[] };
 

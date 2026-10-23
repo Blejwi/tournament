@@ -39,6 +39,16 @@ export function entryText(t: TFunction, entry: ChangeLogEntryView): string {
       return t('changeLog.drawSlotsSwapped', { competition: entry.competitionName, a: drawPlaceText(t, entry.a), b: drawPlaceText(t, entry.b) });
     case 'drawPlayerMoved':
       return t('changeLog.drawPlayerMoved', { competition: entry.competitionName, from: drawPlaceText(t, entry.from), to: drawPlaceText(t, entry.to) });
+    case 'specialResultRecorded': {
+      const winner = entry.match.players[entry.result.winner];
+      return t('changeLog.specialResultRecorded', {
+        kind: t(`match.special.${entry.result.kind}`),
+        match: loggedMatchText(t, entry.match),
+        winner: winner.length ? winner.map((p) => playerName(p)).join(' / ') : t('match.unknown'),
+      });
+    }
+    case 'playerWithdrew':
+      return t('changeLog.playerWithdrew', { name: entry.players.map((p) => playerName(p)).join(' / '), competition: entry.competitionName });
     case 'resultCorrected':
       return t(entry.reset.length ? 'changeLog.resultCorrectedResets' : 'changeLog.resultCorrected', {
         match: loggedMatchText(t, entry.match),

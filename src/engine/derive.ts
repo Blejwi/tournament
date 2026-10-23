@@ -1,5 +1,18 @@
 import { groupStandings, type Standings } from './stages/groups';
-import type { Competition, Entry, Group, GroupsStage, Match, MatchId, PlayerId, SlotSource, Stage, Timestamp, TournamentState } from './types';
+import type {
+  Competition,
+  Entry,
+  Group,
+  GroupsStage,
+  Match,
+  MatchId,
+  MatchResult,
+  PlayerId,
+  SlotSource,
+  Stage,
+  Timestamp,
+  TournamentState,
+} from './types';
 
 /**
  * A match's derived status (from the spec). Never stored: worked out from the draw and the results.
@@ -8,7 +21,8 @@ import type { Competition, Entry, Group, GroupsStage, Match, MatchId, PlayerId, 
  * - busy: both known, but a player is in an in-progress match elsewhere
  * - in_progress / overdue: called to a table. `derive` has no clock, so it only says in_progress;
  *   match views (which take `now`) turn it into overdue past the expected duration.
- * - finished / walkover: has a result (walkover: #0014), or was decided by a BYE
+ * - finished: has a result (also a retirement or disqualification), or was decided by a BYE
+ * - walkover: a walkover was recorded, or a player of the match withdrew (`withdrawPlayer`)
  * - disabled: a place play-off that isn't switched on (#0012)
  */
 export type MatchStatus = 'pending' | 'ready' | 'busy' | 'in_progress' | 'overdue' | 'finished' | 'walkover' | 'disabled';
@@ -27,7 +41,16 @@ export interface DerivedMatch {
   byes: [boolean, boolean];
   /** A BYE decides the match on its own: no result is entered and the other slot goes through. */
   decidedByBye: boolean;
-  /** Slot index of the winner, once there is a result (or a BYE decided it). */
+  /** The recorded result, or the walkover a withdrawal gives (see `withdrawal`); null otherwise. */
+  result: MatchResult | null;
+  /**
+   * When it finished: the recorded time, or for a withdrawal walkover the time both the withdrawal
+   * and the players were known.
+   */
+  finishedAt: Timestamp | null;
+  /** A player withdrew and no result was recorded: a walkover, or nobody plays it if both withdrew. */
+  withdrawal: boolean;
+  /** Slot index of the winner, once there is a result (or a BYE or withdrawal decided it). */
   winner: 0 | 1 | null;
   status: MatchStatus;
   /**
@@ -48,35 +71,65 @@ export interface Derived {
   resolve(competition: Competition, source: SlotSource): Entry | null;
 }
 
-/** Slot index of the winner of a recorded result. */
-export function winnerOf(match: Match): 0 | 1 | null {
-  const { result } = match;
+/** Slot index of the winner of a result. */
+export function winnerOf(result: MatchResult | null): 0 | 1 | null {
   if (!result) return null;
+  if (result.kind !== 'games' && result.kind !== 'gamesOnly') return result.winner;
   const [a, b] = result.kind === 'games' ? gamesWon(result.games) : result.games;
   return a > b ? 0 : 1;
+}
+
+/** Games won by slot A and slot B: none for a walkover or disqualification, the games completed for a retirement. */
+export function resultGamesWon(result: MatchResult): [number, number] {
+  switch (result.kind) {
+    case 'gamesOnly':
+      return [...result.games];
+    case 'games':
+    case 'retirement':
+      return gamesWon(result.games);
+    default:
+      return [0, 0];
+  }
 }
 
 export function gamesWon(games: [number, number][]): [number, number] {
   return games.reduce<[number, number]>(([a, b], [x, y]) => (x > y ? [a + 1, b] : [a, b + 1]), [0, 0]);
 }
 
-/** How a match turned out: from its recorded result, or from a BYE. */
+/** How a match turned out: from its recorded result, a BYE, or a withdrawal. */
 interface Outcome {
   winner: 0 | 1 | null;
   decidedByBye: boolean;
-  /** Both slots are BYEs: whoever takes its winner or loser gets a BYE too. */
+  /** Both slots are BYEs (or both players withdrew): whoever takes its winner or loser gets a BYE too. */
   empty: boolean;
+  /** The recorded result, or the walkover a withdrawal gives; null otherwise. */
+  result: MatchResult | null;
+  /** No result was recorded: a player of the match withdrew, so it is a walkover (or nobody plays it). */
+  withdrawal: boolean;
 }
 
-/** A BYE against an entry sends the entry through; a BYE against a BYE passes a BYE on. */
-function outcomeOf(match: Match, slots: [Resolved, Resolved]): Outcome {
-  const recorded = winnerOf(match);
-  if (recorded !== null) return { winner: recorded, decidedByBye: false, empty: false };
+const undecided: Outcome = { winner: null, decidedByBye: false, empty: false, result: null, withdrawal: false };
+
+/**
+ * A BYE against an entry sends the entry through; a BYE against a BYE passes a BYE on. Once a
+ * confirmed match's players are both known, a withdrawn player's match without a result is a
+ * walkover for the opponent; if both withdrew, nobody goes through (like a BYE against a BYE).
+ */
+function outcomeOf(match: Match, stage: Stage, slots: [Resolved, Resolved]): Outcome {
+  const recorded = winnerOf(match.result);
+  if (recorded !== null) return { ...undecided, winner: recorded, result: match.result };
   const [a, b] = slots;
-  if (a === 'bye' && b === 'bye') return { winner: null, decidedByBye: true, empty: true };
-  if (b === 'bye' && a !== null) return { winner: 0, decidedByBye: true, empty: false };
-  if (a === 'bye' && b !== null) return { winner: 1, decidedByBye: true, empty: false };
-  return { winner: null, decidedByBye: false, empty: false };
+  if (a === 'bye' && b === 'bye') return { ...undecided, decidedByBye: true, empty: true };
+  if (b === 'bye' && a !== null) return { ...undecided, winner: 0, decidedByBye: true };
+  if (a === 'bye' && b !== null) return { ...undecided, winner: 1, decidedByBye: true };
+  if (!a || !b || a === 'bye' || b === 'bye' || stage.drawState !== 'confirmed') return undecided;
+  const withdrawn = [a.withdrawnAt !== null, b.withdrawnAt !== null];
+  if (withdrawn[0] && withdrawn[1]) return { ...undecided, empty: true, withdrawal: true };
+  if (withdrawn[0] || withdrawn[1]) {
+    const winner = withdrawn[0] ? 1 : 0;
+    return { ...undecided, winner, result: { kind: 'walkover', winner }, withdrawal: true };
+  }
+  return undecided;
 }
 
 const asEntry = (resolved: Resolved): Entry | null => (resolved === 'bye' ? null : resolved);
@@ -111,7 +164,8 @@ export function derive(state: TournamentState): Derived {
   const outcome = (id: MatchId): Outcome => {
     const memo = outcomeMemo.get(id);
     if (memo) return memo;
-    const result = outcomeOf(located.get(id)!.match, matchSlots(id));
+    const { match, stage } = located.get(id)!;
+    const result = outcomeOf(match, stage, matchSlots(id));
     outcomeMemo.set(id, result);
     return result;
   };
@@ -123,7 +177,10 @@ export function derive(state: TournamentState): Derived {
     const members = group.entries.map((source) => asEntry(resolveSlot(competition, source)));
     const played = stage.matches
       .filter((m) => m.location.kind === 'group' && m.location.group === group.id)
-      .map((m) => ({ match: m, entries: matchEntries(m.id), winner: winnerOf(m) }));
+      .map((m) => {
+        const { winner, result, withdrawal } = outcome(m.id);
+        return { entries: matchEntries(m.id), winner, result, decided: result !== null || withdrawal };
+      });
     const result = groupStandings(members, played, group.tieResolutions);
     standingsMemo.set(group, result);
     return result;
@@ -176,24 +233,36 @@ export function derive(state: TournamentState): Derived {
   const decidedAt = (competition: Competition, source: SlotSource): Timestamp | null => {
     switch (source.kind) {
       case 'matchResult':
-        return located.get(source.match)?.match.finishedAt ?? null;
+        return located.has(source.match) ? finishedAtOf(source.match) : null;
       case 'groupPlace': {
         const stage = competition.stages.find((s) => s.id === source.stage);
-        const times = (stage?.matches ?? [])
-          .filter((m) => m.location.kind === 'group' && m.location.group === source.group && m.finishedAt !== null)
-          .map((m) => m.finishedAt!);
-        return times.length ? Math.max(...times) : null;
+        const group = (stage?.matches ?? []).filter((m) => m.location.kind === 'group' && m.location.group === source.group);
+        return latest(group.map((m) => finishedAtOf(m.id)));
       }
       default:
         return null;
     }
   };
 
+  /** The recorded finish; a withdrawal walkover finishes once both the withdrawal and the players are known. */
+  const finishedAtMemo = new Map<MatchId, Timestamp | null>();
+  function finishedAtOf(id: MatchId): Timestamp | null {
+    if (finishedAtMemo.has(id)) return finishedAtMemo.get(id)!;
+    const { match, competition } = located.get(id)!;
+    let finishedAt = match.finishedAt;
+    if (outcome(id).withdrawal) {
+      const withdrawals = matchEntries(id).map((e) => e?.withdrawnAt ?? null);
+      finishedAt = latest([...withdrawals, ...match.slots.map((s) => decidedAt(competition, s))]);
+    }
+    finishedAtMemo.set(id, finishedAt);
+    return finishedAt;
+  }
+
   const matches: DerivedMatch[] = [...located.values()].map(({ match, competition, stage, stageIndex }) => {
     const slots = matchSlots(match.id);
     const entries = matchEntries(match.id);
-    const { winner, decidedByBye } = outcome(match.id);
-    const status = statusOf(match, stage, entries, decidedByBye, playing);
+    const { winner, decidedByBye, result, withdrawal } = outcome(match.id);
+    const status = statusOf(match, stage, entries, decidedByBye, withdrawal, playing);
     const players = entries.flatMap((e) => e?.players ?? []);
     const waitingSince =
       status === 'ready' || status === 'busy'
@@ -216,6 +285,9 @@ export function derive(state: TournamentState): Derived {
       entries,
       byes: [slots[0] === 'bye', slots[1] === 'bye'],
       decidedByBye,
+      result,
+      finishedAt: finishedAtOf(match.id),
+      withdrawal,
       winner,
       status,
       waitingSince,
@@ -237,12 +309,14 @@ function statusOf(
   stage: Stage,
   entries: [Entry | null, Entry | null],
   decidedByBye: boolean,
+  withdrawal: boolean,
   playing: Map<PlayerId, MatchId>,
 ): MatchStatus {
-  if (match.result) return 'finished';
+  if (match.result) return match.result.kind === 'walkover' ? 'walkover' : 'finished';
   if (match.table !== null) return 'in_progress';
   if (stage.drawState !== 'confirmed') return 'pending';
   if (decidedByBye) return 'finished';
+  if (withdrawal) return 'walkover';
   const [a, b] = entries;
   if (!a || !b) return 'pending';
   const elsewhere = [...a.players, ...b.players].some((p) => playing.has(p) && playing.get(p) !== match.id);

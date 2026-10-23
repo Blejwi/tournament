@@ -1,7 +1,8 @@
 import type { IdSource } from '../ids';
 import { shuffle } from '../random';
 import { fail, ok, type Result } from '../result';
-import type { Entry, Group, GroupsStage, Match, SlotSource, TieResolution } from '../types';
+import { gameScoresOf } from '../score';
+import type { Entry, Group, GroupsStage, Match, MatchResult, SlotSource, TieResolution } from '../types';
 import type { DrawContext, DrawPosition, StageHandler } from './handler';
 import { breakTies, type Tie, type TiebreakMatch, type TiebreakStep } from './tiebreak';
 
@@ -136,14 +137,17 @@ export interface Standings {
   ties: Tie[];
 }
 
-/** A group match with its resolved entries, as the standings need it. */
+/** A group match with its resolved entries and outcome, as the standings need it. */
 export interface PlayedMatch {
-  match: Match;
   entries: [Entry | null, Entry | null];
   winner: 0 | 1 | null;
+  /** The recorded result, or the walkover a withdrawal gives. */
+  result: MatchResult | null;
+  /** Nothing is left to play: it has a result, or both players withdrew. */
+  decided: boolean;
 }
 
-/** Group points: 1 for a win, 0 for a loss. */
+/** Group points: 1 for a win, 0 for a loss or a walkover. */
 const POINTS_FOR_WIN = 1;
 
 /** Standings by group points, then the ITTF tiebreak among tied entries (see `breakTies`). */
@@ -164,8 +168,9 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
   }));
   const rowOf = (entry: Entry | null) => (entry ? rows.find((r) => r.entry?.id === entry.id) : undefined);
 
-  for (const { match, entries, winner } of matches) {
-    if (winner === null || !match.result) continue;
+  // A walkover or disqualification is a win and a loss without games; a retirement's games count.
+  for (const { result, entries, winner } of matches) {
+    if (winner === null || !result) continue;
     const sides = [rowOf(entries[0]), rowOf(entries[1])];
     sides.forEach((row, side) => {
       if (!row) return;
@@ -174,9 +179,7 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
         row.won++;
         row.groupPoints += POINTS_FOR_WIN;
       } else row.lost++;
-      const result = match.result!;
-      const games = result.kind === 'games' ? result.games : [];
-      for (const game of games) {
+      for (const game of gameScoresOf(result) ?? []) {
         const [mine, theirs] = side === 0 ? game : [game[1], game[0]];
         row.pointsWon += mine;
         row.pointsLost += theirs;
@@ -187,9 +190,9 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
   }
 
   const finished: TiebreakMatch[] = [];
-  for (const { match, entries, winner } of matches) {
-    if (winner === null || !match.result || !entries[0] || !entries[1]) continue;
-    finished.push({ entries: [entries[0].id, entries[1].id], winner, games: match.result.kind === 'games' ? match.result.games : [] });
+  for (const { result, entries, winner } of matches) {
+    if (winner === null || !result || !entries[0] || !entries[1]) continue;
+    finished.push({ entries: [entries[0].id, entries[1].id], winner, games: gameScoresOf(result) ?? [] });
   }
   const tiebreak = breakTies(
     rows.map((row) => ({ row, entry: row.entry?.id ?? null, groupPoints: row.groupPoints })),
@@ -200,7 +203,7 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
   ordered.forEach((row, i) => (row.place = i + 1));
   const unresolved = new Set(tiebreak.ties.filter((t) => t.resolution === null).flatMap((t) => t.entries));
   for (const row of ordered) row.tied = row.entry !== null && unresolved.has(row.entry.id);
-  return { rows: ordered, complete: matches.every((m) => m.match.result !== null), steps: tiebreak.steps, ties: tiebreak.ties };
+  return { rows: ordered, complete: matches.every((m) => m.decided), steps: tiebreak.steps, ties: tiebreak.ties };
 }
 
 /** "A".."Z", then "AA", "AB", ... */

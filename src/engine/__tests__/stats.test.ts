@@ -164,5 +164,29 @@ describe('stats', () => {
     });
   });
 
-  it.todo('counts walkovers toward progress but not toward durations (with walkovers, #0014)');
+  it('counts walkovers toward progress but not toward durations', () => {
+    const { state: start, open, u15 } = openAndU15();
+    // A recorded walkover (P1 v P4) and a retirement (P2 v P3, called to a table for 12 minutes).
+    const walkoverMatch = matchBetween(start, open.stage, 'P1', 'P4').id;
+    const retirementMatch = matchBetween(start, open.stage, 'P2', 'P3').id;
+    let state = run(start, { type: 'recordResult', match: walkoverMatch, result: { kind: 'walkover', winner: 0 }, at: T0 + 5 * MIN });
+    state = run(
+      state,
+      { type: 'assignMatch', match: retirementMatch, table: tableId(state, 1), at: T0 },
+      { type: 'recordResult', match: retirementMatch, result: { kind: 'retirement', winner: 0, games: [[11, 5], [3, 11]] }, at: T0 + 12 * MIN },
+    );
+    // A withdrawal: P5's two matches become walkovers without anybody recording them.
+    const p5 = getCompetition(state, u15.id)!.entries.find((e) => e.players[0].lastName === 'P5')!.id;
+    state = run(state, { type: 'withdrawPlayer', competition: u15.id, entry: p5, at: T0 + 13 * MIN });
+
+    const stats = getStats(state, T0 + 13 * MIN);
+    expect(stats.progress).toEqual({ done: 4, total: 9 });
+    const open_ = stats.competitions.find((c) => c.competition === open.id)!;
+    expect(open_).toMatchObject({ done: 2, total: 6 });
+    // Only the retirement was played on a table: the walkover adds nothing to the durations.
+    expect(open_.durations).toEqual({ matches: 1, averageMs: 12 * MIN });
+    const u15Stats = stats.competitions.find((c) => c.competition === u15.id)!;
+    expect(u15Stats).toMatchObject({ done: 2, total: 3 });
+    expect(u15Stats.durations).toEqual({ matches: 0, averageMs: null });
+  });
 });

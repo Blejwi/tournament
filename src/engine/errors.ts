@@ -55,6 +55,13 @@ export type EngineError =
   | { code: 'invalidGame'; game: number; a: number; b: number }
   | { code: 'gamesAfterDecided'; game: number }
   | { code: 'matchNotDecided'; gamesToWin: number }
+  /** A retirement's games already decide the match: record it as a normal result instead. */
+  | { code: 'retirementAfterDecided'; gamesToWin: number }
+  /** Withdrawal needs the competition's first stage to be confirmed (before that, remove the entry). */
+  | { code: 'competitionNotStarted' }
+  | { code: 'alreadyWithdrawn' }
+  /** The player is on a table in this competition: record that match's result (e.g. a retirement) first. */
+  | { code: 'withdrawalWhilePlaying'; number: number }
   | { code: 'invalidExpectedDuration' }
   | { code: 'importNotJson' }
   | { code: 'importNotTournamentFile' }

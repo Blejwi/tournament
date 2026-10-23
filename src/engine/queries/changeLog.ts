@@ -1,4 +1,4 @@
-import type { LogEntry, LoggedDrawPlace, LoggedMatch, MatchId, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
+import type { SpecialResultKind, LogEntry, LoggedDrawPlace, LoggedMatch, MatchId, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
 import type { EntryPlayerView } from './competitions';
 import { locationView, resultView, type MatchLocationView, type ResultView } from './matches';
 
@@ -38,6 +38,9 @@ export type ChangeLogEntryView = { seq: number; at: Timestamp } & (
   | { type: 'resultRecorded'; match: LoggedMatchView; result: ResultView; table: number | null }
   | { type: 'drawSlotsSwapped'; competition: CompetitionId; competitionName: string; stage: StageId; a: LoggedDrawPlaceView; b: LoggedDrawPlaceView }
   | { type: 'drawPlayerMoved'; competition: CompetitionId; competitionName: string; stage: StageId; from: LoggedDrawPlaceView; to: LoggedDrawPlaceView }
+  /** `result.kind` says which: walkover, retirement or disqualification. */
+  | { type: 'specialResultRecorded'; match: LoggedMatchView; result: ResultView & { kind: SpecialResultKind }; table: number | null }
+  | { type: 'playerWithdrew'; competition: CompetitionId; competitionName: string; players: EntryPlayerView[] }
   | { type: 'resultCorrected'; match: LoggedMatchView; before: ResultView; after: ResultView; reset: LoggedMatchView[] }
 );
 
@@ -53,6 +56,14 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
     case 'matchAssigned':
     case 'matchUnassigned':
       return { ...base, type: entry.type, match: loggedMatchView(state, entry.match), table: entry.table.number };
+    case 'specialResultRecorded':
+      return {
+        ...base,
+        type: entry.type,
+        match: loggedMatchView(state, entry.match),
+        result: { ...resultView(entry.result), kind: entry.result.kind },
+        table: entry.table?.number ?? null,
+      };
     case 'resultRecorded':
       return {
         ...base,
@@ -80,6 +91,14 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
         stage: entry.stage,
         from: loggedPlaceView(state, entry.from),
         to: loggedPlaceView(state, entry.to),
+      };
+    case 'playerWithdrew':
+      return {
+        ...base,
+        type: entry.type,
+        competition: entry.competition,
+        competitionName: competitionName(state, entry.competition),
+        players: entry.players.map((id) => playerView(state, id)),
       };
     case 'resultCorrected':
       return {
@@ -109,10 +128,7 @@ function loggedMatchView(state: TournamentState, logged: LoggedMatch): LoggedMat
   const stageIndex = competition?.stages.findIndex((s) => s.id === logged.stage) ?? -1;
   const stage = stageIndex >= 0 ? competition!.stages[stageIndex] : undefined;
   const match = stage?.matches.find((m) => m.id === logged.match);
-  const player = (id: string): EntryPlayerView => {
-    const p = state.players.find((x) => x.id === id);
-    return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
-  };
+  const player = (id: string) => playerView(state, id);
   return {
     id: logged.match,
     competition: logged.competition,

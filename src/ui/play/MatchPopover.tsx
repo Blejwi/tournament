@@ -30,6 +30,9 @@ import { entryName, formatClock, formatGames } from '@/ui/format';
 import { formatPlace, matchTitle, slotText } from '@/ui/matchLabels';
 import { busyLines } from './busy';
 import { overdueText } from './overdueStyle';
+import { ResultBadge } from './ResultBadge';
+import { hasGames } from './specialResults';
+import { SpecialResultEntry } from './SpecialResultEntry';
 
 /** Actions for one match, one click from the draw: call to a free table, enter the score. */
 export function MatchPopover(props: { match: MatchView; style: CSSProperties; onClose: () => void }) {
@@ -72,7 +75,8 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
                   <div className="break-words">{entry ? entryName(entry) : <i className="text-slate-400">{slotText(t, match.slots[side]).text}</i>}</div>
                   {entry?.players[0]?.club && <div className="text-xs font-normal text-slate-400">{entry.players[0].club}</div>}
                 </div>
-                {match.result && <span className="text-lg tabular-nums">{match.result.gamesWon[side]}</span>}
+                <ResultBadge match={match} side={side} />
+                {hasGames(match) && <span className="text-lg tabular-nums">{match.result!.gamesWon[side]}</span>}
               </div>
             );
           })}
@@ -151,6 +155,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
         )}
 
         {canScore && <ScoreEntry key={match.id} match={match} autoFocus={live} onDone={onClose} />}
+        {canScore && <SpecialResultEntry key={`special-${match.id}`} match={match} onDone={onClose} />}
         {match.result &&
           (correcting ? (
             <ScoreEntry key={`correct-${match.id}`} match={match} correcting autoFocus onDone={() => setCorrecting(false)} />
@@ -260,7 +265,7 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; correcting?: 
   }
 
   let preview: string | null = null;
-  if (valid) {
+  if (valid && (result.kind === 'games' || result.kind === 'gamesOnly')) {
     const [a, b] = result.kind === 'games' ? gamesWon(result.games) : result.games;
     preview = t('match.scorePreview', { games: `${a}:${b}`, name: entryName(match.slots[a > b ? 0 : 1].entry) });
     if (correcting) preview += ` · ${resets.length ? t('match.correctionResets', { count: resets.length }) : t('match.correctionKeepsTiming')}`;

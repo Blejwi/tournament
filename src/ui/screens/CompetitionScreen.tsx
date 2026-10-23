@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Pencil, Shuffle, UserMinus, UserPlus } from 'lucide-react';
+import { ArrowLeft, LogOut, Pencil, Shuffle, UserMinus, UserPlus } from 'lucide-react';
 import {
   getCompetition,
   getPlayers,
@@ -100,16 +100,32 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
                 >
                   <Pencil />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled={locked}
-                  aria-label={t('competition.removeEntry')}
-                  title={t('competition.removeEntry')}
-                  onClick={() => setError(dispatch({ type: 'removeEntry', competition: competition.id, entry: entry.id }))}
-                >
-                  <UserMinus />
-                </Button>
+                {entry.withdrawnAt !== null ? (
+                  <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 uppercase">{t('competition.withdrawn')}</span>
+                ) : locked ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button variant="ghost" size="sm" className="text-red-600">
+                        <LogOut />
+                        {t('competition.withdraw')}
+                      </Button>
+                    }
+                    title={t('competition.withdrawTitle', { name: entryName(entry) })}
+                    description={t('competition.withdrawBody')}
+                    confirmLabel={t('competition.withdraw')}
+                    onConfirm={() => setError(dispatch({ type: 'withdrawPlayer', competition: competition.id, entry: entry.id, at: Date.now() }))}
+                  />
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t('competition.removeEntry')}
+                    title={t('competition.removeEntry')}
+                    onClick={() => setError(dispatch({ type: 'removeEntry', competition: competition.id, entry: entry.id }))}
+                  >
+                    <UserMinus />
+                  </Button>
+                )}
               </li>
             ))}
           </ul>

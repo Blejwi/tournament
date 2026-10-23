@@ -39,6 +39,7 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   enterPlayer: competitions.enterPlayer,
   removeEntry: competitions.removeEntry,
   setSeed: competitions.setSeed,
+  withdrawPlayer: competitions.withdrawPlayer,
   configureStages: stages.configureStages,
   generateDraw: stages.generateDraw,
   confirmStage: stages.confirmStage,

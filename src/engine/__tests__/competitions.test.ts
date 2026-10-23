@@ -60,6 +60,7 @@ describe('competitions', () => {
       id: zielinski,
       seed: 1,
       players: [{ id: player('Zieliński'), firstName: 'Jan', lastName: 'Zieliński', club: 'KS' }],
+      withdrawnAt: null,
     });
     expect(getCompetitions(next)[0].entryCount).toBe(3);
   });
