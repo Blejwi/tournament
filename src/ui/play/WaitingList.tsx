@@ -74,7 +74,7 @@ export function WaitingList(props: {
                 </span>
               )}
             </span>
-            <span className="block truncate text-sm font-medium">
+            <span className="block text-sm font-medium break-words">
               {entryName(m.slots[0].entry)} <span className="font-normal text-slate-400">–</span> {entryName(m.slots[1].entry)}
             </span>
             {m.status === 'busy' &&

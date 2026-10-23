@@ -1,7 +1,7 @@
 ---
 id: 15
 title: Corrections
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -33,3 +33,7 @@ The operator can also edit a match's start time ("started N min ago") and take a
 ## Blocked by
 
 - #0007
+
+## Resolution
+
+Done on `integration/v1` in d84cd67 (engine: `correctResult` with a downstream reset preview and force, plus `setMatchStart`), 9574b95 (UI: correcting a result with a dialog that lists the matches to reset, and editing the start time) and 093a039 (the `resultCorrected` change-log entry). Original timings are kept. `setMatchStart` is not logged. The UI flow was verified through tests, not checked again in the browser.

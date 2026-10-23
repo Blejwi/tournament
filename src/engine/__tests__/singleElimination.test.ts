@@ -178,7 +178,7 @@ describe('single elimination: advancing and final places', () => {
 
   it('derives 1st, 2nd, a shared 3–4 without a 3rd-place match, then shared ranges', () => {
     const { state, competition, stage } = drawnBracket(8, { seeds: allSeeded(8) });
-    expect(getFinalPlaces(state, competition)).toEqual({ rows: [], complete: false });
+    expect(getFinalPlaces(state, competition)).toMatchObject({ rows: [], complete: false });
 
     const played = playOut(state, stage, (m) => m.round === 1 && m.order === 2); // P5 beats P4
     // Within a shared range, top to bottom of the bracket.

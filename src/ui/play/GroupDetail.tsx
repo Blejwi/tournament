@@ -74,7 +74,7 @@ function Standings({ group }: { group: GroupView }) {
             <tr key={row.position} className="border-t text-right tabular-nums">
               <td className={cn('py-1 text-left font-bold', row.tied && 'text-amber-600')}>{row.place}</td>
               <td className="text-left">
-                {entryName(row.entry, false) ?? t('match.unknown')}{' '}
+                {entryName(row.entry) ?? t('match.unknown')}{' '}
                 {row.entry?.players[0]?.club && <span className="text-xs text-slate-400">{row.entry.players[0].club}</span>}
               </td>
               <td>
@@ -264,7 +264,7 @@ function TieResolver(props: { stage: StageId; group: GroupView; tie: TieView }) 
         {order.map((entry, i) => (
           <li key={entry.id} className="flex items-center gap-2 rounded bg-white px-2 py-1">
             <span className="w-5 text-slate-400">{i + 1}.</span>
-            <span className="flex-1">{entryName(entry, false)}</span>
+            <span className="flex-1">{entryName(entry)}</span>
             <Button
               variant="ghost"
               size="icon"

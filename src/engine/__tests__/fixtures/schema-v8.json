@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 8,
+  "tournament": {
+    "id": "winter-cup",
+    "name": "Winter Cup",
+    "date": "2026-12-12",
+    "venue": "",
+    "tables": [
+      {
+        "id": "table-1",
+        "number": 1,
+        "name": "",
+        "active": true
+      }
+    ],
+    "players": [
+      {
+        "id": "player-2",
+        "firstName": "Ola",
+        "lastName": "Kowal",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-3",
+        "firstName": "Iga",
+        "lastName": "Lis",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      }
+    ],
+    "competitions": [
+      {
+        "id": "competition-4",
+        "name": "Women",
+        "gamesToWin": 3,
+        "entries": [
+          {
+            "id": "entry-5",
+            "players": [
+              "player-2"
+            ],
+            "seed": null
+          },
+          {
+            "id": "entry-6",
+            "players": [
+              "player-3"
+            ],
+            "seed": null
+          }
+        ],
+        "stages": [
+          {
+            "id": "stage-7",
+            "type": "groups",
+            "drawState": "confirmed",
+            "grouping": {
+              "by": "count",
+              "groups": 1
+            },
+            "groups": [
+              {
+                "id": "group-8",
+                "name": "A",
+                "entries": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-5"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-6"
+                  }
+                ],
+                "tieResolutions": []
+              }
+            ],
+            "matches": [
+              {
+                "id": "match-9",
+                "location": {
+                  "kind": "group",
+                  "group": "group-8"
+                },
+                "round": 1,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-5"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-6"
+                  }
+                ],
+                "table": "table-1",
+                "assignedAt": 1000,
+                "result": {
+                  "kind": "games",
+                  "games": [
+                    [
+                      11,
+                      7
+                    ],
+                    [
+                      11,
+                      9
+                    ],
+                    [
+                      11,
+                      5
+                    ]
+                  ]
+                },
+                "finishedAt": 2000
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expectedDurations": {
+      "2": 15,
+      "3": 25,
+      "4": 35
+    },
+    "nextId": 10
+  },
+  "log": []
+}

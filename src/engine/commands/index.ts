@@ -1,6 +1,7 @@
 import type { Result } from '../result';
 import type { TournamentState } from '../types';
 import * as competitions from './competitions';
+import * as corrections from './corrections';
 import * as matches from './matches';
 import * as players from './players';
 import * as settings from './settings';
@@ -15,6 +16,7 @@ export type Command =
   | competitions.CompetitionCommand
   | stages.StageCommand
   | matches.MatchCommand
+  | corrections.CorrectionCommand
   | settings.SettingsCommand
   | standings.StandingsCommand;
 
@@ -31,6 +33,7 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   addPlayer: players.addPlayer,
   updatePlayer: players.updatePlayer,
   addCompetition: competitions.addCompetition,
+  registerPlayer: competitions.registerPlayer,
   enterPlayer: competitions.enterPlayer,
   removeEntry: competitions.removeEntry,
   setSeed: competitions.setSeed,
@@ -40,7 +43,9 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   confirmStage: stages.confirmStage,
   assignMatch: matches.assignMatch,
   unassignMatch: matches.unassignMatch,
+  setMatchStart: matches.setMatchStart,
   recordResult: matches.recordResult,
+  correctResult: corrections.correctResult,
   setExpectedDuration: settings.setExpectedDuration,
   resolveTie: standings.resolveTie,
 };

@@ -114,3 +114,26 @@ describe('change log', () => {
     expect(getChangeLog(withdrawn)).toHaveLength(1);
   });
 });
+
+describe('change log: corrections', () => {
+  it('records a correction with the old and new score and the matches it reset', () => {
+    const { state, match } = setup();
+    const before: [number, number][] = [[11, 7], [11, 9], [11, 5]];
+    const after: [number, number][] = [[7, 11], [9, 11], [5, 11]];
+    const next = run(
+      state,
+      { type: 'assignMatch', match, table: tableId(state, 1), at: T0 },
+      { type: 'recordResult', match, result: { kind: 'games', games: before }, at: T0 + 20 * MIN },
+      { type: 'correctResult', match, result: { kind: 'games', games: after }, at: T0 + 30 * MIN },
+    );
+    expect(getChangeLog(next)[0]).toMatchObject({
+      type: 'resultCorrected',
+      at: T0 + 30 * MIN,
+      before: { winner: 0, games: before },
+      after: { winner: 1, games: after },
+      reset: [],
+      match: { id: match },
+    });
+    expect(getChangeLog(next)).toHaveLength(3);
+  });
+});

@@ -1,10 +1,30 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pause, X } from 'lucide-react';
-import { gamesWon, getCompetitions, getFreeTables, parseResult, validateResult, type EngineError, type MatchView } from '@/engine';
+import {
+  gamesWon,
+  getCompetitions,
+  getCorrectionPreview,
+  getFreeTables,
+  parseResult,
+  validateResult,
+  type EngineError,
+  type MatchResult,
+  type MatchView,
+} from '@/engine';
 import { useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/ui/components/ui/alert-dialog';
 import { Button } from '@/ui/components/ui/button';
 import { entryName, formatClock, formatGames } from '@/ui/format';
 import { formatPlace, matchTitle, slotText } from '@/ui/matchLabels';
@@ -22,6 +42,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
   const freeTables = useQuery(getFreeTables) ?? [];
   const competitions = useQuery(getCompetitions) ?? [];
   const [error, setError] = useState<EngineError | null>(null);
+  const [correcting, setCorrecting] = useState(false);
   const live = match.status === 'in_progress' || match.status === 'overdue';
   const canScore = match.status === 'ready' || match.status === 'busy' || live;
 
@@ -51,7 +72,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
               <div key={side} className={cn('flex items-center gap-2', match.result?.winner === side && 'font-semibold')}>
                 <span className="w-4 text-[10px] text-slate-400">{side === 0 ? 'A' : 'B'}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate">{entry ? entryName(entry, false) : <i className="text-slate-400">{slotText(t, match.slots[side], false).text}</i>}</div>
+                  <div className="break-words">{entry ? entryName(entry) : <i className="text-slate-400">{slotText(t, match.slots[side]).text}</i>}</div>
                   {entry?.players[0]?.club && <div className="text-xs font-normal text-slate-400">{entry.players[0].club}</div>}
                 </div>
                 <ResultBadge match={match} side={side} />
@@ -73,7 +94,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
         )}
         {match.decidedByBye && (
           <p className="rounded bg-slate-50 p-2 text-xs text-slate-500">
-            {t('bracket.decidedByBye', { name: entryName(match.slots[0].entry ?? match.slots[1].entry, false) ?? t('bracket.bye') })}
+            {t('bracket.decidedByBye', { name: entryName(match.slots[0].entry ?? match.slots[1].entry) ?? t('bracket.bye') })}
           </p>
         )}
         {match.status === 'pending' && (
@@ -126,6 +147,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
             </Button>
           </div>
         )}
+        {live && <StartTimeEditor key={match.assignedAt} match={match} onError={setError} />}
         {match.overdue && match.elapsedMs !== null && (
           <p className={cn('rounded p-2 text-xs', match.overdue === 'red' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800')}>
             {t('match.overdueNote', { percent: Math.round((match.elapsedMs / match.expectedMs) * 100) })}
@@ -134,6 +156,14 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
 
         {canScore && <ScoreEntry key={match.id} match={match} autoFocus={live} onDone={onClose} />}
         {canScore && <SpecialResultEntry key={`special-${match.id}`} match={match} onDone={onClose} />}
+        {match.result &&
+          (correcting ? (
+            <ScoreEntry key={`correct-${match.id}`} match={match} correcting autoFocus onDone={() => setCorrecting(false)} />
+          ) : (
+            <Button variant="outline" size="sm" className="justify-self-start" onClick={() => setCorrecting(true)}>
+              {t('match.correct')}
+            </Button>
+          ))}
 
         {match.result?.games && (
           <p className="border-t pt-2 text-xs text-slate-500">
@@ -154,13 +184,57 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
   );
 }
 
-/** Typed game scores ("11-7 9-11 11-5"), validated live by the engine. Enter saves, Esc closes. */
-function ScoreEntry(props: { match: MatchView; autoFocus: boolean; onDone: () => void }) {
+/** "Started [N] min ago": moves the match clock, e.g. when the players came to the table late. */
+function StartTimeEditor(props: { match: MatchView; onError: (error: EngineError | null) => void }) {
   const { t } = useTranslation();
   const { match } = props;
   const dispatch = useApp((s) => s.dispatch);
+  const [minutes, setMinutes] = useState(String(Math.round((match.elapsedMs ?? 0) / 60_000)));
+  const value = Number(minutes);
+  const valid = minutes.trim() !== '' && Number.isFinite(value) && value >= 0;
+
+  function save() {
+    if (!valid) return;
+    props.onError(dispatch({ type: 'setMatchStart', match: match.id, at: Date.now() - Math.round(value * 60_000) }));
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+      <span>{t('match.startedPrefix')}</span>
+      <input
+        type="number"
+        min={0}
+        value={minutes}
+        aria-label={t('match.startedLabel')}
+        onChange={(e) => setMinutes(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            save();
+          }
+        }}
+        className="w-14 rounded border border-slate-300 px-1 py-0.5 text-sm tabular-nums"
+      />
+      <span>{t('match.startedSuffix')}</span>
+      <Button variant="outline" size="sm" className="h-6 px-2 text-xs" disabled={!valid} onClick={save}>
+        {t('match.setStart')}
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Typed game scores ("11-7 9-11 11-5"), validated live by the engine. Enter saves, Esc closes.
+ * `correcting` changes the recorded result instead: if later matches already used a player the
+ * correction replaces, saving first asks to reset them, listing them.
+ */
+function ScoreEntry(props: { match: MatchView; autoFocus: boolean; correcting?: boolean; onDone: () => void }) {
+  const { t } = useTranslation();
+  const { match, correcting = false } = props;
+  const dispatch = useApp((s) => s.dispatch);
   const [text, setText] = useState('');
   const [saveError, setSaveError] = useState<EngineError | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -169,38 +243,50 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; onDone: () =>
 
   const parsed = text.trim() ? parseResult(text) : null;
   const result = parsed?.ok ? parsed.value : null;
-  const validation = useQuery((s) => (result ? validateResult(s, match.id, result) : null), [match.id, text]);
+  const recording = useQuery((s) => (result && !correcting ? validateResult(s, match.id, result) : null), [match.id, text, correcting]);
+  const correction = useQuery((s) => (result && correcting ? getCorrectionPreview(s, match.id, result, Date.now()) : null), [match.id, text, correcting]);
+  const validation = correcting ? (correction?.error ?? null) : recording;
   const error = saveError ?? (parsed && !parsed.ok ? parsed.error : validation);
   const valid = result !== null && !error;
+  const resets = correction?.resets ?? [];
+
+  function commit(chosen: MatchResult, force: boolean) {
+    const failure = correcting
+      ? dispatch({ type: 'correctResult', match: match.id, result: chosen, force, at: Date.now() })
+      : dispatch({ type: 'recordResult', match: match.id, result: chosen, at: Date.now() });
+    if (failure) setSaveError(failure);
+    else props.onDone();
+  }
 
   function save() {
     if (!result || !valid) return;
-    const failure = dispatch({ type: 'recordResult', match: match.id, result, at: Date.now() });
-    if (failure) setSaveError(failure);
-    else props.onDone();
+    if (correcting && resets.length) setConfirming(true);
+    else commit(result, false);
   }
 
   let preview: string | null = null;
   if (valid && (result.kind === 'games' || result.kind === 'gamesOnly')) {
     const [a, b] = result.kind === 'games' ? gamesWon(result.games) : result.games;
     preview = t('match.scorePreview', { games: `${a}:${b}`, name: entryName(match.slots[a > b ? 0 : 1].entry) });
+    if (correcting) preview += ` · ${resets.length ? t('match.correctionResets', { count: resets.length }) : t('match.correctionKeepsTiming')}`;
   }
 
+  const id = `${correcting ? 'correct' : 'score'}-${match.id}`;
   return (
     <div>
-      <label htmlFor={`score-${match.id}`} className="text-xs font-semibold text-slate-500 uppercase">
-        {t('match.scoreHeading')}
+      <label htmlFor={id} className="text-xs font-semibold text-slate-500 uppercase">
+        {t(correcting ? 'match.correctHeading' : 'match.scoreHeading')}
       </label>
       <div className="mt-1 flex gap-1">
         <input
-          id={`score-${match.id}`}
+          id={id}
           ref={input}
           value={text}
           autoComplete="off"
           spellCheck={false}
           placeholder={t('match.scorePlaceholder')}
           aria-invalid={(text.trim() !== '' && !valid) || undefined}
-          aria-describedby={`score-help-${match.id}`}
+          aria-describedby={`${id}-help`}
           onChange={(e) => {
             setText(e.target.value);
             setSaveError(null);
@@ -220,12 +306,46 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; onDone: () =>
           )}
         />
         <Button size="sm" disabled={!valid} onClick={save}>
-          {t('match.saveScore')} ⏎
+          {t(correcting ? 'match.saveCorrection' : 'match.saveScore')} ⏎
         </Button>
       </div>
-      <p id={`score-help-${match.id}`} className={cn('mt-1 min-h-4 text-xs', error ? 'text-red-600' : valid ? 'font-medium text-emerald-700' : 'text-slate-400')}>
-        {text.trim() && error ? errorMessage(t, error) : (preview ?? t(match.gamesOnlyAllowed ? 'match.scoreHintQuick' : 'match.scoreHint', { name: entryName(match.slots[0].entry) }))}
+      <p id={`${id}-help`} className={cn('mt-1 min-h-4 text-xs', error ? 'text-red-600' : valid ? 'font-medium text-emerald-700' : 'text-slate-400')}>
+        {text.trim() && error
+          ? errorMessage(t, error)
+          : (preview ?? t(match.gamesOnlyAllowed ? 'match.scoreHintQuick' : 'match.scoreHint', { name: entryName(match.slots[0].entry) }))}
       </p>
+      {correcting && result && <ResetDialog open={confirming} onOpenChange={setConfirming} resets={resets} onConfirm={() => commit(result, true)} />}
     </div>
+  );
+}
+
+/** Confirms a forced correction, listing the matches it resets. */
+function ResetDialog(props: { open: boolean; onOpenChange: (open: boolean) => void; resets: MatchView[]; onConfirm: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <AlertDialog open={props.open} onOpenChange={props.onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('match.resetTitle')}</AlertDialogTitle>
+          <AlertDialogDescription>{t('match.resetDescription', { count: props.resets.length })}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <ul className="grid gap-1 text-sm">
+          {props.resets.map((m) => (
+            <li key={m.id} className="flex items-center gap-2 rounded border px-2 py-1">
+              <span className="font-medium">{matchTitle(t, m)}</span>
+              <span className="min-w-0 flex-1 truncate text-slate-600">
+                {slotText(t, m.slots[0]).text} – {slotText(t, m.slots[1]).text}
+                {m.result && ` · ${m.result.gamesWon.join(':')}`}
+              </span>
+              <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-600 uppercase">{t(`match.status.${m.status}`)}</span>
+            </li>
+          ))}
+        </ul>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+          <AlertDialogAction onClick={props.onConfirm}>{t('match.resetConfirm')}</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

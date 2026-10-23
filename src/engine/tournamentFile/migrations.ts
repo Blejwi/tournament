@@ -15,7 +15,9 @@
  *   (#0007). Older files need no change; the bump lets older apps refuse files with brackets.
  * - 7: the change log `log` gets its entries (#0016). Older files only ever had `[]`; anything
  *   else found there is dropped, as it was never written by the app.
- * - 8: adds an entry's `withdrawnAt` (null: not withdrawn) and the special results walkover,
+ * - 8: adds double elimination stages and the `winners`, `losers` and `secondFinal` bracket
+ *   sections (#0010). Older files need no change; the bump lets older apps refuse them.
+ * - 9: adds an entry's `withdrawnAt` (null: not withdrawn) and the special results walkover,
  *   retirement and disqualification (#0014).
  */
 
@@ -50,7 +52,8 @@ export const migrations: Record<number, Migration> = {
   }),
   5: (file) => ({ ...file, schemaVersion: 6 }),
   6: (file) => ({ ...file, schemaVersion: 7, log: [] }),
-  7: (file) => {
+  7: (file) => ({ ...file, schemaVersion: 8 }),
+  8: (file) => {
     const tournament = file.tournament as { competitions?: unknown };
     const competitions = Array.isArray(tournament?.competitions)
       ? tournament.competitions.map((competition: { entries?: unknown }) => ({
@@ -60,6 +63,6 @@ export const migrations: Record<number, Migration> = {
             : competition?.entries,
         }))
       : tournament?.competitions;
-    return { ...file, schemaVersion: 8, tournament: { ...tournament, competitions } };
+    return { ...file, schemaVersion: 9, tournament: { ...tournament, competitions } };
   },
 };

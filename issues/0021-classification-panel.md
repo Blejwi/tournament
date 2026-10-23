@@ -1,7 +1,7 @@
 ---
 id: 21
 title: Classification panel
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-23
 ---
@@ -35,3 +35,7 @@ A collapsible side panel on the play screen that shows the **classification** (f
 ## Blocked by
 
 None (can start immediately). #0010 and #0012 will feed more place metadata into the same query.
+
+## Resolution
+
+Done on `integration/v1` in 51398fb and c9edd69, plus the coordinator fix 052cebc. `getFinalPlaces` is now generic: stage types produce place slots, and shared logic handles ranges, BYEs and `open` places. Groups-only competitions rank by group position. A collapsible "Final places" panel (`PlacesPanel`) shows individual places and ranges with full names, live. Only the last stage is classified, so in groups → bracket the group non-advancers aren't placed yet (see #0009).

@@ -9,15 +9,15 @@ export function formatDate(isoDate: string, language: string): string {
   );
 }
 
-/** A player's name, e.g. "J. Kowalski" (short) or "Jan Kowalski". */
-export function playerName(player: EntryPlayerView, short = true): string {
-  return short ? `${player.firstName.slice(0, 1)}. ${player.lastName}` : `${player.firstName} ${player.lastName}`;
+/** A player's full name, e.g. "Jan Kowalski". Names are never abbreviated. */
+export function playerName(player: EntryPlayerView): string {
+  return `${player.firstName} ${player.lastName}`;
 }
 
-/** An entry's name, e.g. "J. Kowalski" (short) or "Jan Kowalski"; null when the slot isn't decided. */
-export function entryName(entry: EntryView | null, short = true): string | null {
+/** An entry's full name, e.g. "Jan Kowalski" (doubles: "A / B"); null when the slot is not decided. */
+export function entryName(entry: EntryView | null): string | null {
   if (!entry) return null;
-  return entry.players.map((p) => playerName(p, short)).join(' / ');
+  return entry.players.map((p) => playerName(p)).join(' / ');
 }
 
 /** Elapsed time as m:ss (or h:mm:ss). */

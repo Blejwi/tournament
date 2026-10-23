@@ -38,6 +38,13 @@ export function entryText(t: TFunction, entry: ChangeLogEntryView): string {
     }
     case 'playerWithdrew':
       return t('changeLog.playerWithdrew', { name: entry.players.map((p) => playerName(p)).join(' / '), competition: entry.competitionName });
+    case 'resultCorrected':
+      return t(entry.reset.length ? 'changeLog.resultCorrectedResets' : 'changeLog.resultCorrected', {
+        match: loggedMatchText(t, entry.match),
+        before: scoreText(entry.before),
+        after: scoreText(entry.after),
+        count: entry.reset.length,
+      });
   }
 }
 

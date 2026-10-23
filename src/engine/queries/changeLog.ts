@@ -30,6 +30,7 @@ export type ChangeLogEntryView = { seq: number; at: Timestamp } & (
   /** `result.kind` says which: walkover, retirement or disqualification. */
   | { type: 'specialResultRecorded'; match: LoggedMatchView; result: ResultView & { kind: SpecialResultKind }; table: number | null }
   | { type: 'playerWithdrew'; competition: CompetitionId; competitionName: string; players: EntryPlayerView[] }
+  | { type: 'resultCorrected'; match: LoggedMatchView; before: ResultView; after: ResultView; reset: LoggedMatchView[] }
 );
 
 /** The change log, newest first. */
@@ -67,6 +68,15 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
         competition: entry.competition,
         competitionName: state.competitions.find((c) => c.id === entry.competition)?.name ?? '',
         players: entry.players.map((id) => playerView(state, id)),
+      };
+    case 'resultCorrected':
+      return {
+        ...base,
+        type: entry.type,
+        match: loggedMatchView(state, entry.match),
+        before: resultView(entry.before),
+        after: resultView(entry.after),
+        reset: entry.reset.map((m) => loggedMatchView(state, m)),
       };
   }
 }

@@ -1,7 +1,7 @@
 ---
 id: 20
 title: Full player names on the canvas
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-23
 ---
@@ -29,3 +29,7 @@ Names on the play canvas must not be shortened. Today match cards, group boxes a
 ## Blocked by
 
 None (can start immediately)
+
+## Resolution
+
+Done on `integration/v1` in 404855e and b9eafd4. Names are never abbreviated (the `short` option is gone from `playerName`, `entryName` and `slotText`). Match cards are wider (`CARD_W` 292) and wrap long names; group boxes, popovers, the waiting list and the tables panel wrap instead of truncating. Checked in the browser with long names on groups and a 16-entry bracket.

@@ -3,7 +3,7 @@ import { findStage } from '../locate';
 import type { TiebreakRule } from '../stages/tiebreak';
 import type { CompetitionId, DrawState, EntryId, Grouping, GroupId, StageId, Timestamp, TournamentState } from '../types';
 import { entryView, type EntryView } from './competitions';
-import { singleEliminationView, type SingleEliminationStageView } from './bracket';
+import { doubleEliminationView, singleEliminationView, type DoubleEliminationStageView, type SingleEliminationStageView } from './bracket';
 import { matchView, type MatchView, type SlotView } from './matches';
 
 export interface StandingsRowView {
@@ -82,7 +82,7 @@ export interface GroupsStageView {
 }
 
 /** A stage with its draw and matches: groups with standings, or a bracket with its sections. */
-export type StageView = GroupsStageView | SingleEliminationStageView;
+export type StageView = GroupsStageView | SingleEliminationStageView | DoubleEliminationStageView;
 
 export function getStage(state: TournamentState, id: StageId, now: Timestamp): StageView | null {
   const located = findStage(state, id);
@@ -91,6 +91,7 @@ export function getStage(state: TournamentState, id: StageId, now: Timestamp): S
   const derived = derive(state);
   const view = (matchId: string) => matchView(state, derived.match(matchId)!, now);
   if (stage.type === 'singleElimination') return singleEliminationView(stage, competition.id, index, view);
+  if (stage.type === 'doubleElimination') return doubleEliminationView(stage, competition.id, index, view);
   const entry = (id: EntryId) => entryView(state, competition.entries.find((e) => e.id === id)!);
 
   const groups = stage.groups.map((group): GroupView => {
