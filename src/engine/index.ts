@@ -5,7 +5,10 @@
 export type { Result } from './result';
 export type { EngineError, EngineErrorCode } from './errors';
 export type {
+  BracketSection,
   CompetitionId,
+  MatchPlaces,
+  PlaceRange,
   DrawState,
   EntryId,
   GameScore,
@@ -30,7 +33,7 @@ export { createTournament, type CreateTournamentInput } from './tournament';
 export { execute, type Command, type CommandType } from './commands';
 
 /** Parses typed game scores ("11-7 9-11 11-5"); check them with validateResult. */
-export { parseGames } from './score';
+export { parseGames, parseResult } from './score';
 /** Games won by slot A and slot B, from the points of each game (e.g. for a score preview). */
 export { gamesWon } from './derive';
 // Tournament file (export/import)
@@ -68,7 +71,13 @@ export {
   type GroupsStageView,
   type GroupView,
   type StandingsRowView,
+  type SingleEliminationStageView,
+  type BracketSectionView,
+  type BracketRoundView,
   getMatch,
+  getFinalPlaces,
+  type FinalPlacesView,
+  type FinalPlaceView,
   getWaitingList,
   getFreeTables,
   validateResult,
@@ -78,4 +87,5 @@ export {
   type MatchLocationView,
   type ResultView,
   type SlotView,
+  type FeederView,
 } from './queries';

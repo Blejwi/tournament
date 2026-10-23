@@ -213,6 +213,7 @@ export const pl: Translations = {
     stageNotDrawn: 'Najpierw wylosuj.',
     stageConfirmed: 'Losowanie jest już zatwierdzone i nie można go zmienić.',
     notEnoughEntries: 'Za mało zgłoszeń: potrzeba co najmniej {{needed}}.',
+    tooManyEntries: 'Za dużo zgłoszeń: drabinka mieści najwyżej {{max}}.',
     matchNotFound: 'Ten mecz już nie istnieje.',
     matchNotReady: 'Tego meczu nie można jeszcze rozegrać.',
     matchNotOnTable: 'Ten mecz nie jest przy stole.',

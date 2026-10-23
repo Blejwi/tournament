@@ -30,6 +30,21 @@ export function validateScore(result: MatchResult, gamesToWin: GamesToWin): Resu
 }
 
 /**
+ * Parses a typed result: one pair below 11 points ("3:1", "3-1") is games only; anything else is
+ * game scores (see parseGames). Only checks the format; whether games only is allowed (brackets,
+ * not groups) and the scoring rules are checked when the result is recorded.
+ */
+export function parseResult(text: string): Result<MatchResult> {
+  const games = parseGames(text);
+  if (!games.ok) return games;
+  if (games.value.length === 1) {
+    const [a, b] = games.value[0];
+    if (Math.max(a, b) < GAME_POINTS) return ok({ kind: 'gamesOnly', games: [a, b] });
+  }
+  return ok({ kind: 'games', games: games.value });
+}
+
+/**
  * Parses typed game scores, slot A's points first: "11-7 9-11 11-5" (also "11:7, 9:11").
  * Only checks the format; the scoring rules are checked when the result is recorded.
  */

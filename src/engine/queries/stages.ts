@@ -2,6 +2,7 @@ import { derive } from '../derive';
 import { findStage } from '../locate';
 import type { CompetitionId, DrawState, Grouping, GroupId, StageId, Timestamp, TournamentState } from '../types';
 import { entryView, type EntryView } from './competitions';
+import { singleEliminationView, type SingleEliminationStageView } from './bracket';
 import { matchView, type MatchView, type SlotView } from './matches';
 
 export interface StandingsRowView {
@@ -43,8 +44,8 @@ export interface GroupsStageView {
   groups: GroupView[];
 }
 
-/** A stage with its draw, standings and matches. Bracket stage views join this union. */
-export type StageView = GroupsStageView;
+/** A stage with its draw and matches: groups with standings, or a bracket with its sections. */
+export type StageView = GroupsStageView | SingleEliminationStageView;
 
 export function getStage(state: TournamentState, id: StageId, now: Timestamp): StageView | null {
   const located = findStage(state, id);
@@ -52,6 +53,7 @@ export function getStage(state: TournamentState, id: StageId, now: Timestamp): S
   const { competition, stage, index } = located.value;
   const derived = derive(state);
   const view = (matchId: string) => matchView(state, derived.match(matchId)!, now);
+  if (stage.type === 'singleElimination') return singleEliminationView(stage, competition.id, index, view);
 
   const groups = stage.groups.map((group): GroupView => {
     const standings = derived.standings(stage, group);
@@ -64,7 +66,7 @@ export function getStage(state: TournamentState, id: StageId, now: Timestamp): S
       name: group.name,
       entries: group.entries.map((source) => {
         const entry = derived.resolve(competition, source);
-        return { source: structuredClone(source), entry: entry ? entryView(state, entry) : null };
+        return { source: structuredClone(source), entry: entry ? entryView(state, entry) : null, bye: source.kind === 'bye', feeder: null };
       }),
       standings: standings.rows.map((row) => ({ ...row, entry: row.entry ? entryView(state, row.entry) : null })),
       matches,

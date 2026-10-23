@@ -6,7 +6,9 @@ import type {
   GroupsStage,
   Match,
   MatchResult,
+  PlaceRange,
   Player,
+  SingleEliminationStage,
   SlotSource,
   Stage,
   Table,
@@ -72,9 +74,16 @@ const matchResultSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('gamesOnly'), games: z.tuple([points, points]) }),
 ]) satisfies z.ZodType<MatchResult>;
 
+const placeRangeSchema = z
+  .object({ from: z.number().int().min(1), to: z.number().int().min(1) })
+  .refine((r) => r.from <= r.to, 'A place range must not end before it starts') satisfies z.ZodType<PlaceRange>;
+
 const matchSchema = z.object({
   id,
-  location: z.discriminatedUnion('kind', [z.object({ kind: z.literal('group'), group: id })]),
+  location: z.discriminatedUnion('kind', [
+    z.object({ kind: z.literal('group'), group: id }),
+    z.object({ kind: z.literal('bracket'), section: z.enum(['main', 'thirdPlace']) }),
+  ]),
   round: z.number().int().min(1),
   order: z.number().int().min(1),
   slots: z.tuple([slotSourceSchema, slotSourceSchema]),
@@ -82,6 +91,7 @@ const matchSchema = z.object({
   assignedAt: timestamp,
   result: matchResultSchema.nullable(),
   finishedAt: timestamp,
+  places: z.object({ winner: placeRangeSchema.nullable(), loser: placeRangeSchema.nullable() }).optional(),
 }) satisfies z.ZodType<Match>;
 
 const groupSchema = z.object({
@@ -102,8 +112,16 @@ const groupsStageSchema = z.object({
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<GroupsStage>;
 
-/** One option per stage type; bracket stages join here. */
-const stageSchema = z.discriminatedUnion('type', [groupsStageSchema]) satisfies z.ZodType<Stage>;
+const singleEliminationStageSchema = z.object({
+  id,
+  type: z.literal('singleElimination'),
+  drawState: z.enum(['notDrawn', 'drawn', 'confirmed']),
+  thirdPlace: z.boolean(),
+  matches: uniqueArray(matchSchema, ['id']),
+}) satisfies z.ZodType<SingleEliminationStage>;
+
+/** One option per stage type. */
+const stageSchema = z.discriminatedUnion('type', [groupsStageSchema, singleEliminationStageSchema]) satisfies z.ZodType<Stage>;
 
 const competitionSchema = z.object({
   id,

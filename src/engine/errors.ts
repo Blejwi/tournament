@@ -26,6 +26,7 @@ export type EngineError =
   | { code: 'stageNotDrawn' }
   | { code: 'stageConfirmed' }
   | { code: 'notEnoughEntries'; needed: number }
+  | { code: 'tooManyEntries'; max: number }
   | { code: 'matchNotFound'; match: MatchId }
   | { code: 'matchNotReady'; status: MatchStatus }
   | { code: 'matchNotOnTable' }

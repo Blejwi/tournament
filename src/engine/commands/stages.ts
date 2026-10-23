@@ -20,8 +20,7 @@ export function configureStages(state: TournamentState, cmd: Cmd<'configureStage
   const competition = findCompetition(state, cmd.competition);
   if (!competition.ok) return competition;
   if (competition.value.stages[0]?.drawState === 'confirmed') return fail({ code: 'stageConfirmed' });
-  // v1 grows the supported chains ticket by ticket; for now: groups only.
-  if (cmd.stages.length !== 1 || cmd.stages[0].type !== 'groups') return fail({ code: 'unsupportedStageChain' });
+  if (!isSupportedChain(cmd.stages)) return fail({ code: 'unsupportedStageChain' });
   for (const config of cmd.stages) {
     const valid = handlerFor(config).validateConfig(config);
     if (!valid.ok) return valid;
@@ -29,6 +28,17 @@ export function configureStages(state: TournamentState, cmd: Cmd<'configureStage
   const ids = idSource(state);
   const stages = cmd.stages.map((config) => handlerFor(config).create(ids.next('stage'), config));
   return ok(ids.commit(replaceCompetition(state, { ...competition.value, stages })));
+}
+
+/**
+ * The stage chains v1 supports so far; it grows ticket by ticket (groups → bracket: #0009,
+ * double elimination: #0010, groups → groups: #0013): a single groups stage, or a direct
+ * single elimination bracket.
+ */
+const SUPPORTED_CHAINS: StageConfig['type'][][] = [['groups'], ['singleElimination']];
+
+function isSupportedChain(stages: StageConfig[]): boolean {
+  return SUPPORTED_CHAINS.some((chain) => chain.length === stages.length && chain.every((type, i) => stages[i].type === type));
 }
 
 export function generateDraw(state: TournamentState, cmd: Cmd<'generateDraw'>): Result<TournamentState> {

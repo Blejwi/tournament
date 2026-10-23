@@ -214,6 +214,7 @@ export const en = {
     stageNotDrawn: 'Generate the draw first.',
     stageConfirmed: 'The draw is already confirmed and can no longer be changed.',
     notEnoughEntries: 'Not enough entries: this needs at least {{needed}}.',
+    tooManyEntries: 'Too many entries: a bracket holds at most {{max}}.',
     matchNotFound: 'This match no longer exists.',
     matchNotReady: 'This match cannot be played yet.',
     matchNotOnTable: 'This match is not on a table.',

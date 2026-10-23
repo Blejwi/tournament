@@ -70,8 +70,31 @@ export type GameScore = [number, number];
  */
 export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'gamesOnly'; games: [number, number] };
 
-/** Where a match sits inside its stage. Bracket stages add their own kinds (sections). */
-export type MatchLocation = { kind: 'group'; group: GroupId };
+/**
+ * A part of a bracket stage, drawn as its own labelled block on the canvas.
+ * - main: the single elimination tree
+ * - thirdPlace: the optional 3rd-place match
+ * Double elimination (winners, losers, 2nd final) and place play-offs add their sections here.
+ */
+export type BracketSection = 'main' | 'thirdPlace';
+
+/** Where a match sits inside its stage: a group, or a section of a bracket. */
+export type MatchLocation = { kind: 'group'; group: GroupId } | { kind: 'bracket'; section: BracketSection };
+
+/** A single place (`from === to`) or a shared place range such as 5–8. */
+export interface PlaceRange {
+  from: number;
+  to: number;
+}
+
+/**
+ * The final places a match decides (spec: "places" metadata), e.g. a final: winner 1, loser 2;
+ * a quarter-final: loser 5–8. Null where the entry plays on (a semi-final winner).
+ */
+export interface MatchPlaces {
+  winner: PlaceRange | null;
+  loser: PlaceRange | null;
+}
 
 export interface Match {
   id: MatchId;
@@ -87,6 +110,8 @@ export interface Match {
   assignedAt: Timestamp | null;
   result: MatchResult | null;
   finishedAt: Timestamp | null;
+  /** The final places this match decides; bracket matches only (group places come from the standings). */
+  places?: MatchPlaces;
 }
 
 /** notDrawn → drawn (editable, re-drawable) → confirmed (locked, playable). */
@@ -119,14 +144,24 @@ export interface GroupsStage extends StageBase {
 }
 
 /**
- * One phase of a competition. Each stage type has a handler behind a common stage interface
- * (see stages/); single elimination, double elimination and play-offs join this union.
+ * A single elimination bracket of 8, 16, 32 or 64 positions. The bracket's matches carry it all:
+ * round 1 holds the draw (entries and BYEs), later rounds point to "winner of match X" (ADR 0003).
  */
-export type Stage = GroupsStage;
+export interface SingleEliminationStage extends StageBase {
+  type: 'singleElimination';
+  /** Whether the semi-final losers play a 3rd-place match (otherwise they share 3–4). */
+  thirdPlace: boolean;
+}
+
+/**
+ * One phase of a competition. Each stage type has a handler behind a common stage interface
+ * (see stages/); double elimination and play-offs join this union.
+ */
+export type Stage = GroupsStage | SingleEliminationStage;
 export type StageType = Stage['type'];
 
 /** The options the operator picks per stage when configuring the chain. */
-export type StageConfig = { type: 'groups'; grouping: Grouping };
+export type StageConfig = { type: 'groups'; grouping: Grouping } | { type: 'singleElimination'; thirdPlace: boolean };
 
 export interface Competition {
   id: CompetitionId;

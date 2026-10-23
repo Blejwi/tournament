@@ -1,14 +1,20 @@
 import { checkResult } from '../commands/matches';
 import { derive, gamesWon, type Derived, type DerivedMatch, type MatchStatus } from '../derive';
 import type { EngineError } from '../errors';
+import { handlerFor } from '../stages';
 import type {
+  BracketSection,
+  Competition,
   CompetitionId,
   GameScore,
   GamesToWin,
   GroupId,
+  Match,
   MatchId,
+  MatchPlaces,
   MatchResult,
   SlotSource,
+  Stage,
   StageId,
   TableId,
   Timestamp,
@@ -20,9 +26,30 @@ export interface SlotView {
   source: SlotSource;
   /** Who plays in this slot, resolved from the source; null while it isn't decided (or a BYE). */
   entry: EntryView | null;
+  /** The slot resolves to a BYE: nobody will play here. */
+  bye: boolean;
+  /**
+   * For a "winner/loser of match X" source: where match X sits, so a pending slot can show its
+   * source (e.g. "W QF1"); null for other sources.
+   */
+  feeder: FeederView | null;
 }
 
-export type MatchLocationView = { kind: 'group'; group: GroupId; groupName: string };
+export interface FeederView {
+  match: MatchId;
+  take: 'winner' | 'loser';
+  location: MatchLocationView;
+  round: number;
+  order: number;
+}
+
+export type MatchLocationView =
+  | { kind: 'group'; group: GroupId; groupName: string }
+  /**
+   * A bracket match. `roundMatches` is how many matches its round of the section has (1 = final,
+   * 2 = semi-finals, 4 = quarter-finals, ...) and `rounds` how many rounds the section has.
+   */
+  | { kind: 'bracket'; section: BracketSection; roundMatches: number; rounds: number };
 
 export interface ResultView {
   /** Slot index of the winner. */
@@ -52,33 +79,60 @@ export interface MatchView {
   /** How long it has been on its table, for a match in progress; otherwise null. */
   elapsedMs: number | null;
   result: ResultView | null;
+  /** A BYE decided the match: nobody plays it and the other slot goes through. */
+  decidedByBye: boolean;
+  /** Whether a games-only result (e.g. 3:1) is accepted; group matches need every game's points. */
+  gamesOnlyAllowed: boolean;
+  /** The final places the match decides (bracket matches), e.g. a quarter-final's loser: 5–8. */
+  places: MatchPlaces | null;
+}
+
+function locationView(match: Match, stage: Stage): MatchLocationView {
+  const { location } = match;
+  switch (location.kind) {
+    case 'group': {
+      const group = stage.type === 'groups' ? stage.groups.find((g) => g.id === location.group) : undefined;
+      return { kind: 'group', group: location.group, groupName: group?.name ?? '' };
+    }
+    case 'bracket': {
+      const section = stage.matches.filter((m) => m.location.kind === 'bracket' && m.location.section === location.section);
+      return {
+        kind: 'bracket',
+        section: location.section,
+        roundMatches: section.filter((m) => m.round === match.round).length,
+        rounds: new Set(section.map((m) => m.round)).size,
+      };
+    }
+  }
+}
+
+function feederView(competition: Competition, source: SlotSource): FeederView | null {
+  if (source.kind !== 'matchResult') return null;
+  for (const stage of competition.stages) {
+    const feeder = stage.matches.find((m) => m.id === source.match);
+    if (feeder) return { match: feeder.id, take: source.take, location: locationView(feeder, stage), round: feeder.round, order: feeder.order };
+  }
+  return null;
 }
 
 export function matchView(state: TournamentState, derived: DerivedMatch, now: Timestamp): MatchView {
-  const { match, competition, stage, stageIndex, entries, winner, status } = derived;
+  const { match, competition, stage, stageIndex, entries, byes, winner, status } = derived;
   const table = match.table === null ? null : state.tables.find((t) => t.id === match.table);
-  let location: MatchLocationView;
-  switch (match.location.kind) {
-    case 'group': {
-      const groupId = match.location.group;
-      const group = stage.groups.find((g) => g.id === groupId);
-      location = { kind: 'group', group: groupId, groupName: group?.name ?? '' };
-      break;
-    }
-  }
   const { result } = match;
   return {
     id: match.id,
     competition: competition.id,
     stage: stage.id,
     stageIndex,
-    location,
+    location: locationView(match, stage),
     round: match.round,
     order: match.order,
     gamesToWin: competition.gamesToWin,
     slots: [0, 1].map((i) => ({
       source: structuredClone(match.slots[i]),
       entry: entries[i] ? entryView(state, entries[i]) : null,
+      bye: byes[i],
+      feeder: feederView(competition, match.slots[i]),
     })) as [SlotView, SlotView],
     status,
     table: table ? { id: table.id, number: table.number } : null,
@@ -93,6 +147,9 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
             games: result.kind === 'games' ? result.games.map(([a, b]) => [a, b]) : null,
           }
         : null,
+    decidedByBye: derived.decidedByBye,
+    gamesOnlyAllowed: handlerFor(stage).allowsGamesOnly,
+    places: match.places ? structuredClone(match.places) : null,
   };
 }
 

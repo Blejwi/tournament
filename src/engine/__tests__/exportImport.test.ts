@@ -5,7 +5,9 @@ import {
   exportTournament,
   getCompetition,
   getCompetitions,
+  getFinalPlaces,
   getPlayers,
+  getWaitingList,
   getStage,
   getTables,
   getTournament,
@@ -13,7 +15,7 @@ import {
   type TournamentState,
 } from '@/engine';
 import { errorOf, newTournament, unwrap } from './helpers';
-import { drawnGroups, groupsOf, run, tableId } from './scenarios';
+import { drawnBracket, drawnGroups, groupsOf, run, tableId } from './scenarios';
 import schemaV1 from './fixtures/schema-v1.json?raw';
 import schemaV2 from './fixtures/schema-v2.json?raw';
 
@@ -60,6 +62,22 @@ describe('exporting and importing a tournament', () => {
     expect(imported).toEqual(original);
     expect(getCompetition(imported, competition)).toEqual(getCompetition(original, competition));
     expect(getStage(imported, stage, 5000)).toEqual(getStage(original, stage, 5000));
+  });
+
+  it('gives back a single elimination bracket with its BYEs, places, 3rd-place match and quick results', () => {
+    const { state, competition, stage } = drawnBracket(13, { thirdPlace: true, tables: 1 });
+    const ready = getWaitingList(state, 0);
+    const original = run(
+      state,
+      { type: 'recordResult', match: ready[0].id, result: { kind: 'gamesOnly', games: [3, 1] }, at: 1000 },
+      { type: 'assignMatch', match: ready[1].id, table: tableId(state, 1), at: 2000 },
+    );
+
+    const imported = unwrap(importTournament({ id: original.id, file: exportTournament(original) }));
+
+    expect(imported).toEqual(original);
+    expect(getStage(imported, stage, 5000)).toEqual(getStage(original, stage, 5000));
+    expect(getFinalPlaces(imported, competition)).toEqual(getFinalPlaces(original, competition));
   });
 
   it('gives the imported tournament the id chosen by the caller', () => {

@@ -3,3 +3,5 @@ export * from './setup';
 export * from './competitions';
 export * from './stages';
 export * from './matches';
+export * from './bracket';
+export * from './places';

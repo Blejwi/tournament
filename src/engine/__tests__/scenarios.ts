@@ -5,6 +5,7 @@ import {
   getPlayers,
   getStage,
   getTables,
+  type SingleEliminationStageView,
   type Command,
   type Grouping,
   type GroupsStageView,
@@ -52,6 +53,39 @@ export function drawnGroups(
   if (options.confirm ?? true) state = run(state, { type: 'confirmStage', stage });
   return { state, competition: setup.competition, stage };
 }
+
+/** Configures a single elimination stage, draws it with `randomSeed` and (by default) confirms it. */
+export function drawnBracket(
+  count: number,
+  options: Parameters<typeof competitionWith>[1] & { randomSeed?: number; confirm?: boolean; thirdPlace?: boolean } = {},
+) {
+  const setup = competitionWith(count, options);
+  let state = run(setup.state, {
+    type: 'configureStages',
+    competition: setup.competition,
+    stages: [{ type: 'singleElimination', thirdPlace: options.thirdPlace ?? false }],
+  });
+  const stage = getCompetition(state, setup.competition)!.stages[0].id;
+  state = run(state, { type: 'generateDraw', stage, randomSeed: options.randomSeed ?? 42 });
+  if (options.confirm ?? true) state = run(state, { type: 'confirmStage', stage });
+  return { state, competition: setup.competition, stage };
+}
+
+export function bracketOf(state: TournamentState, stage: string, now = 0): SingleEliminationStageView {
+  const view = getStage(state, stage, now);
+  if (view?.type !== 'singleElimination') throw new Error(`Stage ${stage} is not a bracket stage`);
+  return view;
+}
+
+/** The matches of one bracket section, round by round, each round top to bottom. */
+export function roundsOf(state: TournamentState, stage: string, section = 'main', now = 0): MatchView[][] {
+  const found = bracketOf(state, stage, now).sections.find((s) => s.section === section);
+  if (!found) throw new Error(`No section ${section}`);
+  return found.rounds.map((r) => r.matches);
+}
+
+/** "P3" for an entry, "BYE" for a BYE, "?" while undecided. */
+export const slotLabel = (match: MatchView, slot: 0 | 1) => (match.slots[slot].source.kind === 'bye' ? 'BYE' : slotName(match, slot));
 
 export function groupsOf(state: TournamentState, stage: string, now = 0): GroupsStageView['groups'] {
   const view = getStage(state, stage, now);
