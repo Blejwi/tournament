@@ -36,6 +36,14 @@ export interface SlotView {
    * source (e.g. "W QF1"); null for other sources.
    */
   feeder: FeederView | null;
+  /** For a "place in a group" source: the origin label, e.g. "1A" (place 1, group A); null for other sources. */
+  origin: OriginView | null;
+}
+
+export interface OriginView {
+  place: number;
+  /** The name of the group of the earlier stage, e.g. "A". */
+  group: string;
 }
 
 export interface FeederView {
@@ -142,6 +150,13 @@ export function locationView(match: Match, stage: Stage): MatchLocationView {
   }
 }
 
+export function originView(competition: Competition, source: SlotSource): OriginView | null {
+  if (source.kind !== 'groupPlace') return null;
+  const stage = competition.stages.find((s) => s.id === source.stage);
+  const group = stage?.type === 'groups' ? stage.groups.find((g) => g.id === source.group) : undefined;
+  return group ? { place: source.place, group: group.name } : null;
+}
+
 function feederView(competition: Competition, source: SlotSource): FeederView | null {
   if (source.kind !== 'matchResult') return null;
   for (const stage of competition.stages) {
@@ -184,6 +199,7 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
       entry: entries[i] ? entryView(state, entries[i]) : null,
       bye: byes[i],
       feeder: feederView(competition, match.slots[i]),
+      origin: originView(competition, match.slots[i]),
     })) as [SlotView, SlotView],
     status,
     table: table ? { id: table.id, number: table.number } : null,

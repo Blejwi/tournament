@@ -26,6 +26,7 @@ import schemaV5 from './fixtures/schema-v5.json?raw';
 import schemaV6 from './fixtures/schema-v6.json?raw';
 import schemaV7 from './fixtures/schema-v7.json?raw';
 import schemaV8 from './fixtures/schema-v8.json?raw';
+import schemaV9 from './fixtures/schema-v9.json?raw';
 
 function setUpTournament(): TournamentState {
   let state = newTournament();
@@ -135,7 +136,7 @@ describe('exporting and importing a tournament', () => {
   it('writes the schema version, the tournament and an empty change log', () => {
     const file = JSON.parse(exportTournament(newTournament()));
     expect(file).toEqual({
-      schemaVersion: 9,
+      schemaVersion: 10,
       tournament: expect.objectContaining({ name: 'Spring Open' }),
       log: [],
     });
@@ -182,7 +183,7 @@ describe('importing a file with an older schema version', () => {
     const imported = unwrap(importTournament({ id: 'restored', file: schemaV7 }));
 
     expect(getCompetition(imported, 'competition-4')!.stages).toEqual([
-      { id: 'stage-7', drawState: 'confirmed', type: 'groups', grouping: { by: 'count', groups: 1 } },
+      { id: 'stage-7', drawState: 'confirmed', type: 'groups', grouping: { by: 'count', groups: 1 }, carryOver: true },
     ]);
     expect(groupsOf(imported, 'stage-7')[0].matches.map((m) => [m.status, m.result?.winner])).toEqual([['finished', 0]]);
     expect(JSON.parse(exportTournament(imported)).schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
@@ -201,7 +202,15 @@ describe('importing a file with an older schema version', () => {
     const imported = unwrap(importTournament({ id: 'restored', file: schemaV8 }));
 
     expect(getCompetition(imported, 'competition-4')!.entries.map((e) => e.withdrawnAt)).toEqual([null, null]);
-    expect(JSON.parse(exportTournament(imported)).schemaVersion).toBe(9);
+    expect(JSON.parse(exportTournament(imported)).schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+  });
+
+  it('migrates a version 9 file (before groups → groups) with carry-over on in its groups stage', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV9 }));
+    const file = JSON.parse(exportTournament(imported));
+
+    expect(file.tournament.competitions[0].stages[0].carryOver).toBe(true);
+    expect(file.schemaVersion).toBe(10);
   });
 
   it('migrates a version 7 file (before double elimination and withdrawals) with every entry still in its competition', () => {
@@ -215,7 +224,7 @@ describe('importing a file with an older schema version', () => {
     const imported = unwrap(importTournament({ id: 'restored', file: schemaV5 }));
 
     expect(getCompetition(imported, 'competition-4')!.stages).toEqual([
-      { id: 'stage-7', drawState: 'confirmed', type: 'groups', grouping: { by: 'count', groups: 1 } },
+      { id: 'stage-7', drawState: 'confirmed', type: 'groups', grouping: { by: 'count', groups: 1 }, carryOver: true },
     ]);
     expect(groupsOf(imported, 'stage-7')[0].matches.map((m) => [m.status, m.result?.winner, m.places])).toEqual([['finished', 0, null]]);
     expect(getExpectedDurations(imported)).toEqual({ 2: 15, 3: 30, 4: 35 });

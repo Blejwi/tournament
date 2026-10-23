@@ -11,7 +11,7 @@ describe('configuring a groups stage', () => {
     const next = run(state, { type: 'configureStages', competition, stages: [{ type: 'groups', grouping: { by: 'count', groups: 2 } }] });
 
     expect(getCompetition(next, competition)!.stages).toEqual([
-      { id: expect.any(String), type: 'groups', drawState: 'notDrawn', grouping: { by: 'count', groups: 2 } },
+      { id: expect.any(String), type: 'groups', drawState: 'notDrawn', grouping: { by: 'count', groups: 2 }, carryOver: true },
     ]);
   });
 
@@ -27,10 +27,10 @@ describe('configuring a groups stage', () => {
     }
   });
 
-  it('supports only a single groups stage for now', () => {
+  it('supports no stage chain beyond a groups stage and one groups stage after it, for now', () => {
     const { state, competition } = competitionWith(8);
     const groups = { type: 'groups', grouping: { by: 'count', groups: 2 } } as const;
-    for (const stages of [[], [groups, groups]]) {
+    for (const stages of [[], [groups, groups, groups]]) {
       expect(errorOf(execute(state, { type: 'configureStages', competition, stages }))).toEqual({
         code: 'unsupportedStageChain',
       });

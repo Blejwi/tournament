@@ -3,7 +3,7 @@ import { shuffle } from '../random';
 import { fail, ok, type Result } from '../result';
 import { gameScoresOf } from '../score';
 import type { Entry, Group, GroupsStage, Match, MatchResult, SlotSource, TieResolution } from '../types';
-import type { DrawContext, DrawPosition, StageHandler } from './handler';
+import type { DrawContext, DrawEntrant, DrawPosition, StageHandler } from './handler';
 import { breakTies, type Tie, type TiebreakMatch, type TiebreakStep } from './tiebreak';
 
 /** Fewer than 2 entries in a group means no matches. */
@@ -20,27 +20,33 @@ export const groupsHandler: StageHandler<GroupsStage> = {
     return valid ? ok(undefined) : fail({ code: 'invalidGrouping' });
   },
 
-  create: (id, { grouping }) => ({ id, type: 'groups', grouping, drawState: 'notDrawn', groups: [], matches: [] }),
+  create: (id, { grouping, carryOver }) => ({ id, type: 'groups', grouping, carryOver: carryOver ?? true, drawState: 'notDrawn', groups: [], matches: [] }),
 
-  config: (stage) => ({ type: 'groups', grouping: stage.grouping }),
+  config: (stage) => ({ type: 'groups', grouping: stage.grouping, carryOver: stage.carryOver }),
+
+  advancers: (stage) =>
+    [1, 2].flatMap((place) =>
+      stage.groups.map((group): DrawEntrant => ({ source: { kind: 'groupPlace', stage: stage.id, group: group.id, place }, seed: null })),
+    ),
 
   draw(stage, ctx) {
     const sizes = groupSizes(ctx.entrants.length, stage);
     if (!sizes.ok) return sizes;
-    const members = snakeFill(ctx, sizes.value);
+    const fed = ctx.entrants.length > 0 && ctx.entrants.every((e) => e.source.kind === 'groupPlace');
+    const members = fed ? snakeFillFed(ctx.entrants, sizes.value) : snakeFill(ctx, sizes.value);
     const groups: Group[] = members.map((entries, i) => ({
       id: ctx.ids.next('group'),
       name: groupName(i),
       entries,
       tieResolutions: [],
     }));
-    const matches = groups.flatMap((group) => roundRobin(group, () => ctx.ids.next('match')));
+    const matches = groups.flatMap((group) => roundRobin(group, () => ctx.ids.next('match'), stage.carryOver));
     return ok({ ...stage, drawState: 'drawn', groups, matches });
   },
 
   clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', groups: [], matches: [] }),
 
-  swapPositions: (stage, a, b) => swapGroupPositions(stage, a, b),
+  swapPositions: (stage, a, b, ids) => swapGroupPositions(stage, a, b, ids),
   movePosition: (stage, from, to, ids) => moveGroupPosition(stage, from, to, ids),
 };
 
@@ -79,10 +85,38 @@ function snakeFill(ctx: DrawContext, sizes: number[]): SlotSource[][] {
 }
 
 /**
- * The group's matches in Berger order. Positions are 1-based draw positions; an odd group gets a
- * dummy last position, and whoever meets the dummy rests that round.
+ * Entrants that come from an earlier groups stage (winners first, then runners-up, each in group
+ * order) dealt out snake-style by place. Two entrants from the same earlier group are kept apart
+ * where possible: one that would land next to a group-mate goes to the next group, in the snake's
+ * direction, that has room and no group-mate.
  */
-function roundRobin(group: Group, nextId: () => string): Match[] {
+function snakeFillFed(entrants: DrawEntrant[], sizes: number[]): SlotSource[][] {
+  const groups: SlotSource[][] = sizes.map(() => []);
+  const origin = (source: SlotSource) => (source.kind === 'groupPlace' ? `${source.stage}/${source.group}` : '');
+  entrants.forEach(({ source }, i) => {
+    const row = Math.floor(i / sizes.length);
+    const column = i % sizes.length;
+    const wanted = row % 2 === 0 ? column : sizes.length - 1 - column;
+    const step = row % 2 === 0 ? 1 : -1;
+    const candidates = sizes.map((_, k) => (wanted + step * k + sizes.length * sizes.length) % sizes.length);
+    const roomy = candidates.filter((g) => groups[g].length < sizes[g]);
+    const apart = roomy.find((g) => groups[g].every((other) => origin(other) !== origin(source)));
+    groups[apart ?? roomy[0]].push(source);
+  });
+  return groups;
+}
+
+/** Two sources that are places of the same group of an earlier stage: those entries already met there. */
+function sameEarlierGroup(a: SlotSource, b: SlotSource): boolean {
+  return a.kind === 'groupPlace' && b.kind === 'groupPlace' && a.stage === b.stage && a.group === b.group;
+}
+
+/**
+ * The group's matches in Berger order. Positions are 1-based draw positions; an odd group gets a
+ * dummy last position, and whoever meets the dummy rests that round. With `carryOver`, a pair that
+ * already met in the earlier groups stage gets no match (their result there counts).
+ */
+function roundRobin(group: Group, nextId: () => string, carryOver: boolean): Match[] {
   const size = group.entries.length;
   const n = size % 2 === 0 ? size : size + 1;
   const matches: Match[] = [];
@@ -90,7 +124,9 @@ function roundRobin(group: Group, nextId: () => string): Match[] {
     const seat = (i: number) => ((i + (round * n) / 2) % (n - 1)) + 1;
     const pairs: [number, number][] = [round % 2 === 0 ? [seat(0), n] : [n, seat(0)]];
     for (let k = 1; k < n / 2; k++) pairs.push([seat(k), seat(n - 1 - k)]);
-    const played = pairs.filter(([a, b]) => a <= size && b <= size);
+    const played = pairs.filter(
+      ([a, b]) => a <= size && b <= size && !(carryOver && sameEarlierGroup(group.entries[a - 1], group.entries[b - 1])),
+    );
     played.forEach(([a, b], i) =>
       matches.push({
         id: nextId(),
@@ -225,13 +261,13 @@ function findGroupPosition(stage: GroupsStage, at: DrawPosition, allowEnd = fals
   return { group, index: at.position - 1 };
 }
 
-function swapGroupPositions(stage: GroupsStage, a: DrawPosition, b: DrawPosition): Result<GroupsStage> {
+function swapGroupPositions(stage: GroupsStage, a: DrawPosition, b: DrawPosition, ids: IdSource): Result<GroupsStage> {
   const from = findGroupPosition(stage, a);
   const to = findGroupPosition(stage, b);
   if (!from || !to) return fail({ code: 'drawPositionNotFound' });
   const entries = stage.groups.map((g) => [...g.entries]);
   [entries[from.group][from.index], entries[to.group][to.index]] = [entries[to.group][to.index], entries[from.group][from.index]];
-  return ok(withGroupEntries(stage, entries));
+  return ok(withGroupEntries(stage, entries, ids));
 }
 
 function moveGroupPosition(stage: GroupsStage, fromAt: DrawPosition, toAt: DrawPosition, ids: IdSource): Result<GroupsStage> {
@@ -251,7 +287,7 @@ function moveGroupPosition(stage: GroupsStage, fromAt: DrawPosition, toAt: DrawP
  * The stage with new group entries; the matches of each changed group are made again in Berger
  * order. A group that keeps its size keeps its match ids, so a swap leaves every match in place.
  */
-function withGroupEntries(stage: GroupsStage, entries: SlotSource[][], ids?: IdSource): GroupsStage {
+function withGroupEntries(stage: GroupsStage, entries: SlotSource[][], ids: IdSource): GroupsStage {
   const groups = stage.groups.map((group, i): Group => {
     const same = group.entries.length === entries[i].length && group.entries.every((source, k) => source === entries[i][k]);
     return same ? group : { ...group, entries: entries[i], tieResolutions: [] };
@@ -259,10 +295,9 @@ function withGroupEntries(stage: GroupsStage, entries: SlotSource[][], ids?: IdS
   const matches = groups.flatMap((group, i) => {
     const old = stage.matches.filter((m) => m.location.kind === 'group' && m.location.group === group.id);
     if (group === stage.groups[i]) return old;
-    const size = group.entries.length;
-    const reuse = old.length === (size * (size - 1)) / 2 ? old.map((m) => m.id) : null;
+    const reuse = old.length === roundRobin(group, () => '', stage.carryOver).length ? old.map((m) => m.id) : null;
     let k = 0;
-    return roundRobin(group, () => (reuse ? reuse[k++] : ids!.next('match')));
+    return roundRobin(group, () => (reuse ? reuse[k++] : ids.next('match')), stage.carryOver);
   });
   return { ...stage, groups, matches };
 }

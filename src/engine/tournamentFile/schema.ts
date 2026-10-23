@@ -135,6 +135,7 @@ const groupsStageSchema = z.object({
     z.object({ by: z.literal('size'), size: z.number().int().min(2) }),
   ]),
   groups: uniqueArray(groupSchema, ['id', 'name']),
+  carryOver: z.boolean(),
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<GroupsStage>;
 

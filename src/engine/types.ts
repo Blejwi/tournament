@@ -174,6 +174,12 @@ export interface GroupsStage extends StageBase {
   type: 'groups';
   grouping: Grouping;
   groups: Group[];
+  /**
+   * For a groups stage fed by an earlier groups stage (groups → groups): two entries that already
+   * met in the earlier stage don't play again, their result there counts (carry-over). Turned
+   * off, they play again. A first stage ignores it.
+   */
+  carryOver: boolean;
 }
 
 /**
@@ -205,7 +211,8 @@ export type StageType = Stage['type'];
 
 /** The options the operator picks per stage when configuring the chain. */
 export type StageConfig =
-  | { type: 'groups'; grouping: Grouping }
+  /** `carryOver` defaults to true; see `GroupsStage.carryOver`. */
+  | { type: 'groups'; grouping: Grouping; carryOver?: boolean }
   | { type: 'singleElimination'; thirdPlace: boolean }
   | { type: 'doubleElimination' };
 

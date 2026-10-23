@@ -127,10 +127,10 @@ function changeEntries(
   competition: Competition,
   change: (entries: Competition['entries']) => Result<Competition['entries']>,
 ): Result<TournamentState> {
-  const [first, ...rest] = competition.stages;
+  const [first] = competition.stages;
   if (first?.drawState === 'confirmed') return fail({ code: 'stageConfirmed' });
   const entries = change(competition.entries);
   if (!entries.ok) return entries;
-  const stages = first ? [handlerFor(first).clearDraw(first), ...rest] : [];
+  const stages = competition.stages.map((s) => handlerFor(s).clearDraw(s));
   return ok(replaceCompetition(state, { ...competition, entries: entries.value, stages }));
 }

@@ -1,4 +1,4 @@
-import { groupStandings, type Standings } from './stages/groups';
+import { groupStandings, type PlayedMatch, type Standings } from './stages/groups';
 import type {
   Competition,
   Entry,
@@ -181,10 +181,28 @@ export function derive(state: TournamentState): Derived {
         const { winner, result, withdrawal } = outcome(m.id);
         return { entries: matchEntries(m.id), winner, result, decided: result !== null || withdrawal };
       });
-    const result = groupStandings(members, played, group.tieResolutions);
-    standingsMemo.set(group, result);
-    return result;
+    const result = groupStandings(members, [...played, ...carriedOver(competition, stage, members)], group.tieResolutions);
+    // A group with an undecided member (e.g. "1A" not known yet) isn't complete, even if all its pairs were carried over.
+    const standings = { ...result, complete: result.complete && members.every((m) => m !== null) };
+    standingsMemo.set(group, standings);
+    return standings;
   };
+
+  /**
+   * Carry-over (groups → groups): the matches of the groups stage before that were played between
+   * two members of this group. They count in its standings instead of being played again.
+   */
+  function carriedOver(competition: Competition, stage: GroupsStage, members: (Entry | null)[]): PlayedMatch[] {
+    const previous = competition.stages[competition.stages.indexOf(stage) - 1];
+    if (!stage.carryOver || previous?.type !== 'groups') return [];
+    const ids = new Set(members.flatMap((m) => (m ? [m.id] : [])));
+    return previous.matches.flatMap((m) => {
+      const entries = matchEntries(m.id);
+      if (!entries[0] || !entries[1] || !ids.has(entries[0].id) || !ids.has(entries[1].id)) return [];
+      const { winner, result, withdrawal } = outcome(m.id);
+      return [{ entries, winner, result, decided: result !== null || withdrawal }];
+    });
+  }
 
   function resolveSlot(competition: Competition, source: SlotSource): Resolved {
     switch (source.kind) {

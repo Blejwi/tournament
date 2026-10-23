@@ -35,6 +35,12 @@ export interface StageHandler<S extends Stage = Stage> {
   config(stage: S): Extract<StageConfig, { type: S['type'] }>;
   /** Places the entrants and creates the stage's matches; the result has `drawState: 'drawn'`. */
   draw(stage: S, ctx: DrawContext): Result<S>;
+  /**
+   * Who goes on from this stage to the next one, as origin labels in the order the next stage is
+   * filled (e.g. all winners in group order, then all runners-up). A stage type that can't feed
+   * another stage leaves this out.
+   */
+  advancers?(stage: S): DrawEntrant[];
   /** Discards the draw (back to `notDrawn`), e.g. when the entries change. */
   clearDraw(stage: S): S;
   /**
@@ -42,7 +48,7 @@ export interface StageHandler<S extends Stage = Stage> {
    * an entrant to another position (into another group, or onto a BYE). The command layer checks
    * the draw state first. A stage type without draw editing leaves these out.
    */
-  swapPositions?(stage: S, a: DrawPosition, b: DrawPosition): Result<S>;
+  swapPositions?(stage: S, a: DrawPosition, b: DrawPosition, ids: IdSource): Result<S>;
   movePosition?(stage: S, from: DrawPosition, to: DrawPosition, ids: IdSource): Result<S>;
   /** Whether a match in this stage may be recorded as games only (e.g. 3:1), without the points of each game. */
   allowsGamesOnly: boolean;

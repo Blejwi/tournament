@@ -4,7 +4,7 @@ import type { TiebreakRule } from '../stages/tiebreak';
 import type { CompetitionId, DrawState, EntryId, Grouping, GroupId, StageId, Timestamp, TournamentState } from '../types';
 import { entryView, type EntryView } from './competitions';
 import { doubleEliminationView, singleEliminationView, type DoubleEliminationStageView, type SingleEliminationStageView } from './bracket';
-import { matchView, type MatchView, type SlotView } from './matches';
+import { matchView, originView, type MatchView, type SlotView } from './matches';
 
 export interface StandingsRowView {
   /** 1-based draw position in the group. */
@@ -105,7 +105,7 @@ export function getStage(state: TournamentState, id: StageId, now: Timestamp): S
       name: group.name,
       entries: group.entries.map((source) => {
         const entry = derived.resolve(competition, source);
-        return { source: structuredClone(source), entry: entry ? entryView(state, entry) : null, bye: source.kind === 'bye', feeder: null };
+        return { source: structuredClone(source), entry: entry ? entryView(state, entry) : null, bye: source.kind === 'bye', feeder: null, origin: originView(competition, source) };
       }),
       standings: standings.rows.map((row) => ({ ...row, entry: row.entry ? entryView(state, row.entry) : null })),
       tiebreak: standings.steps.map((step) => ({

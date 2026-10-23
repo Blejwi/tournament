@@ -25,13 +25,14 @@ type Cmd<T extends DrawCommand['type']> = Extract<DrawCommand, { type: T }>;
 export function swapSlots(state: TournamentState, cmd: Cmd<'swapSlots'>): Result<TournamentState> {
   const located = findStage(state, cmd.stage);
   if (!located.ok) return located;
+  const ids = idSource(state);
   const edited = editDraw(state, cmd.stage, (stage, handler) =>
-    handler.swapPositions ? handler.swapPositions(stage, cmd.a, cmd.b) : fail({ code: 'drawEditNotSupported' }),
+    handler.swapPositions ? handler.swapPositions(stage, cmd.a, cmd.b, ids) : fail({ code: 'drawEditNotSupported' }),
   );
   if (!edited.ok) return edited;
   const { competition, stage } = located.value;
   return ok(
-    appendLog(edited.value, {
+    appendLog(ids.commit(edited.value), {
       type: 'drawSlotsSwapped',
       at: cmd.at,
       competition: competition.id,
