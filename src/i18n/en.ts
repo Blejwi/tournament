@@ -312,6 +312,9 @@ export const en = {
     resultRecorded: 'Score {{match}}: {{score}}',
     removedMatch: 'a match no longer in the draw',
     showMatch: 'Show this match on the canvas',
+    nobody: 'nobody',
+    drawSlotsSwapped: '{{competition}}: draw swap, {{a}} ⇄ {{b}}',
+    drawPlayerMoved: '{{competition}}: draw move, {{from}} → {{to}}',
   },
   play: {
     noCompetitions: 'No competitions yet.',

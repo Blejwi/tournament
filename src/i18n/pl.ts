@@ -313,6 +313,9 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     resultRecorded: 'Wynik {{match}}: {{score}}',
     removedMatch: 'mecz, którego nie ma już w losowaniu',
     showMatch: 'Pokaż ten mecz na planszy',
+    nobody: 'nikt',
+    drawSlotsSwapped: '{{competition}}: zamiana w losowaniu, {{a}} ⇄ {{b}}',
+    drawPlayerMoved: '{{competition}}: przeniesienie w losowaniu, {{from}} → {{to}}',
   },
   play: {
     noCompetitions: 'Nie ma jeszcze konkurencji.',

@@ -15,6 +15,12 @@ function setup() {
 
 const lastNames = (players: { lastName: string }[]) => players.map((p) => p.lastName);
 
+/** The match of a match-related entry (narrows the union). */
+function matchOf(entry: ReturnType<typeof getChangeLog>[number]) {
+  if (!('match' in entry)) throw new Error(`entry ${entry.type} has no match`);
+  return entry.match;
+}
+
 describe('change log', () => {
   it('is empty for a new tournament', () => {
     expect(getChangeLog(setup().state)).toEqual([]);
@@ -26,8 +32,8 @@ describe('change log', () => {
 
     const [entry] = getChangeLog(next);
     expect(entry).toMatchObject({ type: 'matchAssigned', at: T0, table: 2, match: { id: match, competition, competitionName: 'Open' } });
-    expect(lastNames(entry.match.players[0])).toEqual([slotA]);
-    expect(entry.match.players.flat().map((p) => p.lastName).sort()).toEqual(['P1', 'P4']);
+    expect(lastNames(matchOf(entry).players[0])).toEqual([slotA]);
+    expect(matchOf(entry).players.flat().map((p) => p.lastName).sort()).toEqual(['P1', 'P4']);
   });
 
   it('records taking a match off its table, with the table it was on', () => {
@@ -66,7 +72,7 @@ describe('change log', () => {
       { type: 'assignMatch', match: other, table: tableId(state, 2), at: T0 + MIN },
       { type: 'recordResult', match, result: { kind: 'games', games: [[11, 1], [11, 2], [11, 3]] }, at: T0 + 10 * MIN },
     );
-    expect(getChangeLog(next).map((e) => [e.type, e.match.id, e.at])).toEqual([
+    expect(getChangeLog(next).map((e) => [e.type, matchOf(e).id, e.at])).toEqual([
       ['resultRecorded', match, T0 + 10 * MIN],
       ['matchAssigned', other, T0 + MIN],
       ['matchAssigned', match, T0],

@@ -4,6 +4,7 @@ import type {
   Entry,
   Group,
   LogEntry,
+  LoggedDrawPlace,
   LoggedMatch,
   LoggedTable,
   GroupsStage,
@@ -168,6 +169,12 @@ const loggedTableSchema = z.object({ table: id, number: z.number().int().min(1) 
 
 const at = z.number().int();
 
+const loggedDrawPlaceSchema = z.object({
+  group: z.string().nullable(),
+  position: z.number().int().min(1),
+  players: z.array(id),
+}) satisfies z.ZodType<LoggedDrawPlace>;
+
 /** One option per change-log entry type (see `LogEntry`). */
 const logEntrySchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('matchAssigned'), at, match: loggedMatchSchema, table: loggedTableSchema }),
@@ -179,6 +186,8 @@ const logEntrySchema = z.discriminatedUnion('type', [
     result: matchResultSchema,
     table: loggedTableSchema.nullable(),
   }),
+  z.object({ type: z.literal('drawSlotsSwapped'), at, competition: id, stage: id, a: loggedDrawPlaceSchema, b: loggedDrawPlaceSchema }),
+  z.object({ type: z.literal('drawPlayerMoved'), at, competition: id, stage: id, from: loggedDrawPlaceSchema, to: loggedDrawPlaceSchema }),
 ]) satisfies z.ZodType<LogEntry>;
 
 /** The change log section (the state's `log`, kept out of `tournament` in the file), oldest first. */

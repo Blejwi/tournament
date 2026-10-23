@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { execute, getCompetition, getStage, type DrawPosition } from '@/engine';
+import { execute, getChangeLog, getCompetition, getStage, type DrawPosition } from '@/engine';
 import { errorOf } from './helpers';
 import { drawnBracket, drawnGroups, groupNames, groupsOf, roundsOf, run, slotLabel, slotName } from './scenarios';
 
+const T0 = Date.UTC(2026, 4, 1, 9, 0);
 const allSeeded = (count: number) => Object.fromEntries(Array.from({ length: count }, (_, i) => [i + 1, i + 1]));
 
 /** 8 seeded entries in 2 groups, drawn but not confirmed: A = P1 P4 P5 P8, B = P2 P3 P6 P7. */
@@ -22,7 +23,7 @@ describe('editing a groups draw before confirming', () => {
     ]);
     const [a, b] = groupsOf(state, stage);
 
-    const next = run(state, { type: 'swapSlots', stage, a: at(a.id, 2), b: at(b.id, 3) });
+    const next = run(state, { type: 'swapSlots', at: T0, stage, a: at(a.id, 2), b: at(b.id, 3) });
 
     expect(groupNames(next, stage)).toEqual([
       ['P1', 'P6', 'P5', 'P8'],
@@ -43,7 +44,7 @@ describe('editing a groups draw before confirming', () => {
   it('keeps the matches (same ids, same order) when swapping, only their players change', () => {
     const { state, stage } = twoGroups();
     const [a, b] = groupsOf(state, stage);
-    const next = run(state, { type: 'swapSlots', stage, a: at(a.id, 1), b: at(b.id, 1) });
+    const next = run(state, { type: 'swapSlots', at: T0, stage, a: at(a.id, 1), b: at(b.id, 1) });
     const ids = (s: typeof state) => groupsOf(s, stage).map((g) => g.matches.map((m) => m.id));
     expect(ids(next)).toEqual(ids(state));
   });
@@ -54,7 +55,7 @@ describe('moving an entry to another group before confirming', () => {
     const { state, stage } = twoGroups();
     const [a, b] = groupsOf(state, stage);
 
-    const next = run(state, { type: 'movePlayer', stage, from: at(a.id, 4), to: at(b.id, 5) });
+    const next = run(state, { type: 'movePlayer', at: T0, stage, from: at(a.id, 4), to: at(b.id, 5) });
 
     expect(groupNames(next, stage)).toEqual([
       ['P1', 'P4', 'P5'],
@@ -70,7 +71,7 @@ describe('moving an entry to another group before confirming', () => {
   it('reorders the draw positions inside a group', () => {
     const { state, stage } = twoGroups();
     const [a] = groupsOf(state, stage);
-    const next = run(state, { type: 'movePlayer', stage, from: at(a.id, 4), to: at(a.id, 1) });
+    const next = run(state, { type: 'movePlayer', at: T0, stage, from: at(a.id, 4), to: at(a.id, 1) });
     expect(groupNames(next, stage)[0]).toEqual(['P8', 'P1', 'P4', 'P5']);
   });
 
@@ -78,7 +79,7 @@ describe('moving an entry to another group before confirming', () => {
     const { state, stage } = drawnGroups(5, { by: 'count', groups: 2 }, { seeds: allSeeded(5), confirm: false });
     const [a, b] = groupsOf(state, stage);
     expect(b.entries).toHaveLength(2);
-    const result = execute(state, { type: 'movePlayer', stage, from: at(b.id, 1), to: at(a.id, 1) });
+    const result = execute(state, { type: 'movePlayer', at: T0, stage, from: at(b.id, 1), to: at(a.id, 1) });
     expect(errorOf(result)).toEqual({ code: 'groupTooSmall', min: 2 });
   });
 
@@ -86,11 +87,11 @@ describe('moving an entry to another group before confirming', () => {
     const { state, stage } = twoGroups();
     const [a, b] = groupsOf(state, stage);
     for (const command of [
-      { type: 'swapSlots' as const, stage, a: at(a.id, 5), b: at(b.id, 1) },
-      { type: 'swapSlots' as const, stage, a: at('nope', 1), b: at(b.id, 1) },
-      { type: 'swapSlots' as const, stage, a: { kind: 'bracket' as const, position: 1 }, b: at(b.id, 1) },
-      { type: 'movePlayer' as const, stage, from: at(a.id, 1), to: at(b.id, 6) },
-      { type: 'movePlayer' as const, stage, from: at(a.id, 1), to: at(a.id, 5) },
+      { type: 'swapSlots' as const, at: T0, stage, a: at(a.id, 5), b: at(b.id, 1) },
+      { type: 'swapSlots' as const, at: T0, stage, a: at('nope', 1), b: at(b.id, 1) },
+      { type: 'swapSlots' as const, at: T0, stage, a: { kind: 'bracket' as const, position: 1 }, b: at(b.id, 1) },
+      { type: 'movePlayer' as const, at: T0, stage, from: at(a.id, 1), to: at(b.id, 6) },
+      { type: 'movePlayer' as const, at: T0, stage, from: at(a.id, 1), to: at(a.id, 5) },
     ]) {
       expect(errorOf(execute(state, command))).toEqual({ code: 'drawPositionNotFound' });
     }
@@ -105,7 +106,7 @@ const firstRound = (state: Parameters<typeof roundsOf>[0], stage: string) => rou
 describe('editing a bracket draw before confirming', () => {
   it('swaps two bracket positions; the BYE match and the next round follow', () => {
     const { state, stage } = bracket13();
-    const next = run(state, { type: 'swapSlots', stage, a: pos(1), b: pos(3) });
+    const next = run(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(3) });
 
     expect(firstRound(next, stage).slice(0, 2)).toEqual(['P9 v BYE', 'P1 v P8']);
     expect(slotLabel(roundsOf(next, stage)[1][0], 0)).toBe('P9');
@@ -113,39 +114,39 @@ describe('editing a bracket draw before confirming', () => {
 
   it('moves an entry onto a BYE, which takes its old position', () => {
     const { state, stage } = bracket13();
-    const next = run(state, { type: 'movePlayer', stage, from: pos(3), to: pos(2) });
+    const next = run(state, { type: 'movePlayer', at: T0, stage, from: pos(3), to: pos(2) });
     expect(firstRound(next, stage).slice(0, 2)).toEqual(['P1 v P9', 'BYE v P8']);
   });
 
   it('moves only onto a BYE; onto a player it is a swap', () => {
     const { state, stage } = bracket13();
-    expect(errorOf(execute(state, { type: 'movePlayer', stage, from: pos(3), to: pos(4) }))).toEqual({ code: 'positionTaken' });
+    expect(errorOf(execute(state, { type: 'movePlayer', at: T0, stage, from: pos(3), to: pos(4) }))).toEqual({ code: 'positionTaken' });
   });
 
   it('never puts a BYE on both sides of a first-round match', () => {
     const { state, stage } = bracket13();
-    expect(errorOf(execute(state, { type: 'swapSlots', stage, a: pos(1), b: pos(10) }))).toEqual({ code: 'byeAgainstBye' });
+    expect(errorOf(execute(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(10) }))).toEqual({ code: 'byeAgainstBye' });
   });
 
   it('rejects positions outside the bracket', () => {
     const { state, stage } = bracket13();
     for (const b of [pos(0), pos(17), at('group-1', 1)]) {
-      expect(errorOf(execute(state, { type: 'swapSlots', stage, a: pos(1), b }))).toEqual({ code: 'drawPositionNotFound' });
+      expect(errorOf(execute(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b }))).toEqual({ code: 'drawPositionNotFound' });
     }
   });
 
   it('is locked once the bracket is confirmed', () => {
     const { state, stage } = bracket13();
     const confirmed = run(state, { type: 'confirmStage', stage });
-    expect(errorOf(execute(confirmed, { type: 'swapSlots', stage, a: pos(1), b: pos(3) }))).toEqual({ code: 'stageConfirmed' });
-    expect(errorOf(execute(confirmed, { type: 'movePlayer', stage, from: pos(3), to: pos(2) }))).toEqual({ code: 'stageConfirmed' });
+    expect(errorOf(execute(confirmed, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(3) }))).toEqual({ code: 'stageConfirmed' });
+    expect(errorOf(execute(confirmed, { type: 'movePlayer', at: T0, stage, from: pos(3), to: pos(2) }))).toEqual({ code: 'stageConfirmed' });
   });
 });
 
 describe('re-drawing before confirming', () => {
   it('gives a new bracket draw for a new random seed; seeded entries stay on their positions', () => {
     const { state, stage } = drawnBracket(16, { seeds: { 1: 1, 2: 2, 3: 3, 4: 4 }, confirm: false, randomSeed: 1 });
-    const edited = run(state, { type: 'swapSlots', stage, a: pos(1), b: pos(2) });
+    const edited = run(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(2) });
     const redrawn = run(edited, { type: 'generateDraw', stage, randomSeed: 2 });
 
     const positions = (s: typeof state) => roundsOf(s, stage)[0].flatMap((m) => [slotLabel(m, 0), slotLabel(m, 1)]);
@@ -176,8 +177,8 @@ describe('the draw is locked once confirmed', () => {
   it('rejects swaps and moves after confirmation, and before the draw', () => {
     const drawn = twoGroups();
     const [a, b] = groupsOf(drawn.state, drawn.stage);
-    const swap = { type: 'swapSlots' as const, stage: drawn.stage, a: at(a.id, 1), b: at(b.id, 1) };
-    const move = { type: 'movePlayer' as const, stage: drawn.stage, from: at(a.id, 1), to: at(b.id, 1) };
+    const swap = { type: 'swapSlots' as const, at: T0, stage: drawn.stage, a: at(a.id, 1), b: at(b.id, 1) };
+    const move = { type: 'movePlayer' as const, at: T0, stage: drawn.stage, from: at(a.id, 1), to: at(b.id, 1) };
     const confirmed = run(drawn.state, { type: 'confirmStage', stage: drawn.stage });
     expect(errorOf(execute(confirmed, swap))).toEqual({ code: 'stageConfirmed' });
     expect(errorOf(execute(confirmed, move))).toEqual({ code: 'stageConfirmed' });
@@ -190,5 +191,50 @@ describe('the draw is locked once confirmed', () => {
     const stage = getCompetition(notDrawn, drawn.competition)!.stages[0].id;
     expect(errorOf(execute(notDrawn, { ...swap, stage }))).toEqual({ code: 'stageNotDrawn' });
     expect(errorOf(execute(notDrawn, { ...move, stage }))).toEqual({ code: 'stageNotDrawn' });
+  });
+});
+
+describe('change log of draw edits', () => {
+  it('records a swap with both places and who sat there before', () => {
+    const { state, stage } = twoGroups();
+    const [a, b] = groupsOf(state, stage);
+    const next = run(state, { type: 'swapSlots', at: T0, stage, a: at(a.id, 2), b: at(b.id, 3) });
+
+    const [entry] = getChangeLog(next);
+    expect(entry.type).toBe('drawSlotsSwapped');
+    if (entry.type !== 'drawSlotsSwapped') return;
+    expect(entry.at).toBe(T0);
+    expect(entry.competitionName).toBe('Open');
+    expect(entry.a).toMatchObject({ group: 'A', position: 2 });
+    expect(entry.b).toMatchObject({ group: 'B', position: 3 });
+    expect(entry.a.players.map((p) => p.lastName)).toEqual(['P4']);
+    expect(entry.b.players.map((p) => p.lastName)).toEqual(['P6']);
+  });
+
+  it('records a move with where the player came from and went to', () => {
+    const { state, stage } = twoGroups();
+    const [a, b] = groupsOf(state, stage);
+    const next = run(state, { type: 'movePlayer', at: T0, stage, from: at(a.id, 4), to: at(b.id, 5) });
+
+    const [entry] = getChangeLog(next);
+    expect(entry.type).toBe('drawPlayerMoved');
+    if (entry.type !== 'drawPlayerMoved') return;
+    expect(entry.from).toMatchObject({ group: 'A', position: 4 });
+    expect(entry.to).toMatchObject({ group: 'B', position: 5 });
+    expect(entry.from.players.map((p) => p.lastName)).toEqual(['P8']);
+  });
+
+  it('records bracket edits without a group, and a BYE as nobody', () => {
+    const { state, stage } = bracket13();
+    const next = run(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(2) }, { type: 'movePlayer', at: T0 + 1, stage, from: pos(3), to: pos(1) });
+    const [moved, swapped] = getChangeLog(next);
+    expect(swapped).toMatchObject({ type: 'drawSlotsSwapped', a: { group: null, position: 1 }, b: { group: null, position: 2, players: [] } });
+    expect(moved).toMatchObject({ type: 'drawPlayerMoved', from: { group: null, position: 3 }, to: { group: null, position: 1 } });
+  });
+
+  it('logs nothing for a rejected edit', () => {
+    const { state, stage } = bracket13();
+    expect(errorOf(execute(state, { type: 'swapSlots', at: T0, stage, a: pos(1), b: pos(99) }))).toEqual({ code: 'drawPositionNotFound' });
+    expect(getChangeLog(state)).toEqual([]);
   });
 });

@@ -59,8 +59,8 @@ export function DrawEditor(props: { stage: StageId; bracket: boolean; children: 
       if (!from || samePosition(from, target.at)) return setPicked(null);
       run(
         target.kind === 'swap'
-          ? dispatch({ type: 'swapSlots', stage: props.stage, a: from, b: target.at })
-          : dispatch({ type: 'movePlayer', stage: props.stage, from, to: target.at }),
+          ? dispatch({ type: 'swapSlots', at: Date.now(), stage: props.stage, a: from, b: target.at })
+          : dispatch({ type: 'movePlayer', at: Date.now(), stage: props.stage, from, to: target.at }),
       );
     },
   };

@@ -28,6 +28,7 @@ export type {
   TournamentId,
   TournamentState,
   LogEntry,
+  LoggedDrawPlace,
   LogEntryType,
 } from './types';
 
@@ -103,6 +104,7 @@ export {
   type MatchCountsView,
   getChangeLog,
   type ChangeLogEntryView,
+  type LoggedDrawPlaceView,
   type LoggedMatchView,
   getStats,
   LONGEST_MATCHES,

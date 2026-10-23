@@ -226,6 +226,15 @@ export interface LoggedTable {
   number: number;
 }
 
+/** A place in a stage's draw as it was when an entry was written: who sat there (nobody for a BYE or a free place). */
+export interface LoggedDrawPlace {
+  /** The group's name ("A"); null in a bracket. */
+  group: string | null;
+  /** 1-based draw position (in the group, or in the first round of the bracket). */
+  position: number;
+  players: PlayerId[];
+}
+
 /**
  * One change-log entry: a timestamped record of an operator action, with enough detail to settle
  * a dispute (e.g. the old and new score). Data only, no display text. Adding an entry type:
@@ -237,6 +246,10 @@ export type LogEntry =
   /** A match was taken off its table (`unassignMatch`). */
   | { type: 'matchUnassigned'; at: Timestamp; match: LoggedMatch; table: LoggedTable }
   /** A score was entered (`recordResult`); `table` is where it was played, if it was called. */
-  | { type: 'resultRecorded'; at: Timestamp; match: LoggedMatch; result: MatchResult; table: LoggedTable | null };
+  | { type: 'resultRecorded'; at: Timestamp; match: LoggedMatch; result: MatchResult; table: LoggedTable | null }
+  /** Two draw positions traded places before the draw was confirmed (`swapSlots`); players as they were before. */
+  | { type: 'drawSlotsSwapped'; at: Timestamp; competition: CompetitionId; stage: StageId; a: LoggedDrawPlace; b: LoggedDrawPlace }
+  /** A player was moved to another draw position (`movePlayer`); `from` and `to` as they were before. */
+  | { type: 'drawPlayerMoved'; at: Timestamp; competition: CompetitionId; stage: StageId; from: LoggedDrawPlace; to: LoggedDrawPlace };
 
 export type LogEntryType = LogEntry['type'];

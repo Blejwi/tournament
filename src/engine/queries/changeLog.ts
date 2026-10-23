@@ -1,4 +1,4 @@
-import type { LogEntry, LoggedMatch, MatchId, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
+import type { LogEntry, LoggedDrawPlace, LoggedMatch, MatchId, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
 import type { EntryPlayerView } from './competitions';
 import { locationView, resultView, type MatchLocationView, type ResultView } from './matches';
 
@@ -19,6 +19,15 @@ export interface LoggedMatchView {
   players: [EntryPlayerView[], EntryPlayerView[]];
 }
 
+/** A draw position as it was when the entry was written. */
+export interface LoggedDrawPlaceView {
+  /** The group's name; null in a bracket. */
+  group: string | null;
+  position: number;
+  /** Who sat there; empty for a BYE or a free place. */
+  players: EntryPlayerView[];
+}
+
 /**
  * One change-log entry as shown. `seq` is its 0-based position in the log (oldest = 0), stable
  * across calls, so it works as a list key. Each entry type adds its own fields.
@@ -27,6 +36,8 @@ export type ChangeLogEntryView = { seq: number; at: Timestamp } & (
   | { type: 'matchAssigned'; match: LoggedMatchView; table: number }
   | { type: 'matchUnassigned'; match: LoggedMatchView; table: number }
   | { type: 'resultRecorded'; match: LoggedMatchView; result: ResultView; table: number | null }
+  | { type: 'drawSlotsSwapped'; competition: CompetitionId; competitionName: string; stage: StageId; a: LoggedDrawPlaceView; b: LoggedDrawPlaceView }
+  | { type: 'drawPlayerMoved'; competition: CompetitionId; competitionName: string; stage: StageId; from: LoggedDrawPlaceView; to: LoggedDrawPlaceView }
 );
 
 /** The change log, newest first. */
@@ -49,7 +60,38 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
         result: resultView(entry.result),
         table: entry.table?.number ?? null,
       };
+    case 'drawSlotsSwapped':
+      return {
+        ...base,
+        type: entry.type,
+        competition: entry.competition,
+        competitionName: competitionName(state, entry.competition),
+        stage: entry.stage,
+        a: loggedPlaceView(state, entry.a),
+        b: loggedPlaceView(state, entry.b),
+      };
+    case 'drawPlayerMoved':
+      return {
+        ...base,
+        type: entry.type,
+        competition: entry.competition,
+        competitionName: competitionName(state, entry.competition),
+        stage: entry.stage,
+        from: loggedPlaceView(state, entry.from),
+        to: loggedPlaceView(state, entry.to),
+      };
   }
+}
+
+const competitionName = (state: TournamentState, id: CompetitionId) => state.competitions.find((c) => c.id === id)?.name ?? '';
+
+function playerView(state: TournamentState, id: string): EntryPlayerView {
+  const p = state.players.find((x) => x.id === id);
+  return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
+}
+
+function loggedPlaceView(state: TournamentState, place: LoggedDrawPlace): LoggedDrawPlaceView {
+  return { group: place.group, position: place.position, players: place.players.map((id) => playerView(state, id)) };
 }
 
 function loggedMatchView(state: TournamentState, logged: LoggedMatch): LoggedMatchView {

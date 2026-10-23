@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import type { ChangeLogEntryView, LoggedMatchView, MatchView, ResultView } from '@/engine';
+import type { ChangeLogEntryView, LoggedDrawPlaceView, LoggedMatchView, MatchView, ResultView } from '@/engine';
 import { formatGames, playerName } from '@/ui/format';
 import { matchTitle } from '@/ui/matchLabels';
 
@@ -13,6 +13,13 @@ function loggedMatchText(t: TFunction, match: LoggedMatchView): string {
   const side = (players: LoggedMatchView['players'][number]) =>
     players.length ? players.map((p) => playerName(p)).join(' / ') : t('match.unknown');
   return [match.competitionName, where, `${side(match.players[0])} – ${side(match.players[1])}`].filter(Boolean).join(' · ');
+}
+
+/** A draw position: "A2 J. Kowalski", or "7" in a bracket; nobody reads as a BYE or free place. */
+function drawPlaceText(t: TFunction, place: LoggedDrawPlaceView): string {
+  const where = place.group ? `${place.group}${place.position}` : String(place.position);
+  const who = place.players.length ? place.players.map((p) => playerName(p)).join(' / ') : t('changeLog.nobody');
+  return `${who} (${where})`;
 }
 
 /** "11-7 9-11 11-5" or, for a games-only result, "3:1". */
@@ -28,6 +35,10 @@ export function entryText(t: TFunction, entry: ChangeLogEntryView): string {
       return t(`changeLog.${entry.type}`, { match: loggedMatchText(t, entry.match), table: entry.table });
     case 'resultRecorded':
       return t('changeLog.resultRecorded', { match: loggedMatchText(t, entry.match), score: scoreText(entry.result) });
+    case 'drawSlotsSwapped':
+      return t('changeLog.drawSlotsSwapped', { competition: entry.competitionName, a: drawPlaceText(t, entry.a), b: drawPlaceText(t, entry.b) });
+    case 'drawPlayerMoved':
+      return t('changeLog.drawPlayerMoved', { competition: entry.competitionName, from: drawPlaceText(t, entry.from), to: drawPlaceText(t, entry.to) });
   }
 }
 
