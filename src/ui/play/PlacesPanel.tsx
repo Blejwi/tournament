@@ -98,7 +98,7 @@ export function PlacesPanel(props: { competition: CompetitionId }) {
                 <ul className="min-w-0 flex-1">
                   {block.entries.map(({ entry }) => (
                     <li key={entry.id} className="text-sm">
-                      <span className="block truncate font-medium">{entryName(entry, false)}</span>
+                      <span className="block break-words font-medium">{entryName(entry)}</span>
                       {entry.players.some((p) => p.club) && (
                         <span className="block truncate text-xs text-slate-500">
                           {entry.players
