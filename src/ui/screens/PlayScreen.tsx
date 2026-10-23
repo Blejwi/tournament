@@ -26,6 +26,7 @@ import { GroupBox } from '@/ui/play/GroupBox';
 import { GroupDetail } from '@/ui/play/GroupDetail';
 import { roundTitle } from '@/ui/matchLabels';
 import { MatchPopover } from '@/ui/play/MatchPopover';
+import { PlacesPanel } from '@/ui/play/PlacesPanel';
 import { StatsDrawer } from '@/ui/play/StatsDrawer';
 import { TablesFullScreen, TablesPanel } from '@/ui/play/TablesPanel';
 import { WaitingList, type WaitingListScope } from '@/ui/play/WaitingList';
@@ -154,6 +155,7 @@ export function PlayScreen() {
           selectedMatch={selection?.match ?? null}
           onSelect={select}
         />
+        <PlacesPanel competition={competitionId} />
       </div>
       <StatsDrawer now={now} onFocus={select} />
     </div>

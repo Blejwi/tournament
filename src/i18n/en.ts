@@ -346,6 +346,14 @@ export const en = {
     collapse: 'Hide',
     expand: 'Show the waiting list',
   },
+  places: {
+    heading: 'Final places',
+    expand: 'Show the final places',
+    collapse: 'Hide',
+    empty: 'No places yet.',
+    open_one: '{{count}} still open',
+    open_other: '{{count}} still open',
+  },
   tables: {
     heading: 'Tables',
     add: 'Add table',

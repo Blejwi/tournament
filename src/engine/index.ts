@@ -87,6 +87,7 @@ export {
   getFinalPlaces,
   type FinalPlacesView,
   type FinalPlaceView,
+  type OpenPlaceView,
   getWaitingList,
   getFreeTables,
   validateResult,
