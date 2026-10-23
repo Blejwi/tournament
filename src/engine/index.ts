@@ -79,6 +79,7 @@ export {
   getStage,
   type StageView,
   type GroupsStageView,
+  type CarriedMatchView,
   type GroupView,
   type StandingsRowView,
   type SingleEliminationStageView,

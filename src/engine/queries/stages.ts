@@ -4,7 +4,7 @@ import type { TiebreakRule } from '../stages/tiebreak';
 import type { CompetitionId, DrawState, EntryId, Grouping, GroupId, StageId, Timestamp, TournamentState } from '../types';
 import { entryView, type EntryView } from './competitions';
 import { doubleEliminationView, singleEliminationView, type DoubleEliminationStageView, type SingleEliminationStageView } from './bracket';
-import { matchView, originView, type MatchView, type SlotView } from './matches';
+import { matchView, originView, resultView, type MatchView, type ResultView, type SlotView } from './matches';
 
 export interface StandingsRowView {
   /** 1-based draw position in the group. */
@@ -69,6 +69,15 @@ export interface GroupView {
   matches: MatchView[];
   /** Every match has a result. */
   complete: boolean;
+  /** Results of the previous groups stage that count here instead of being played again (carry-over). */
+  carriedOver: CarriedMatchView[];
+}
+
+/** A first-phase result between two members of this group, carried over into its standings. */
+export interface CarriedMatchView {
+  /** Slot order of the match in the first stage. */
+  entries: [EntryView, EntryView];
+  result: ResultView;
 }
 
 export interface GroupsStageView {
@@ -117,6 +126,11 @@ export function getStage(state: TournamentState, id: StageId, now: Timestamp): S
       ties: standings.ties.map((tie) => ({ entries: tie.entries.map(entry), resolution: tie.resolution })),
       matches,
       complete: standings.complete,
+      carriedOver: derived.carriedOver(stage, group).flatMap((m) =>
+        m.result && m.entries[0] && m.entries[1]
+          ? [{ entries: [entryView(state, m.entries[0]), entryView(state, m.entries[1])] as [EntryView, EntryView], result: resultView(m.result, m.winner ?? undefined) }]
+          : [],
+      ),
     };
   });
 

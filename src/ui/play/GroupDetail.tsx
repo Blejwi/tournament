@@ -107,7 +107,25 @@ function CrossTable({ group }: { group: GroupView }) {
       const pair = [m.slots[0].entry?.id, m.slots[1].entry?.id];
       return row && column && pair.includes(row) && pair.includes(column);
     });
-    if (!match) return <td key={j} />;
+    if (!match) {
+      const carried = group.carriedOver.find((c) => row && column && c.entries.some((e) => e.id === row) && c.entries.some((e) => e.id === column));
+      if (!carried) return <td key={j} />;
+      const side = carried.entries[0].id === row ? 0 : 1;
+      const [a, b] = side === 0 ? carried.result.gamesWon : [carried.result.gamesWon[1], carried.result.gamesWon[0]];
+      return (
+        <td
+          key={j}
+          title={t('groups.carriedOverTitle')}
+          className={cn(
+            'text-center font-semibold tabular-nums italic',
+            carried.result.winner === side ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600',
+          )}
+        >
+          <span className="mr-0.5 text-[10px] font-normal not-italic opacity-70">↩</span>
+          {hasGames(carried) ? `${a}:${b}` : t(`match.specialBadge.${specialKind(carried.result)!}`)}
+        </td>
+      );
+    }
     const side = match.slots[0].entry?.id === row ? 0 : 1;
     if (match.result) {
       const won = match.result.winner === side;
@@ -159,7 +177,10 @@ function CrossTable({ group }: { group: GroupView }) {
           ))}
         </tbody>
       </table>
-      <p className="mt-1 text-xs text-slate-400">{t('groupDetail.crossTableHint')}</p>
+      <p className="mt-1 text-xs text-slate-400">
+        {t('groupDetail.crossTableHint')}
+        {group.carriedOver.length > 0 && ` ${t('groups.carriedOver')}: ${t('groups.carriedOverTitle').toLowerCase()}.`}
+      </p>
     </section>
   );
 }

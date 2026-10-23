@@ -135,6 +135,8 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     group: 'Grupa {{name}}',
     played: 'Rozegrane: {{done}}/{{total}}',
     final: 'końcowa',
+    carriedOver: '↩ 1. faza',
+    carriedOverTitle: 'Rozegrany w pierwszej fazie i zaliczony',
     place: 'Msc.',
     player: 'Zawodnik',
     wonLost: 'Z–P',

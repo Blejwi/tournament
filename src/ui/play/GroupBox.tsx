@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { entryName } from '@/ui/format';
 import { originLabel } from '@/ui/matchLabels';
 import { MatchCard } from './MatchCard';
+import { hasGames, specialKind } from './specialResults';
 
 /** A group on the canvas: standings, then the group's matches in play order. */
 export function GroupBox(props: {
@@ -78,6 +79,18 @@ export function GroupBox(props: {
           })}
         </tbody>
       </table>
+      {group.carriedOver.length > 0 && (
+        <ul className="mb-2 grid gap-0.5 text-[11px] text-slate-500" aria-label={t('groups.carriedOverTitle')}>
+          {group.carriedOver.map((carried, i) => (
+            <li key={i} title={t('groups.carriedOverTitle')} className="flex items-center gap-1.5 italic">
+              <span className="font-semibold not-italic">{t('groups.carriedOver')}</span>
+              <span className={cn(carried.result.winner === 0 && 'font-semibold text-slate-700')}>{entryName(carried.entries[0])}</span>
+              <span className="tabular-nums">{hasGames(carried) ? `${carried.result.gamesWon[0]}:${carried.result.gamesWon[1]}` : t(`match.specialBadge.${specialKind(carried.result)!}`)}</span>
+              <span className={cn(carried.result.winner === 1 && 'font-semibold text-slate-700')}>{entryName(carried.entries[1])}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="grid grid-cols-2 gap-2">
         {group.matches.map((match) => (
           <MatchCard

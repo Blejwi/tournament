@@ -163,6 +163,20 @@ describe('carry-over', () => {
     expect(groupsOf(played, two)[0].complete).toBe(false);
   });
 
+  it('lists the carried results of a group with their winners, and none when carry-over is off', () => {
+    const { state, one, two } = finalGroup();
+    const played = playFirst(state, one, two);
+
+    const carried = groupsOf(played, two)[0].carriedOver;
+    expect(carried.map((c) => [c.entries[c.result.winner].players[0].lastName, c.result.gamesWon]).sort()).toEqual([
+      ['P1', [3, 0]],
+      ['P2', [3, 0]],
+    ]);
+    const off = finalGroup(false);
+    expect(groupsOf(playFirst(off.state, off.one, off.two), off.two)[0].carriedOver).toEqual([]);
+    expect(groupsOf(played, one).every((g) => g.carriedOver.length === 0)).toBe(true);
+  });
+
   it('plays the stage out with the carried results in the final standings', () => {
     const { state, one, two } = finalGroup();
     let next = playFirst(state, one, two);

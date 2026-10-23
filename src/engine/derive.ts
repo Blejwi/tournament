@@ -70,6 +70,8 @@ export interface Derived {
   matches: DerivedMatch[];
   match(id: MatchId): DerivedMatch | undefined;
   standings(stage: GroupsStage, group: Group): Standings;
+  /** The results of the previous groups stage that count in this group (carry-over); empty when off or not applicable. */
+  carriedOver(stage: GroupsStage, group: Group): PlayedMatch[];
   resolve(competition: Competition, source: SlotSource): Entry | null;
 }
 
@@ -316,7 +318,12 @@ export function derive(state: TournamentState): Derived {
   });
   const byId = new Map(matches.map((m) => [m.match.id, m]));
 
-  return { matches, match: (id) => byId.get(id), standings, resolve };
+  const carriedOverIn = (stage: GroupsStage, group: Group): PlayedMatch[] => {
+    const competition = competitionOf.get(stage)!;
+    return carriedOver(competition, stage, group.entries.map((source) => asEntry(resolveSlot(competition, source))));
+  };
+
+  return { matches, match: (id) => byId.get(id), standings, carriedOver: carriedOverIn, resolve };
 }
 
 function latest(times: (Timestamp | null)[]): Timestamp | null {

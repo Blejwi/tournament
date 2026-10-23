@@ -135,6 +135,8 @@ export const en = {
     group: 'Group {{name}}',
     played: '{{done}}/{{total}} played',
     final: 'final',
+    carriedOver: '↩ 1st phase',
+    carriedOverTitle: 'Played in the first phase and carried over',
     place: '#',
     player: 'Player',
     wonLost: 'W–L',

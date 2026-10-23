@@ -6,7 +6,7 @@ export function specialKind(result: { kind: string } | null): SpecialResultKind 
 }
 
 /** Whether the result has games to show: a played result or a retirement (a walkover or disqualification has none). */
-export function hasGames(match: MatchView): boolean {
+export function hasGames(match: Pick<MatchView, 'result'>): boolean {
   const kind = match.result?.kind;
   return kind === 'games' || kind === 'gamesOnly' || kind === 'retirement';
 }
