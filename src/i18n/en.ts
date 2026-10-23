@@ -142,6 +142,9 @@ export const en = {
     pendingDraw: 'The draw is not confirmed yet.',
     pendingPlayers: 'Waiting for the players to be known.',
     busy: 'A player is playing on another table.',
+    busyOn: '{{name}} is playing on table {{number}}.',
+    busyOnIn: '{{name}} is playing on table {{number}} in {{competition}}.',
+    busyChip: 'Busy · T{{number}}',
     takeOff: 'Take off table',
     scoreHeading: 'Enter score',
     scoreHint: 'Games separated by spaces, {{name}}’s points first. Enter saves, Esc closes.',
@@ -163,6 +166,17 @@ export const en = {
     fit: 'Fit',
     waitingList: 'Waiting list',
     readyCount: 'Ready: {{count}}',
+    tabReady_one: '{{count}} ready',
+    tabReady_other: '{{count}} ready',
+    tabLive_one: '{{count}} live',
+    tabLive_other: '{{count}} live',
+    tabOverdue_one: '{{count}} overdue',
+    tabOverdue_other: '{{count}} overdue',
+    scope: 'Show the waiting list of',
+    scopeAll: 'All',
+    noReadyIn: 'No ready matches in {{name}}.',
+    waitingMinutes: '{{minutes}} min',
+    waitingSince: 'Ready for {{minutes}} min',
     noReady: 'No ready matches.',
     busyHeading: 'Busy: a player is on another table',
     callTo: 'Call to table {{number}}',
@@ -233,7 +247,25 @@ export const en = {
   } satisfies Record<EngineErrorCode, string>,
 };
 
-type Strings<T> = { [K in keyof T]: T[K] extends string ? string : Strings<T[K]> };
+/** i18next plural suffixes (CLDR categories). */
+type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
-/** The shape every language must match exactly. */
-export type Translations = Strings<typeof en>;
+/**
+ * The shape of a language's strings: the same keys as EN, except plural keys. EN writes a plural as
+ * `key_one` + `key_other`; another language has its own categories instead (`Required`, plus any
+ * of `Optional`), e.g. Polish `key_one`, `key_few`, `key_many`.
+ */
+type Strings<T, Required extends PluralCategory, Optional extends PluralCategory> = {
+  [K in keyof T as K extends `${string}_${PluralCategory}` ? never : K]: T[K] extends string ? string : Strings<T[K], Required, Optional>;
+} & {
+  [K in keyof T as K extends `${infer Base}_${PluralCategory}` ? `${Base}_${Required}` : never]: string;
+} & {
+  [K in keyof T as K extends `${infer Base}_${PluralCategory}` ? `${Base}_${Exclude<Optional, Required>}` : never]?: string;
+};
+
+/** The shape a language with these plural categories must match (Polish: one, few, many; `_other` optional). */
+export type Translations<Required extends PluralCategory = 'one' | 'other', Optional extends PluralCategory = never> = Strings<
+  typeof en,
+  Required,
+  Optional
+>;

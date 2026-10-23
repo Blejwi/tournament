@@ -1,6 +1,7 @@
 import type { Translations } from './en';
 
-export const pl: Translations = {
+/** Polish plurals: _one (1), _few (2-4, 22-24, ...), _many (0, 5-21, ...); _other only for fractions. */
+export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
   app: {
     title: 'Menedżer turniejów',
     language: 'Język',
@@ -141,6 +142,9 @@ export const pl: Translations = {
     pendingDraw: 'Losowanie nie jest jeszcze zatwierdzone.',
     pendingPlayers: 'Czeka, aż zawodnicy będą znani.',
     busy: 'Zawodnik gra przy innym stole.',
+    busyOn: '{{name}} gra przy stole {{number}}.',
+    busyOnIn: '{{name}} gra przy stole {{number}} w konkurencji {{competition}}.',
+    busyChip: 'Zajęty · S{{number}}',
     takeOff: 'Zdejmij ze stołu',
     scoreHeading: 'Wpisz wynik',
     scoreHint: 'Gry oddzielone spacjami, najpierw punkty: {{name}}. Enter zapisuje, Esc zamyka.',
@@ -162,6 +166,20 @@ export const pl: Translations = {
     fit: 'Dopasuj',
     waitingList: 'Lista oczekujących',
     readyCount: 'Gotowe: {{count}}',
+    tabReady_one: '{{count}} gotowy',
+    tabReady_few: '{{count}} gotowe',
+    tabReady_many: '{{count}} gotowych',
+    tabLive_one: '{{count}} w grze',
+    tabLive_few: '{{count}} w grze',
+    tabLive_many: '{{count}} w grze',
+    tabOverdue_one: '{{count}} przeciągnięty',
+    tabOverdue_few: '{{count}} przeciągnięte',
+    tabOverdue_many: '{{count}} przeciągniętych',
+    scope: 'Pokaż listę oczekujących dla',
+    scopeAll: 'Wszystkie',
+    noReadyIn: 'Brak gotowych meczów w konkurencji {{name}}.',
+    waitingMinutes: '{{minutes}} min',
+    waitingSince: 'Gotowy od {{minutes}} min',
     noReady: 'Brak gotowych meczów.',
     busyHeading: 'Zajęte: zawodnik gra przy innym stole',
     callTo: 'Wywołaj do stołu {{number}}',
