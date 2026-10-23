@@ -3,6 +3,10 @@ import type {
   Competition,
   Entry,
   Group,
+  LogEntry,
+  SpecialResult,
+  LoggedMatch,
+  LoggedTable,
   GroupsStage,
   Match,
   MatchResult,
@@ -73,12 +77,16 @@ const slotSourceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('bye') }),
 ]) satisfies z.ZodType<SlotSource>;
 
-const matchResultSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('games'), games: z.array(z.tuple([points, points])) }),
-  z.object({ kind: z.literal('gamesOnly'), games: z.tuple([points, points]) }),
+const specialResultSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('walkover'), winner: slotIndex }),
   z.object({ kind: z.literal('retirement'), winner: slotIndex, games: z.array(z.tuple([points, points])) }),
   z.object({ kind: z.literal('disqualification'), winner: slotIndex }),
+]) satisfies z.ZodType<SpecialResult>;
+
+const matchResultSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('games'), games: z.array(z.tuple([points, points])) }),
+  z.object({ kind: z.literal('gamesOnly'), games: z.tuple([points, points]) }),
+  ...specialResultSchema.options,
 ]) satisfies z.ZodType<MatchResult>;
 
 const placeRangeSchema = z
@@ -157,13 +165,42 @@ export const tournamentSchema = z.object({
   competitions: uniqueArray(competitionSchema, ['id']),
   expectedDurations: z.object({ 2: minutes, 3: minutes, 4: minutes }),
   nextId: z.number().int().min(1),
-}) satisfies z.ZodType<TournamentState>;
+}) satisfies z.ZodType<Omit<TournamentState, 'log'>>;
 
-/**
- * The change log section. The log doesn't exist yet (#0016): files carry an empty array,
- * and any entries are accepted unchecked until #0016 gives them a schema.
- */
-export const logSchema = z.array(z.unknown());
+const loggedMatchSchema = z.object({
+  competition: id,
+  stage: id,
+  match: id,
+  players: z.tuple([z.array(id), z.array(id)]),
+}) satisfies z.ZodType<LoggedMatch>;
+
+const loggedTableSchema = z.object({ table: id, number: z.number().int().min(1) }) satisfies z.ZodType<LoggedTable>;
+
+const at = z.number().int();
+
+/** One option per change-log entry type (see `LogEntry`). */
+const logEntrySchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('matchAssigned'), at, match: loggedMatchSchema, table: loggedTableSchema }),
+  z.object({ type: z.literal('matchUnassigned'), at, match: loggedMatchSchema, table: loggedTableSchema }),
+  z.object({
+    type: z.literal('resultRecorded'),
+    at,
+    match: loggedMatchSchema,
+    result: matchResultSchema,
+    table: loggedTableSchema.nullable(),
+  }),
+  z.object({
+    type: z.literal('specialResultRecorded'),
+    at,
+    match: loggedMatchSchema,
+    result: specialResultSchema,
+    table: loggedTableSchema.nullable(),
+  }),
+  z.object({ type: z.literal('playerWithdrew'), at, competition: id, players: z.array(id) }),
+]) satisfies z.ZodType<LogEntry>;
+
+/** The change log section (the state's `log`, kept out of `tournament` in the file), oldest first. */
+export const logSchema = z.array(logEntrySchema);
 
 export const fileSchema = z.object({
   schemaVersion: z.number().int(),

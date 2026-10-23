@@ -1,15 +1,16 @@
 import { derive } from '../derive';
 import { findMatch, replaceMatch } from '../locate';
+import { appendLog, loggedMatch, loggedTable } from '../log';
 import { fail, ok, type Result } from '../result';
 import { validateScore } from '../score';
 import { handlerFor } from '../stages';
-import type { MatchId, MatchResult, TableId, Timestamp, TournamentState } from '../types';
+import type { LogEntry, MatchId, MatchResult, TableId, Timestamp, TournamentState } from '../types';
 
 export type MatchCommand =
   /** Calls a ready match to a free table; the match clock starts at `at`. */
   | { type: 'assignMatch'; match: MatchId; table: TableId; at: Timestamp }
-  /** Takes a match off its table (a wrong call); it goes back to the waiting list. */
-  | { type: 'unassignMatch'; match: MatchId }
+  /** Takes a match off its table (a wrong call) at `at`; it goes back to the waiting list. */
+  | { type: 'unassignMatch'; match: MatchId; at: Timestamp }
   /** Records the result; the match finishes at `at` and its table is free again. */
   | { type: 'recordResult'; match: MatchId; result: MatchResult; at: Timestamp };
 
@@ -25,7 +26,8 @@ export function assignMatch(state: TournamentState, cmd: Cmd<'assignMatch'>): Re
   if (status !== 'ready') return fail({ code: 'matchNotReady', status });
   if (!table.active) return fail({ code: 'tableInactive', number: table.number });
   if (tableInUse(state, table.id)) return fail({ code: 'tableBusy', number: table.number });
-  return ok(replaceMatch(state, located.value, { ...located.value.match, table: table.id, assignedAt: cmd.at }));
+  const next = replaceMatch(state, located.value, { ...located.value.match, table: table.id, assignedAt: cmd.at });
+  return ok(appendLog(next, { type: 'matchAssigned', at: cmd.at, match: loggedMatch(state, cmd.match), table: loggedTable(state, table.id)! }));
 }
 
 export function unassignMatch(state: TournamentState, cmd: Cmd<'unassignMatch'>): Result<TournamentState> {
@@ -33,7 +35,8 @@ export function unassignMatch(state: TournamentState, cmd: Cmd<'unassignMatch'>)
   if (!located.ok) return located;
   const { match } = located.value;
   if (match.table === null || match.result) return fail({ code: 'matchNotOnTable' });
-  return ok(replaceMatch(state, located.value, { ...match, table: null, assignedAt: null }));
+  const next = replaceMatch(state, located.value, { ...match, table: null, assignedAt: null });
+  return ok(appendLog(next, { type: 'matchUnassigned', at: cmd.at, match: loggedMatch(state, cmd.match), table: loggedTable(state, match.table)! }));
 }
 
 export function recordResult(state: TournamentState, cmd: Cmd<'recordResult'>): Result<TournamentState> {
@@ -41,7 +44,15 @@ export function recordResult(state: TournamentState, cmd: Cmd<'recordResult'>): 
   if (!valid.ok) return valid;
   const located = findMatch(state, cmd.match);
   if (!located.ok) return located;
-  return ok(replaceMatch(state, located.value, { ...located.value.match, result: structuredClone(cmd.result), finishedAt: cmd.at }));
+  const { match } = located.value;
+  const next = replaceMatch(state, located.value, { ...match, result: structuredClone(cmd.result), finishedAt: cmd.at });
+  const logged = { at: cmd.at, match: loggedMatch(state, cmd.match), table: loggedTable(state, match.table) };
+  const { result } = cmd;
+  const entry: LogEntry =
+    result.kind === 'games' || result.kind === 'gamesOnly'
+      ? { type: 'resultRecorded', ...logged, result: structuredClone(result) }
+      : { type: 'specialResultRecorded', ...logged, result: structuredClone(result) };
+  return ok(appendLog(next, entry));
 }
 
 /** Whether `result` could be recorded for the match now: the match is playable and the score is valid. */

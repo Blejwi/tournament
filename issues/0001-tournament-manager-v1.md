@@ -62,8 +62,8 @@ Overdue matches and long-idle tables are highlighted. The UI ships in English (d
 4. As an operator, I want to define tables with a number (ID) and an optional name, so that I can match them to the physical tables in the hall.
 5. As an operator, I want to add or remove tables during the tournament, so that I can react when tables are added or taken away.
 6. As an operator, I want to mark a table inactive (broken, reserved) and active again, so that no match is suggested for it while it's unavailable.
-7. As an operator, I want to register players once per tournament with first name, last name, club, optional rating and optional birth year/category, so that I don't retype them for each competition.
-8. As an operator, I want to enter the same player in several competitions, so that juniors can play both U15 and Open.
+7. As an operator, I want to register players inside the competition they play in (first name, last name, club, optional rating and optional birth year/category), so that setting up a competition is one list and most players, who play only one competition, are entered in a single step. *(Changed 2026-10-23, see #0019.)*
+8. As an operator, I want to add someone already registered in another competition by picking them from the tournament's players, so that juniors can play both U15 and Open without being retyped, and the app still knows they're the same person (busy detection).
 9. As an operator, I want to add several competitions to one tournament, so that they share the tables and can run at the same time or one after another.
 10. As an operator, I want to set the games-to-win per competition (2, 3 or 4, default 3), so that the match format fits the category.
 11. As an operator, I want to configure a competition as a chain of stages, so that I can build: direct single elimination, direct double elimination, groups only, groups → single elimination, groups → double elimination, or groups → groups (→ bracket).
@@ -287,7 +287,7 @@ Overdue matches and long-idle tables are highlighted. The UI ships in English (d
 
 ### Domain model
 
-- **Tournament** owns Tables, Players and Competitions. **Competition** has an ordered list of Stages. **Stage** is one of groups, single elimination, double elimination or play-off, and contains Matches.
+- **Tournament** owns Tables, Players and Competitions. Players are still one record per person at tournament level (so busy detection works across competitions), but they are registered through a competition: the operator adds them on the competition's entry list, and a tournament-level player record is created or reused (#0019). **Competition** has an ordered list of Stages. **Stage** is one of groups, single elimination, double elimination or play-off, and contains Matches.
 - **Entry vs player.** A competition's entries are singles players for v1. The entry shape should allow 1..n players later, but nothing in v1 depends on that.
 - **Slots.** Each match has two slots. A slot's source is one of: a fixed player, a group placeholder (group + place), the winner of another match, the loser of another match, or a BYE. Advancement is resolved through these references, not copied. Correction then only re-resolves the draw and resets downstream matches that had already used a now-wrong player.
 - **Places.** A match can carry `places` metadata, e.g. G winner → 1, 2nd final winner → 2 and loser → 3, LR1 losers → 13–16. Final standings are derived from this metadata plus play-off results.

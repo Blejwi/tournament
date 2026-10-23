@@ -1,5 +1,6 @@
 import { allocateId } from '../ids';
 import { replaceCompetition } from '../locate';
+import { appendLog } from '../log';
 import { fail, ok, type Result } from '../result';
 import { handlerFor } from '../stages';
 import { derive } from '../derive';
@@ -83,7 +84,8 @@ export function withdrawPlayer(state: TournamentState, cmd: Cmd<'withdrawPlayer'
     return fail({ code: 'withdrawalWhilePlaying', number });
   }
   const entries = competition.entries.map((e) => (e.id === entry.id ? { ...e, withdrawnAt: cmd.at } : e));
-  return ok(replaceCompetition(state, { ...competition, entries }));
+  const next = replaceCompetition(state, { ...competition, entries });
+  return ok(appendLog(next, { type: 'playerWithdrew', at: cmd.at, competition: competition.id, players: [...entry.players] }));
 }
 
 export function findCompetition(state: TournamentState, id: CompetitionId): Result<Competition> {

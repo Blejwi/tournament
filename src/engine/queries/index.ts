@@ -8,3 +8,5 @@ export * from './bracket';
 export * from './places';
 export * from './tables';
 export * from './matchCounts';
+export * from './changeLog';
+export * from './stats';

@@ -108,7 +108,22 @@ export interface MatchView {
   places: MatchPlaces | null;
 }
 
-function locationView(match: Match, stage: Stage): MatchLocationView {
+/**
+ * A recorded result as shown. `winner` is given for a derived result (a withdrawal's walkover);
+ * otherwise it follows from the result itself.
+ */
+export function resultView(result: MatchResult, winner?: 0 | 1): ResultView {
+  const won = resultGamesWon(result);
+  const special = result.kind === 'walkover' || result.kind === 'retirement' || result.kind === 'disqualification';
+  return {
+    kind: result.kind,
+    winner: winner ?? (special ? result.winner : won[0] > won[1] ? 0 : 1),
+    gamesWon: won,
+    games: gameScoresOf(result)?.map(([a, b]) => [a, b]) ?? null,
+  };
+}
+
+export function locationView(match: Match, stage: Stage): MatchLocationView {
   const { location } = match;
   switch (location.kind) {
     case 'group': {
@@ -177,15 +192,7 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
     elapsedMs,
     expectedMs: expected,
     overdue,
-    result:
-      result && winner !== null
-        ? {
-            kind: result.kind,
-            winner,
-            gamesWon: resultGamesWon(result),
-            games: gameScoresOf(result)?.map(([a, b]) => [a, b]) ?? null,
-          }
-        : null,
+    result: result && winner !== null ? resultView(result, winner) : null,
     readySince: status === 'ready' ? derived.waitingSince : null,
     busyWith: derived.busyWith.map((b) => ({ player: b.player, match: b.match.id, competition: b.competition.id, table: tableNumber(b.match.table) })),
     decidedByBye: derived.decidedByBye,

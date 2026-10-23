@@ -10,6 +10,9 @@ import { entryName, formatClock, formatGames } from '@/ui/format';
 import { formatPlace, matchTitle, slotText } from '@/ui/matchLabels';
 import { busyLines } from './busy';
 import { overdueText } from './overdueStyle';
+import { ResultBadge } from './ResultBadge';
+import { hasGames } from './specialResults';
+import { SpecialResultEntry } from './SpecialResultEntry';
 
 /** Actions for one match, one click from the draw: call to a free table, enter the score. */
 export function MatchPopover(props: { match: MatchView; style: CSSProperties; onClose: () => void }) {
@@ -51,7 +54,8 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
                   <div className="truncate">{entry ? entryName(entry, false) : <i className="text-slate-400">{slotText(t, match.slots[side], false).text}</i>}</div>
                   {entry?.players[0]?.club && <div className="text-xs font-normal text-slate-400">{entry.players[0].club}</div>}
                 </div>
-                {match.result && <span className="text-lg tabular-nums">{match.result.gamesWon[side]}</span>}
+                <ResultBadge match={match} side={side} />
+                {hasGames(match) && <span className="text-lg tabular-nums">{match.result!.gamesWon[side]}</span>}
               </div>
             );
           })}
@@ -117,7 +121,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
             <span className="rounded bg-slate-900 px-2 py-0.5 font-bold text-white">{t('match.table', { number: match.table?.number })}</span>
             <span className={cn('text-base font-bold tabular-nums', overdueText(match))}>{formatClock(match.elapsedMs ?? 0)}</span>
             <span className="text-xs text-slate-400">{t('tablesPanel.expected', { minutes: Math.round(match.expectedMs / 60_000) })}</span>
-            <Button variant="ghost" size="sm" className="ml-auto text-red-600" onClick={() => setError(dispatch({ type: 'unassignMatch', match: match.id }))}>
+            <Button variant="ghost" size="sm" className="ml-auto text-red-600" onClick={() => setError(dispatch({ type: 'unassignMatch', match: match.id, at: Date.now() }))}>
               {t('match.takeOff')}
             </Button>
           </div>
@@ -129,6 +133,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
         )}
 
         {canScore && <ScoreEntry key={match.id} match={match} autoFocus={live} onDone={onClose} />}
+        {canScore && <SpecialResultEntry key={`special-${match.id}`} match={match} onDone={onClose} />}
 
         {match.result?.games && (
           <p className="border-t pt-2 text-xs text-slate-500">

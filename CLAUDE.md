@@ -25,6 +25,7 @@ Folder layout (`@/` = `src/`):
   - `commands/<area>.ts` command types + handlers; `commands/index.ts` the `Command` union, the handler map and `execute(state, command)`.
   - `queries.ts` (split into `queries/` when it grows): pure `(state, now?)` functions returning fresh view objects.
   - `tournamentFile/`: the tournament file format, used for export/import AND for each stored tournament. `schema.ts` (Zod schema of the current version), `migrations.ts` (one step per old version), `index.ts` (`exportTournament(state)` → JSON text, `importTournament({ id, file })` → `Result<TournamentState>`).
+  - `log.ts`: change-log helpers for command handlers (`appendLog`, `loggedMatch`, `loggedTable`); see "How to add a change-log entry".
   - `backupReminder.ts`: `getBackupReminder(state, { now, unsavedSince, postponedUntil? })` (epoch ms); the app tracks those times. "Live" (a match in progress, or a result in the last 30 minutes) is read from `state`.
   - Every time in the engine is epoch milliseconds (`Timestamp`), both command fields (`at`) and query arguments (`now`). The UI gets `now` from `useNow()` (`src/ui/useNow.ts`).
   - `__tests__/`: the only tests. They import `@/engine` alone: set up with commands, assert on queries.
@@ -48,7 +49,16 @@ How to change the tournament state shape (new section such as `competitions`, ne
 3. Add a fixture `__tests__/fixtures/schema-v<n>.json` (a file as the previous version wrote it) and a test in `exportImport.test.ts` that imports it. Extend the round-trip test's setup so it covers the new section.
 4. Stored tournaments go through the same migrations on load, so nothing else is needed for localStorage.
 
-The change log (#0016) has its own top-level `log` section in the file, currently always `[]` and not checked beyond being an array. Give it a schema there when the log exists.
+The change log (#0016) is `state.log` (`LogEntry[]`, oldest first). The file keeps it in its own top-level `log` section, not inside `tournament`. Commands write the entries themselves, so the log is tested through `execute` + `getChangeLog`. Logged today: `matchAssigned`, `matchUnassigned`, `resultRecorded`.
+
+How to add a change-log entry (one per operator action such as a correction, a walkover, a manual swap or a play-off toggle):
+
+1. Add a variant `{ type: 'thingDone'; at: Timestamp; ... }` to `LogEntry` in `types.ts`. Store a snapshot of everything needed to settle a dispute, as it was at that moment: e.g. `before` and `after` results for a correction, `LoggedMatch` (`match` with the players in each slot) and `LoggedTable` (table number) rather than bare ids, since slots re-resolve and tables get renumbered. Data only, no display text.
+2. Add the variant's Zod object to `logEntrySchema` in `tournamentFile/schema.ts` (its `satisfies` fails until you do). A new entry type needs no migration or version bump: older files stay valid.
+3. In the command handler, build the new state, then `return ok(appendLog(next, { type: 'thingDone', at: cmd.at, match: loggedMatch(state, cmd.match), ... }))` (helpers in `log.ts`). Take snapshots from the state before the change. The command must have an `at`; add one if it lacks it. Log only on success.
+4. Add its view to `ChangeLogEntryView` and the `entryView` switch in `queries/changeLog.ts` (TypeScript fails until you do; resolve names there, e.g. with `resultView`).
+5. Show it: add a case to `entryText` in `src/ui/changeLogText.ts` and the `changeLog.thingDone` key in `en.ts` and `pl.ts`.
+6. Test first in `__tests__/changeLog.test.ts`: run the command, assert on `getChangeLog(state)[0]`.
 
 The UI runs commands with `useApp((s) => s.dispatch)(command)`, which returns the `EngineError` or `null`; show it with `errorMessage(t, error)`. Read data with `useQuery(getThing)`, never by calling queries inside a `useApp` selector (new objects each call make Zustand loop).
 

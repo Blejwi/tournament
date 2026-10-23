@@ -1,3 +1,4 @@
+import { hasGames, specialKind } from './specialResults';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp } from 'lucide-react';
@@ -115,7 +116,7 @@ function CrossTable({ group }: { group: GroupView }) {
           key={j}
           className={cn('text-center font-semibold tabular-nums', won ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600')}
         >
-          {a}:{b}
+          {hasGames(match) ? `${a}:${b}` : t(`match.specialBadge.${specialKind(match.result)!}`)}
         </td>
       );
     }
