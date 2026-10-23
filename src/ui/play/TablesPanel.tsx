@@ -133,7 +133,7 @@ export function TablesPanel(props: { overview: TableOverview; onFocus: (match: M
                           {matchTitle(t, m)}
                           {row.name && ` · ${row.name}`}
                         </span>
-                        <span className="block truncate text-xs font-medium">
+                        <span className="block text-xs font-medium break-words">
                           {entryName(m.slots[0].entry)} – {entryName(m.slots[1].entry)}
                         </span>
                       </>
@@ -198,7 +198,7 @@ function CallFromTable(props: { table: TableOverviewRow; onDone?: () => void }) 
           className="flex w-full items-center gap-1.5 rounded border border-slate-200 bg-white px-1.5 py-1 text-left text-[11.5px] hover:border-slate-500"
         >
           <b className="shrink-0">{matchTitle(t, m)}</b>
-          <span className="truncate">
+          <span className="min-w-0 break-words">
             {entryName(m.slots[0].entry)} – {entryName(m.slots[1].entry)}
           </span>
           <span className="ml-auto shrink-0 text-slate-400">→ {props.table.number}</span>
@@ -262,8 +262,8 @@ export function TablesFullScreen(props: { overview: TableOverview; onFocus: (mat
               >
                 {header}
                 <span className="mt-2 truncate text-[11px] text-slate-500">{matchTitle(t, m)}</span>
-                <span className="truncate text-[13px] font-semibold">{entryName(m.slots[0].entry)}</span>
-                <span className="truncate text-[13px] font-semibold">{entryName(m.slots[1].entry)}</span>
+                <span className="break-words text-[13px] font-semibold">{entryName(m.slots[0].entry)}</span>
+                <span className="break-words text-[13px] font-semibold">{entryName(m.slots[1].entry)}</span>
                 <span className="mt-auto h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                   <span
                     className={cn('block h-full', m.overdue === 'red' ? 'bg-red-500' : m.overdue ? 'bg-amber-500' : 'bg-sky-500')}

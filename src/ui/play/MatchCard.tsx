@@ -34,7 +34,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
       title={busy}
       onClick={(e) => props.onSelect(e.currentTarget)}
       className={cn(
-        'relative block h-16 w-[212px] overflow-hidden rounded-md text-left text-slate-900 select-none hover:shadow-md',
+        'relative block h-16 w-[292px] overflow-hidden rounded-md text-left text-slate-900 select-none hover:shadow-md',
         match.overdue === 'red' ? RED_OVERDUE_STYLE : STATUS_STYLE[match.status],
         props.selected && 'outline-2 outline-offset-2 outline-slate-900',
       )}
@@ -52,12 +52,12 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
           <span
             key={side}
             className={cn(
-              'flex h-[21px] items-center gap-1 border-t border-black/5 px-1.5 text-xs leading-none',
+              'flex h-[21px] items-center gap-1 border-t border-black/5 px-1.5 text-[11px] leading-[10px]',
               won && 'font-semibold text-slate-800',
               match.result && !won && 'text-slate-400',
             )}
           >
-            <span className={cn('truncate', slot.placeholder && 'text-slate-400 italic')}>{slot.text}</span>
+            <span className={cn('min-w-0 break-words', slot.placeholder && 'text-slate-400 italic')}>{slot.text}</span>
             <span className="ml-auto font-bold tabular-nums">{match.result?.gamesWon[side] ?? ''}</span>
           </span>
         );
