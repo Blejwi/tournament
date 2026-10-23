@@ -28,4 +28,7 @@ export const router = createBrowserRouter([
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
-]);
+], {
+  // Vite's `base` (e.g. /tournament/ on GitHub Pages); route paths stay root-relative.
+  basename: import.meta.env.BASE_URL.replace(/\/$/, '') || '/',
+});

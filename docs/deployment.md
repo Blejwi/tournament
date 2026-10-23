@@ -19,7 +19,15 @@ Service workers need HTTPS (or `localhost`). Every static host below serves HTTP
 ### Hosting requirements
 
 - Serve `sw.js` with `Cache-Control: no-cache` (or a short max-age) so browsers notice new versions quickly. Files in `assets/` have hashed names and can be cached for a long time.
-- Deploy at the domain root. The app uses absolute paths (`/`); hosting under a sub-path needs Vite's `base` and the router's `basename` set to that path.
+- Sub-path hosting: build with `BASE_PATH=/<path>/ npm run build`. That sets Vite's `base`, and from it the router's `basename` and the PWA's scope and start URL. Without it, the app is built for the domain root. On Windows Git Bash, prefix the command with `MSYS_NO_PATHCONV=1` so that `/<path>/` isn't rewritten into a Windows path.
+
+## GitHub Pages (the live deployment)
+
+`.github/workflows/deploy-pages.yml` builds and publishes on every push to `main`, or when run manually from the Actions tab. It runs the tests, builds with `BASE_PATH=/<repo>/`, copies `index.html` to `404.html` for deep links, and deploys to `https://<owner>.github.io/<repo>/`.
+
+One-time setup: in the repository's Settings > Pages, set Source to "GitHub Actions". Pages on a free account needs a public repository.
+
+Tournament data is never part of a deployment: it lives in each browser's localStorage for that site's origin. Move tournaments between machines with Export/Import.
 
 ## SPA fallback (deep links and reload)
 

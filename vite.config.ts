@@ -6,6 +6,9 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // Sub-path the app is served from (docs/deployment.md). GitHub Pages serves a project repo at
+  // /<repo>/, so the deploy workflow sets BASE_PATH; everywhere else the app sits at the root.
+  base: process.env.BASE_PATH ?? '/',
   plugins: [
     react(),
     tailwindcss(),
