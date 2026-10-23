@@ -41,6 +41,7 @@ A competition with groups followed by a single elimination bracket. The top 2 of
 - [ ] Confirming is rejected until all groups are complete.
 - [ ] The 4-entry knockout after 2 groups works; a direct bracket under 8 entries is rejected.
 - [ ] The canvas lays out the groups stage, then the bracket, and shows origin labels.
+- [ ] Final places (`getFinalPlaces` and the places panel from #0021) cover the whole competition. Bracket places come first, then entries that did not advance from the groups share ranges by group position below the bracket. For example, with 4 groups of 4 into an 8-entry bracket, the 3rd places share 9–12 and the 4th places 13–16. *(Added 2026-10-23: #0021 only classifies the last stage.)*
 
 ## Blocked by
 
