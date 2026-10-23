@@ -1,7 +1,9 @@
+import type { IdSource } from '../ids';
 import { shuffle } from '../random';
 import { fail, ok, type Result } from '../result';
-import type { Entry, Group, GroupsStage, Match, SlotSource, TieResolution } from '../types';
-import type { DrawContext, StageHandler } from './handler';
+import { gameScoresOf } from '../score';
+import type { Entry, Group, GroupsStage, Match, MatchResult, SlotSource, TieResolution } from '../types';
+import type { DrawContext, DrawPosition, StageHandler } from './handler';
 import { breakTies, type Tie, type TiebreakMatch, type TiebreakStep } from './tiebreak';
 
 /** Fewer than 2 entries in a group means no matches. */
@@ -32,11 +34,14 @@ export const groupsHandler: StageHandler<GroupsStage> = {
       entries,
       tieResolutions: [],
     }));
-    const matches = groups.flatMap((group) => roundRobin(group, ctx));
+    const matches = groups.flatMap((group) => roundRobin(group, () => ctx.ids.next('match')));
     return ok({ ...stage, drawState: 'drawn', groups, matches });
   },
 
   clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', groups: [], matches: [] }),
+
+  swapPositions: (stage, a, b) => swapGroupPositions(stage, a, b),
+  movePosition: (stage, from, to, ids) => moveGroupPosition(stage, from, to, ids),
 };
 
 /** Group sizes for `count` entrants: as even as possible, the first groups one larger. */
@@ -77,7 +82,7 @@ function snakeFill(ctx: DrawContext, sizes: number[]): SlotSource[][] {
  * The group's matches in Berger order. Positions are 1-based draw positions; an odd group gets a
  * dummy last position, and whoever meets the dummy rests that round.
  */
-function roundRobin(group: Group, ctx: DrawContext): Match[] {
+function roundRobin(group: Group, nextId: () => string): Match[] {
   const size = group.entries.length;
   const n = size % 2 === 0 ? size : size + 1;
   const matches: Match[] = [];
@@ -88,7 +93,7 @@ function roundRobin(group: Group, ctx: DrawContext): Match[] {
     const played = pairs.filter(([a, b]) => a <= size && b <= size);
     played.forEach(([a, b], i) =>
       matches.push({
-        id: ctx.ids.next('match'),
+        id: nextId(),
         location: { kind: 'group', group: group.id },
         round: round + 1,
         order: i + 1,
@@ -132,14 +137,17 @@ export interface Standings {
   ties: Tie[];
 }
 
-/** A group match with its resolved entries, as the standings need it. */
+/** A group match with its resolved entries and outcome, as the standings need it. */
 export interface PlayedMatch {
-  match: Match;
   entries: [Entry | null, Entry | null];
   winner: 0 | 1 | null;
+  /** The recorded result, or the walkover a withdrawal gives. */
+  result: MatchResult | null;
+  /** Nothing is left to play: it has a result, or both players withdrew. */
+  decided: boolean;
 }
 
-/** Group points: 1 for a win, 0 for a loss. */
+/** Group points: 1 for a win, 0 for a loss or a walkover. */
 const POINTS_FOR_WIN = 1;
 
 /** Standings by group points, then the ITTF tiebreak among tied entries (see `breakTies`). */
@@ -160,8 +168,9 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
   }));
   const rowOf = (entry: Entry | null) => (entry ? rows.find((r) => r.entry?.id === entry.id) : undefined);
 
-  for (const { match, entries, winner } of matches) {
-    if (winner === null || !match.result) continue;
+  // A walkover or disqualification is a win and a loss without games; a retirement's games count.
+  for (const { result, entries, winner } of matches) {
+    if (winner === null || !result) continue;
     const sides = [rowOf(entries[0]), rowOf(entries[1])];
     sides.forEach((row, side) => {
       if (!row) return;
@@ -170,9 +179,7 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
         row.won++;
         row.groupPoints += POINTS_FOR_WIN;
       } else row.lost++;
-      const result = match.result!;
-      const games = result.kind === 'games' ? result.games : [];
-      for (const game of games) {
+      for (const game of gameScoresOf(result) ?? []) {
         const [mine, theirs] = side === 0 ? game : [game[1], game[0]];
         row.pointsWon += mine;
         row.pointsLost += theirs;
@@ -183,9 +190,9 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
   }
 
   const finished: TiebreakMatch[] = [];
-  for (const { match, entries, winner } of matches) {
-    if (winner === null || !match.result || !entries[0] || !entries[1]) continue;
-    finished.push({ entries: [entries[0].id, entries[1].id], winner, games: match.result.kind === 'games' ? match.result.games : [] });
+  for (const { result, entries, winner } of matches) {
+    if (winner === null || !result || !entries[0] || !entries[1]) continue;
+    finished.push({ entries: [entries[0].id, entries[1].id], winner, games: gameScoresOf(result) ?? [] });
   }
   const tiebreak = breakTies(
     rows.map((row) => ({ row, entry: row.entry?.id ?? null, groupPoints: row.groupPoints })),
@@ -196,11 +203,66 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
   ordered.forEach((row, i) => (row.place = i + 1));
   const unresolved = new Set(tiebreak.ties.filter((t) => t.resolution === null).flatMap((t) => t.entries));
   for (const row of ordered) row.tied = row.entry !== null && unresolved.has(row.entry.id);
-  return { rows: ordered, complete: matches.every((m) => m.match.result !== null), steps: tiebreak.steps, ties: tiebreak.ties };
+  return { rows: ordered, complete: matches.every((m) => m.decided), steps: tiebreak.steps, ties: tiebreak.ties };
 }
 
 /** "A".."Z", then "AA", "AB", ... */
 function groupName(index: number): string {
   const letter = String.fromCharCode(65 + (index % 26));
   return index < 26 ? letter : groupName(Math.floor(index / 26) - 1) + letter;
+}
+
+/**
+ * Draw editing (before confirm): a group position's occupant, its group's index and the
+ * 0-based index in the group; null when the position doesn't exist.
+ */
+function findGroupPosition(stage: GroupsStage, at: DrawPosition, allowEnd = false): { group: number; index: number } | null {
+  if (at.kind !== 'group') return null;
+  const group = stage.groups.findIndex((g) => g.id === at.group);
+  if (group === -1) return null;
+  const size = stage.groups[group].entries.length + (allowEnd ? 1 : 0);
+  if (!Number.isInteger(at.position) || at.position < 1 || at.position > size) return null;
+  return { group, index: at.position - 1 };
+}
+
+function swapGroupPositions(stage: GroupsStage, a: DrawPosition, b: DrawPosition): Result<GroupsStage> {
+  const from = findGroupPosition(stage, a);
+  const to = findGroupPosition(stage, b);
+  if (!from || !to) return fail({ code: 'drawPositionNotFound' });
+  const entries = stage.groups.map((g) => [...g.entries]);
+  [entries[from.group][from.index], entries[to.group][to.index]] = [entries[to.group][to.index], entries[from.group][from.index]];
+  return ok(withGroupEntries(stage, entries));
+}
+
+function moveGroupPosition(stage: GroupsStage, fromAt: DrawPosition, toAt: DrawPosition, ids: IdSource): Result<GroupsStage> {
+  const from = findGroupPosition(stage, fromAt);
+  if (!from) return fail({ code: 'drawPositionNotFound' });
+  const sameGroup = toAt.kind === 'group' && toAt.group === stage.groups[from.group].id;
+  const to = findGroupPosition(stage, toAt, !sameGroup);
+  if (!to) return fail({ code: 'drawPositionNotFound' });
+  if (!sameGroup && stage.groups[from.group].entries.length <= MIN_GROUP_SIZE) return fail({ code: 'groupTooSmall', min: MIN_GROUP_SIZE });
+  const entries = stage.groups.map((g) => [...g.entries]);
+  const [moved] = entries[from.group].splice(from.index, 1);
+  entries[to.group].splice(to.index, 0, moved);
+  return ok(withGroupEntries(stage, entries, ids));
+}
+
+/**
+ * The stage with new group entries; the matches of each changed group are made again in Berger
+ * order. A group that keeps its size keeps its match ids, so a swap leaves every match in place.
+ */
+function withGroupEntries(stage: GroupsStage, entries: SlotSource[][], ids?: IdSource): GroupsStage {
+  const groups = stage.groups.map((group, i): Group => {
+    const same = group.entries.length === entries[i].length && group.entries.every((source, k) => source === entries[i][k]);
+    return same ? group : { ...group, entries: entries[i], tieResolutions: [] };
+  });
+  const matches = groups.flatMap((group, i) => {
+    const old = stage.matches.filter((m) => m.location.kind === 'group' && m.location.group === group.id);
+    if (group === stage.groups[i]) return old;
+    const size = group.entries.length;
+    const reuse = old.length === (size * (size - 1)) / 2 ? old.map((m) => m.id) : null;
+    let k = 0;
+    return roundRobin(group, () => (reuse ? reuse[k++] : ids!.next('match')));
+  });
+  return { ...stage, groups, matches };
 }

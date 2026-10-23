@@ -17,22 +17,22 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0013](0013-groups-to-groups-with-carry-over.md) | Groups → groups with carry-over | started 2026-10-23 |
+| [#0009](0009-groups-to-single-elimination.md) | Groups → single elimination | started 2026-10-23 |
 | [#0012](0012-place-playoffs-and-final-places.md) | Place play-offs and final places | started 2026-10-23 |
-| [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | started 2026-10-23 |
-| [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | started 2026-10-23 |
 
 ## ⛔ Blocked
 
 | Ticket | Title | Blocked by |
 |---|---|---|
-| [#0009](0009-groups-to-single-elimination.md) | Groups → single elimination | #0004, #0007, #0008 |
 | [#0011](0011-groups-to-double-elimination.md) | Groups → double elimination | #0009, #0010 |
-| [#0013](0013-groups-to-groups-with-carry-over.md) | Groups → groups with carry-over | #0004, #0008 |
 
 ## ✅ Done
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | c89eaa8..0e82b0a, 5268571 |
+| [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | abf482c..b531e52 |
 | [#0010](0010-direct-double-elimination.md) | Direct double elimination | f0c6fdf..d6bbd58, 46dc025 |
 | [#0019](0019-register-players-per-competition.md) | Register players per competition | d7e2492, 4afbf49 |
 | [#0020](0020-full-player-names-on-canvas.md) | Full player names on the canvas | 404855e, b9eafd4 |

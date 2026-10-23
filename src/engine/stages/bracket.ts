@@ -2,7 +2,7 @@ import type { IdSource } from '../ids';
 import { shuffle, type Random } from '../random';
 import { fail, ok, type Result } from '../result';
 import type { BracketSection, Match, MatchPlaces, PlaceRange, SlotSource, Stage } from '../types';
-import type { DrawEntrant } from './handler';
+import type { DrawEntrant, DrawPosition } from './handler';
 
 /**
  * Building blocks shared by the bracket stages (single elimination now; double elimination,
@@ -91,6 +91,53 @@ export function knockoutTree({ positions, section, ids, places }: KnockoutOption
     slots = matches.map((m) => ({ kind: 'matchResult', match: m.id, take: 'winner' }));
   }
   return tree;
+}
+
+/**
+ * Draw editing before confirm: swaps two first-round positions (1-based, top to bottom) of a
+ * bracket section; a BYE moves like an entrant. A first-round match may not end up BYE v BYE.
+ * Later rounds point to "winner of match X", so they follow by themselves (ADR 0003).
+ */
+export function swapFirstRoundPositions(matches: Match[], section: BracketSection, a: DrawPosition, b: DrawPosition): Result<Match[]> {
+  const firstRound = matches
+    .filter((m) => m.location.kind === 'bracket' && m.location.section === section && m.round === 1)
+    .sort((x, y) => x.order - y.order);
+  const slotAt = (at: DrawPosition) =>
+    at.kind === 'bracket' && Number.isInteger(at.position) && at.position >= 1 && at.position <= firstRound.length * 2
+      ? { match: firstRound[Math.floor((at.position - 1) / 2)].id, side: (at.position - 1) % 2 }
+      : null;
+  const [x, y] = [slotAt(a), slotAt(b)];
+  if (!x || !y) return fail({ code: 'drawPositionNotFound' });
+  const sourceAt = (p: { match: string; side: number }) => firstRound.find((m) => m.id === p.match)!.slots[p.side];
+  const [sx, sy] = [sourceAt(x), sourceAt(y)];
+  const edited = matches.map((m) => {
+    if (m.id !== x.match && m.id !== y.match) return m;
+    const slots = [...m.slots] as Match['slots'];
+    if (m.id === x.match) slots[x.side] = sy;
+    if (m.id === y.match) slots[y.side] = sx;
+    return { ...m, slots };
+  });
+  if (edited.some((m) => (m.id === x.match || m.id === y.match) && m.slots.every((s) => s.kind === 'bye'))) {
+    return fail({ code: 'byeAgainstBye' });
+  }
+  return ok(edited);
+}
+
+/** The source on a first-round position of a bracket section, or null when there is no such position. */
+export function firstRoundSource(matches: Match[], section: BracketSection, at: DrawPosition): SlotSource | null {
+  if (at.kind !== 'bracket' || !Number.isInteger(at.position) || at.position < 1) return null;
+  const match = matches.find(
+    (m) => m.location.kind === 'bracket' && m.location.section === section && m.round === 1 && m.order === Math.ceil(at.position / 2),
+  );
+  return match ? match.slots[(at.position - 1) % 2] : null;
+}
+
+/** Moving an entrant in a bracket is a swap with a BYE: the target position must hold a BYE. */
+export function moveFirstRoundPosition(matches: Match[], section: BracketSection, from: DrawPosition, to: DrawPosition): Result<Match[]> {
+  const target = firstRoundSource(matches, section, to);
+  if (!firstRoundSource(matches, section, from) || !target) return fail({ code: 'drawPositionNotFound' });
+  if (target.kind !== 'bye') return fail({ code: 'positionTaken' });
+  return swapFirstRoundPositions(matches, section, from, to);
 }
 
 /**

@@ -1,7 +1,13 @@
 import type { IdSource } from '../ids';
 import type { Random } from '../random';
 import type { Result } from '../result';
-import type { SlotSource, Stage, StageConfig, StageId } from '../types';
+import type { GroupId, SlotSource, Stage, StageConfig, StageId } from '../types';
+
+/**
+ * A place in a stage's draw, 1-based: a position in a group (draw position order), or a
+ * first-round bracket position, top to bottom.
+ */
+export type DrawPosition = { kind: 'group'; group: GroupId; position: number } | { kind: 'bracket'; position: number };
 
 /** Someone to place in a draw: an entry (first stage) or an origin label (fed by an earlier stage). */
 export interface DrawEntrant {
@@ -31,6 +37,13 @@ export interface StageHandler<S extends Stage = Stage> {
   draw(stage: S, ctx: DrawContext): Result<S>;
   /** Discards the draw (back to `notDrawn`), e.g. when the entries change. */
   clearDraw(stage: S): S;
+  /**
+   * Draw editing before confirm: swaps whoever (or the BYE) sits on two draw positions, or moves
+   * an entrant to another position (into another group, or onto a BYE). The command layer checks
+   * the draw state first. A stage type without draw editing leaves these out.
+   */
+  swapPositions?(stage: S, a: DrawPosition, b: DrawPosition): Result<S>;
+  movePosition?(stage: S, from: DrawPosition, to: DrawPosition, ids: IdSource): Result<S>;
   /** Whether a match in this stage may be recorded as games only (e.g. 3:1), without the points of each game. */
   allowsGamesOnly: boolean;
 }

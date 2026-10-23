@@ -4,7 +4,7 @@ import { singleEliminationHandler } from './singleElimination';
 import { doubleEliminationHandler } from './doubleElimination';
 import type { StageHandler } from './handler';
 
-export type { DrawContext, DrawEntrant, StageHandler } from './handler';
+export type { DrawContext, DrawEntrant, DrawPosition, StageHandler } from './handler';
 
 /** One handler per stage type; TypeScript rejects a missing entry when a stage type is added. */
 const handlers: { [T in StageType]: StageHandler<Extract<Stage, { type: T }>> } = {

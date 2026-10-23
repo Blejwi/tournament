@@ -47,7 +47,7 @@ describe('corrections: nothing after the match has started', () => {
 
     const corrected = unwrap(execute(state, { type: 'correctResult', at: 9000, match: qf1.id, result: quick(1) }));
 
-    expect(getMatch(corrected, qf1.id, 0)!.result).toEqual({ winner: 1, gamesWon: [1, 3], games: null });
+    expect(getMatch(corrected, qf1.id, 0)!.result).toEqual({ kind: 'gamesOnly', winner: 1, gamesWon: [1, 3], games: null });
     expect(names(corrected, sf1.id)).toEqual(['P8', 'P4']);
     expect(getCorrectionPreview(state, qf1.id, quick(1), 0)).toEqual({ error: null, resets: [] });
   });
@@ -229,6 +229,7 @@ describe('corrections: groups → bracket, where a correction can change the sta
       type: 'singleElimination',
       drawState: 'confirmed',
       thirdPlace: false,
+      playOffs: [],
       matches: [
         bracketMatch('sf1', 1, 1, [place(a, 1), place(b, 2)]),
         bracketMatch('sf2', 1, 2, [place(b, 1), place(a, 2)]),

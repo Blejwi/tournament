@@ -18,6 +18,8 @@ export type {
   Grouping,
   MatchId,
   MatchResult,
+  SpecialResult,
+  SpecialResultKind,
   PlayerId,
   SlotSource,
   StageConfig,
@@ -28,12 +30,14 @@ export type {
   TournamentId,
   TournamentState,
   LogEntry,
+  LoggedDrawPlace,
   LogEntryType,
 } from './types';
 
 // Commands
 export { createTournament, type CreateTournamentInput } from './tournament';
 export { execute, type Command, type CommandType } from './commands';
+export type { DrawPosition } from './stages';
 
 export { DEFAULT_EXPECTED_DURATIONS, type OverdueLevel } from './overdue';
 /** Parses typed game scores ("11-7 9-11 11-5"); check them with validateResult. */
@@ -108,6 +112,7 @@ export {
   type MatchCountsView,
   getChangeLog,
   type ChangeLogEntryView,
+  type LoggedDrawPlaceView,
   type LoggedMatchView,
   getStats,
   LONGEST_MATCHES,

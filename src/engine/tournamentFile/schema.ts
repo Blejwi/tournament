@@ -5,6 +5,8 @@ import type {
   Entry,
   Group,
   LogEntry,
+  LoggedDrawPlace,
+  SpecialResult,
   LoggedMatch,
   LoggedTable,
   GroupsStage,
@@ -62,11 +64,13 @@ const id = z.string().min(1);
 const timestamp = z.number().int().nullable();
 const points = z.number().int().min(0);
 const minutes = z.number().int().min(1);
+const slotIndex = z.union([z.literal(0), z.literal(1)]);
 
 const entrySchema = z.object({
   id,
   players: z.array(id).min(1),
   seed: z.number().int().min(1).nullable(),
+  withdrawnAt: timestamp,
 }) satisfies z.ZodType<Entry>;
 
 const slotSourceSchema = z.discriminatedUnion('kind', [
@@ -76,9 +80,16 @@ const slotSourceSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('bye') }),
 ]) satisfies z.ZodType<SlotSource>;
 
+const specialResultSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('walkover'), winner: slotIndex }),
+  z.object({ kind: z.literal('retirement'), winner: slotIndex, games: z.array(z.tuple([points, points])) }),
+  z.object({ kind: z.literal('disqualification'), winner: slotIndex }),
+]) satisfies z.ZodType<SpecialResult>;
+
 const matchResultSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('games'), games: z.array(z.tuple([points, points])) }),
   z.object({ kind: z.literal('gamesOnly'), games: z.tuple([points, points]) }),
+  ...specialResultSchema.options,
 ]) satisfies z.ZodType<MatchResult>;
 
 const placeRangeSchema = z
@@ -186,6 +197,12 @@ const loggedTableSchema = z.object({ table: id, number: z.number().int().min(1) 
 
 const at = z.number().int();
 
+const loggedDrawPlaceSchema = z.object({
+  group: z.string().nullable(),
+  position: z.number().int().min(1),
+  players: z.array(id),
+}) satisfies z.ZodType<LoggedDrawPlace>;
+
 /** One option per change-log entry type (see `LogEntry`). */
 const logEntrySchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('matchAssigned'), at, match: loggedMatchSchema, table: loggedTableSchema }),
@@ -197,6 +214,16 @@ const logEntrySchema = z.discriminatedUnion('type', [
     result: matchResultSchema,
     table: loggedTableSchema.nullable(),
   }),
+  z.object({ type: z.literal('drawSlotsSwapped'), at, competition: id, stage: id, a: loggedDrawPlaceSchema, b: loggedDrawPlaceSchema }),
+  z.object({ type: z.literal('drawPlayerMoved'), at, competition: id, stage: id, from: loggedDrawPlaceSchema, to: loggedDrawPlaceSchema }),
+  z.object({
+    type: z.literal('specialResultRecorded'),
+    at,
+    match: loggedMatchSchema,
+    result: specialResultSchema,
+    table: loggedTableSchema.nullable(),
+  }),
+  z.object({ type: z.literal('playerWithdrew'), at, competition: id, players: z.array(id) }),
   z.object({
     type: z.literal('resultCorrected'),
     at,

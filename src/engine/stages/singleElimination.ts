@@ -1,15 +1,20 @@
-import { fail, ok } from '../result';
-import type { MatchPlaces, PlaceRange, SingleEliminationStage } from '../types';
+import { fail, ok, type Result } from '../result';
+import type { Match, MatchPlaces, PlaceRange, SingleEliminationStage } from '../types';
 import {
   directBracketSize,
   knockoutTree,
+  moveFirstRoundPosition,
   newBracketMatch,
   numberEntrants,
   placeBySeedPositions,
+  swapFirstRoundPositions,
 } from './bracket';
 import type { StageHandler } from './handler';
 
 const place = (from: number, to = from): PlaceRange => ({ from, to });
+
+const withMatches = (stage: SingleEliminationStage, matches: Result<Match[]>): Result<SingleEliminationStage> =>
+  matches.ok ? ok({ ...stage, matches: matches.value }) : matches;
 
 export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
   allowsGamesOnly: true, // nothing in a knockout depends on point ratios
@@ -52,6 +57,9 @@ export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
   },
 
   clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', matches: [], playOffs: [] }),
+
+  swapPositions: (stage, a, b) => withMatches(stage, swapFirstRoundPositions(stage.matches, 'main', a, b)),
+  movePosition: (stage, from, to) => withMatches(stage, moveFirstRoundPosition(stage.matches, 'main', from, to)),
 };
 
 /**

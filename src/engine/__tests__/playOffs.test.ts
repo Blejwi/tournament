@@ -29,7 +29,7 @@ function source(state: TournamentState, stage: string, match: MatchView, slot: 0
   const s = match.slots[slot].source;
   if (s.kind !== 'matchResult') return slotLabel(match, slot);
   const feeder = allMatches(state, stage).find((m) => m.id === s.match)!;
-  const where = feeder.location.kind === 'bracket' && feeder.location.section === 'playOff' ? 'PO' : feeder.location.kind === 'bracket' ? { main: 'R', winners: 'WR', losers: 'LR', thirdPlace: '3P', secondFinal: '2F' }[feeder.location.section] : '';
+  const where = feeder.location.kind === 'bracket' && feeder.location.section === 'playOff' ? 'PO' : feeder.location.kind === 'bracket' ? ({ main: 'R', winners: 'WR', losers: 'LR', thirdPlace: '3P', secondFinal: '2F', playOff: 'PO' } as Record<string, string>)[feeder.location.section] : '';
   return `${s.take === 'winner' ? 'W' : 'L'} ${where}${feeder.round}.${feeder.order}`;
 }
 
@@ -55,7 +55,6 @@ function playOut(state: TournamentState, stage: string, upset: (m: MatchView) =>
 }
 
 const isPlayOff = (m: MatchView) => m.location.kind === 'bracket' && m.location.section === 'playOff';
-const mainOnly = (m: MatchView) => !isPlayOff(m);
 
 const places = (state: TournamentState, competition: string) =>
   getFinalPlaces(state, competition)!.rows.map((r) => `${range(r.place)} ${r.entry.players[0].lastName}`);
@@ -160,7 +159,7 @@ describe('place play-offs: switching on and off', () => {
     const played = run(on, { type: 'recordResult', match: qf1.id, result: quick(0), at: 0 }, { type: 'recordResult', match: qf2.id, result: quick(0), at: 0 });
     expect(playOffRounds(played, stage, 5, 8)[0].map((m) => m.status)).toEqual(['ready', 'pending']);
     expect(playOffRounds(played, stage, 5, 8)[0].map((m) => [m.slots[0].entry?.players[0].lastName, m.slots[1].entry?.players[0].lastName])).toEqual([
-      ['P8', 'P5'],
+      ['P8', 'P4'],
       [undefined, undefined],
     ]);
   });
@@ -282,10 +281,10 @@ describe('place play-offs: final places', () => {
     expect(places(off, competition).slice(4)).toEqual(['5–8 P8', '5–8 P5', '5–8 P6', '5–8 P7']);
   });
 
-  it('with BYEs the play-off only places the entries that are there: 6 in 8 → 5th and 6th', () => {
-    const { state, competition, stage } = drawnBracket(6, { seeds: allSeeded(6) });
-    const played = playOut(run(state, setPlayOff(stage, 5, 8, true)), stage);
-    expect(places(played, competition).slice(4)).toEqual(['5 P5', '6 P6']);
+  it('with BYEs the play-off only places the entries that are there: 12 in 16 → 9th to 12th', () => {
+    const { state, competition, stage } = drawnBracket(12, { seeds: allSeeded(12) });
+    const played = playOut(run(state, setPlayOff(stage, 9, 16, true)), stage);
+    expect(places(played, competition).slice(8)).toEqual(['9 P9', '10 P10', '11 P11', '12 P12']);
     expect(getFinalPlaces(played, competition)!.complete).toBe(true);
   });
 });
@@ -314,7 +313,7 @@ describe('place play-offs: waiting list and counts', () => {
     const progress = (s: TournamentState) => getStats(s, 0).progress.total;
     const before = [getWaitingList(state, 0).length, getMatchCounts(state, 0)[0].ready, progress(state)];
     const on = run(state, setPlayOff(stage, 13, 16, true));
-    expect(progress(on)).toBe(before[2] + 6);
+    expect(progress(on)).toBe(before[2] + 4);
     const off = run(on, setPlayOff(stage, 13, 16, false));
     expect([getWaitingList(off, 0).length, getMatchCounts(off, 0)[0].ready, progress(off)]).toEqual(before);
     expect(competition).toBeDefined();

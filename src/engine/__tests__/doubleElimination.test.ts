@@ -180,7 +180,7 @@ describe('double elimination: structure for 8, 32 and 64', () => {
 
   it('is configured as a stage with no options', () => {
     const { state, competition } = drawnDoubleElimination(8, { confirm: false });
-    expect(getCompetition(state, competition)!.stages).toEqual([{ id: expect.any(String), drawState: 'drawn', type: 'doubleElimination', matches: expect.any(Array), playOffs: [] }]);
+    expect(getCompetition(state, competition)!.stages).toEqual([{ id: expect.any(String), drawState: 'drawn', type: 'doubleElimination', }]);
   });
 });
 
@@ -274,5 +274,36 @@ describe('double elimination: BYEs', () => {
     const played = playOut(state, stage);
     expect(places(played, competition).slice(8)).toEqual(['9–12 P9', '9–12 P12', '9–12 P11', '9–12 P10', '13 P13']);
     expect(getFinalPlaces(played, competition)!.complete).toBe(true);
+  });
+});
+
+describe('double elimination: special results and withdrawal', () => {
+  const firstMatch = (state: TournamentState, stage: string, section: string, round = 0, index = 0) => sectionRounds(state, stage, section)[round][index];
+
+  it('drops the loser of a walkover or a disqualification into the losers bracket', () => {
+    const { state, stage } = drawnDoubleElimination(8, { seeds: allSeeded(8) });
+    const [m1, m2] = sectionRounds(state, stage, 'winners')[0];
+    const walkover = run(state, { type: 'recordResult', match: m1.id, result: { kind: 'walkover', winner: 0 }, at: 0 });
+    const next = run(walkover, { type: 'recordResult', match: m2.id, result: { kind: 'disqualification', winner: 1 }, at: 0 });
+    expect(slotLabel(sectionRounds(next, stage, 'winners')[1][0], 0)).toBe('P1');
+    const l1 = firstMatch(next, stage, 'losers');
+    expect([slotLabel(l1, 0), slotLabel(l1, 1)]).toEqual(['P8', 'P5']); // M1: P1 v P8 (walkover for P1); M2: P4 v P5, P5 disqualified
+  });
+
+  it('drops the opponent of a withdrawn player into the losers bracket as winner of a walkover', () => {
+    const { state, competition, stage } = drawnDoubleElimination(8, { seeds: allSeeded(8) });
+    const [m1] = sectionRounds(state, stage, 'winners')[0];
+    const p8 = m1.slots[1].entry!.id;
+    const next = run(state, { type: 'withdrawPlayer', competition, entry: p8, at: 5000 });
+    expect(firstMatch(next, stage, 'winners')).toMatchObject({ status: 'walkover', result: { kind: 'walkover', winner: 0 } });
+    expect(slotLabel(sectionRounds(next, stage, 'winners')[1][0], 0)).toBe('P1');
+    // the withdrawn player is the loser: they take the losers-bracket slot and lose there by walkover too
+    const l1 = firstMatch(next, stage, 'losers');
+    expect(l1.slots[0].entry?.id).toBe(p8);
+    expect(l1.status).toBe('pending');
+    // once the other first-round loser arrives, the withdrawn player's losers-bracket match is a walkover for them
+    const [, m2] = sectionRounds(next, stage, 'winners')[0];
+    const after = run(next, { type: 'recordResult', match: m2.id, result: quick(0), at: 0 });
+    expect(firstMatch(after, stage, 'losers')).toMatchObject({ status: 'walkover', result: { kind: 'walkover', winner: 1 } });
   });
 });

@@ -100,7 +100,8 @@ function countsTowardProgress(m: DerivedMatch): boolean {
   return !(m.status === 'finished' && !m.match.result);
 }
 
-const isDone = (m: DerivedMatch) => m.match.result !== null;
+/** Has a result, or is a walkover a withdrawal gives (never recorded, so `match.result` is empty). */
+const isDone = (m: DerivedMatch) => m.match.result !== null || m.status === 'walkover';
 
 function progressOf(matches: DerivedMatch[]): ProgressView {
   return { done: matches.filter(isDone).length, total: matches.length };
@@ -125,7 +126,11 @@ function wasPlayed(result: MatchResult): boolean {
   switch (result.kind) {
     case 'games':
     case 'gamesOnly':
+    case 'retirement':
       return true;
+    case 'walkover':
+    case 'disqualification':
+      return false;
   }
 }
 

@@ -1,4 +1,4 @@
-import type { LogEntry, LoggedMatch, MatchId, PlaceRange, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
+import type { SpecialResultKind, LogEntry, LoggedDrawPlace, LoggedMatch, MatchId, PlaceRange, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
 import type { EntryPlayerView } from './competitions';
 import { locationView, resultView, type MatchLocationView, type ResultView } from './matches';
 
@@ -19,6 +19,15 @@ export interface LoggedMatchView {
   players: [EntryPlayerView[], EntryPlayerView[]];
 }
 
+/** A draw position as it was when the entry was written. */
+export interface LoggedDrawPlaceView {
+  /** The group's name; null in a bracket. */
+  group: string | null;
+  position: number;
+  /** Who sat there; empty for a BYE or a free place. */
+  players: EntryPlayerView[];
+}
+
 /**
  * One change-log entry as shown. `seq` is its 0-based position in the log (oldest = 0), stable
  * across calls, so it works as a list key. Each entry type adds its own fields.
@@ -27,6 +36,11 @@ export type ChangeLogEntryView = { seq: number; at: Timestamp } & (
   | { type: 'matchAssigned'; match: LoggedMatchView; table: number }
   | { type: 'matchUnassigned'; match: LoggedMatchView; table: number }
   | { type: 'resultRecorded'; match: LoggedMatchView; result: ResultView; table: number | null }
+  | { type: 'drawSlotsSwapped'; competition: CompetitionId; competitionName: string; stage: StageId; a: LoggedDrawPlaceView; b: LoggedDrawPlaceView }
+  | { type: 'drawPlayerMoved'; competition: CompetitionId; competitionName: string; stage: StageId; from: LoggedDrawPlaceView; to: LoggedDrawPlaceView }
+  /** `result.kind` says which: walkover, retirement or disqualification. */
+  | { type: 'specialResultRecorded'; match: LoggedMatchView; result: ResultView & { kind: SpecialResultKind }; table: number | null }
+  | { type: 'playerWithdrew'; competition: CompetitionId; competitionName: string; players: EntryPlayerView[] }
   | { type: 'resultCorrected'; match: LoggedMatchView; before: ResultView; after: ResultView; reset: LoggedMatchView[] }
   | { type: 'playOffSet'; competition: CompetitionId; competitionName: string; stage: StageId; range: PlaceRange; enabled: boolean }
 );
@@ -43,6 +57,14 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
     case 'matchAssigned':
     case 'matchUnassigned':
       return { ...base, type: entry.type, match: loggedMatchView(state, entry.match), table: entry.table.number };
+    case 'specialResultRecorded':
+      return {
+        ...base,
+        type: entry.type,
+        match: loggedMatchView(state, entry.match),
+        result: { ...resultView(entry.result), kind: entry.result.kind },
+        table: entry.table?.number ?? null,
+      };
     case 'resultRecorded':
       return {
         ...base,
@@ -50,6 +72,34 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
         match: loggedMatchView(state, entry.match),
         result: resultView(entry.result),
         table: entry.table?.number ?? null,
+      };
+    case 'drawSlotsSwapped':
+      return {
+        ...base,
+        type: entry.type,
+        competition: entry.competition,
+        competitionName: competitionName(state, entry.competition),
+        stage: entry.stage,
+        a: loggedPlaceView(state, entry.a),
+        b: loggedPlaceView(state, entry.b),
+      };
+    case 'drawPlayerMoved':
+      return {
+        ...base,
+        type: entry.type,
+        competition: entry.competition,
+        competitionName: competitionName(state, entry.competition),
+        stage: entry.stage,
+        from: loggedPlaceView(state, entry.from),
+        to: loggedPlaceView(state, entry.to),
+      };
+    case 'playerWithdrew':
+      return {
+        ...base,
+        type: entry.type,
+        competition: entry.competition,
+        competitionName: competitionName(state, entry.competition),
+        players: entry.players.map((id) => playerView(state, id)),
       };
     case 'resultCorrected':
       return {
@@ -73,15 +123,23 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
   }
 }
 
+const competitionName = (state: TournamentState, id: CompetitionId) => state.competitions.find((c) => c.id === id)?.name ?? '';
+
+function playerView(state: TournamentState, id: string): EntryPlayerView {
+  const p = state.players.find((x) => x.id === id);
+  return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
+}
+
+function loggedPlaceView(state: TournamentState, place: LoggedDrawPlace): LoggedDrawPlaceView {
+  return { group: place.group, position: place.position, players: place.players.map((id) => playerView(state, id)) };
+}
+
 function loggedMatchView(state: TournamentState, logged: LoggedMatch): LoggedMatchView {
   const competition = state.competitions.find((c) => c.id === logged.competition);
   const stageIndex = competition?.stages.findIndex((s) => s.id === logged.stage) ?? -1;
   const stage = stageIndex >= 0 ? competition!.stages[stageIndex] : undefined;
   const match = stage?.matches.find((m) => m.id === logged.match);
-  const player = (id: string): EntryPlayerView => {
-    const p = state.players.find((x) => x.id === id);
-    return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
-  };
+  const player = (id: string) => playerView(state, id);
   return {
     id: logged.match,
     competition: logged.competition,

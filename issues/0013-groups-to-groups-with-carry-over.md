@@ -1,7 +1,7 @@
 ---
 id: 13
 title: Groups → groups with carry-over
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

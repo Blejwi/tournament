@@ -1,5 +1,5 @@
 import { handlerFor } from '../stages';
-import type { Competition, CompetitionId, DrawState, Entry, EntryId, GamesToWin, PlayerId, StageConfig, StageId, TournamentState } from '../types';
+import type { Competition, CompetitionId, DrawState, Entry, EntryId, GamesToWin, PlayerId, StageConfig, StageId, Timestamp, TournamentState } from '../types';
 
 export interface CompetitionSummaryView {
   id: CompetitionId;
@@ -25,6 +25,8 @@ export interface EntryView {
   id: EntryId;
   seed: number | null;
   players: EntryPlayerView[];
+  /** When the player withdrew from the competition; null while still in it. */
+  withdrawnAt: Timestamp | null;
 }
 
 export interface CompetitionView {
@@ -52,7 +54,7 @@ export function entryView(state: TournamentState, entry: Entry): EntryView {
     const p = state.players.find((x) => x.id === id);
     return { id, firstName: p?.firstName ?? '', lastName: p?.lastName ?? '', club: p?.club ?? '' };
   });
-  return { id: entry.id, seed: entry.seed, players };
+  return { id: entry.id, seed: entry.seed, players, withdrawnAt: entry.withdrawnAt };
 }
 
 export function findEntry(competition: Competition, id: EntryId): Entry | undefined {

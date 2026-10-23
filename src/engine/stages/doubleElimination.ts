@@ -1,7 +1,15 @@
 import type { IdSource } from '../ids';
-import { ok } from '../result';
+import { ok, type Result } from '../result';
 import type { DoubleEliminationStage, Match, PlaceRange, SlotSource } from '../types';
-import { directBracketSize, knockoutTree, newBracketMatch, numberEntrants, placeBySeedPositions } from './bracket';
+import {
+  directBracketSize,
+  knockoutTree,
+  moveFirstRoundPosition,
+  newBracketMatch,
+  numberEntrants,
+  placeBySeedPositions,
+  swapFirstRoundPositions,
+} from './bracket';
 import type { StageHandler } from './handler';
 
 /**
@@ -39,7 +47,14 @@ export const doubleEliminationHandler: StageHandler<DoubleEliminationStage> = {
   },
 
   clearDraw: (stage) => ({ ...stage, drawState: 'notDrawn', matches: [], playOffs: [] }),
+
+  // Draw editing moves the winners bracket's round-1 positions; the losers bracket follows through its slot sources.
+  swapPositions: (stage, a, b) => withMatches(stage, swapFirstRoundPositions(stage.matches, 'winners', a, b)),
+  movePosition: (stage, from, to) => withMatches(stage, moveFirstRoundPosition(stage.matches, 'winners', from, to)),
 };
+
+const withMatches = (stage: DoubleEliminationStage, matches: Result<Match[]>): Result<DoubleEliminationStage> =>
+  matches.ok ? ok({ ...stage, matches: matches.value }) : matches;
 
 const place = (from: number, to = from): PlaceRange => ({ from, to });
 const winnerOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'winner' });

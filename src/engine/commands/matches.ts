@@ -4,7 +4,7 @@ import { appendLog, loggedMatch, loggedTable } from '../log';
 import { fail, ok, type Result } from '../result';
 import { validateScore } from '../score';
 import { handlerFor } from '../stages';
-import type { MatchId, MatchResult, TableId, Timestamp, TournamentState } from '../types';
+import type { LogEntry, MatchId, MatchResult, TableId, Timestamp, TournamentState } from '../types';
 
 export type MatchCommand =
   /** Calls a ready match to a free table; the match clock starts at `at`. */
@@ -56,15 +56,13 @@ export function recordResult(state: TournamentState, cmd: Cmd<'recordResult'>): 
   if (!located.ok) return located;
   const { match } = located.value;
   const next = replaceMatch(state, located.value, { ...match, result: structuredClone(cmd.result), finishedAt: cmd.at });
-  return ok(
-    appendLog(next, {
-      type: 'resultRecorded',
-      at: cmd.at,
-      match: loggedMatch(state, cmd.match),
-      result: structuredClone(cmd.result),
-      table: loggedTable(state, match.table),
-    }),
-  );
+  const logged = { at: cmd.at, match: loggedMatch(state, cmd.match), table: loggedTable(state, match.table) };
+  const { result } = cmd;
+  const entry: LogEntry =
+    result.kind === 'games' || result.kind === 'gamesOnly'
+      ? { type: 'resultRecorded', ...logged, result: structuredClone(result) }
+      : { type: 'specialResultRecorded', ...logged, result: structuredClone(result) };
+  return ok(appendLog(next, entry));
 }
 
 /** Whether `result` could be recorded for the match now: the match is playable and the score is valid. */

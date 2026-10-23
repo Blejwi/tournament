@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { execute, getChangeLog, type ChangeLogEntryView, type TournamentState } from '@/engine';
+import { execute, getChangeLog, getCompetition } from '@/engine';
 import { errorOf } from './helpers';
 import { drawnGroups, matchBetween, run, tableId } from './scenarios';
 
@@ -13,11 +13,13 @@ function setup() {
   return { state, stage, competition, match: match.id, slotA: match.slots[0].entry!.players[0].lastName };
 }
 
-/** The log entries about a match (every type except play-off switches). */
-const matchEntries = (state: TournamentState) =>
-  getChangeLog(state).filter((e): e is Extract<ChangeLogEntryView, { match: unknown }> => 'match' in e);
-
 const lastNames = (players: { lastName: string }[]) => players.map((p) => p.lastName);
+
+/** The match of a match-related entry (narrows the union). */
+function matchOf(entry: ReturnType<typeof getChangeLog>[number]) {
+  if (!('match' in entry)) throw new Error(`entry ${entry.type} has no match`);
+  return entry.match;
+}
 
 describe('change log', () => {
   it('is empty for a new tournament', () => {
@@ -27,11 +29,11 @@ describe('change log', () => {
   it('records a table assignment with its time, the table and the players', () => {
     const { state, match, competition, slotA } = setup();
     const next = run(state, { type: 'assignMatch', match, table: tableId(state, 2), at: T0 });
-
-    const [entry] = matchEntries(next);
+    const [entry] = getChangeLog(next);
+    if (entry.type !== 'matchAssigned') throw new Error(entry.type);
     expect(entry).toMatchObject({ type: 'matchAssigned', at: T0, table: 2, match: { id: match, competition, competitionName: 'Open' } });
-    expect(lastNames(entry.match.players[0])).toEqual([slotA]);
-    expect(entry.match.players.flat().map((p) => p.lastName).sort()).toEqual(['P1', 'P4']);
+    expect(lastNames(matchOf(entry).players[0])).toEqual([slotA]);
+    expect(matchOf(entry).players.flat().map((p) => p.lastName).sort()).toEqual(['P1', 'P4']);
   });
 
   it('records taking a match off its table, with the table it was on', () => {
@@ -70,7 +72,7 @@ describe('change log', () => {
       { type: 'assignMatch', match: other, table: tableId(state, 2), at: T0 + MIN },
       { type: 'recordResult', match, result: { kind: 'games', games: [[11, 1], [11, 2], [11, 3]] }, at: T0 + 10 * MIN },
     );
-    expect(matchEntries(next).map((e) => [e.type, e.match.id, e.at])).toEqual([
+    expect(getChangeLog(next).map((e) => [e.type, matchOf(e).id, e.at])).toEqual([
       ['resultRecorded', match, T0 + 10 * MIN],
       ['matchAssigned', other, T0 + MIN],
       ['matchAssigned', match, T0],
@@ -82,6 +84,40 @@ describe('change log', () => {
     errorOf(execute(state, { type: 'unassignMatch', match, at: T0 }));
     errorOf(execute(state, { type: 'recordResult', match, result: { kind: 'games', games: [[11, 1]] }, at: T0 }));
     expect(getChangeLog(state)).toEqual([]);
+  });
+
+  it('records a walkover, a retirement and a disqualification as special results, with the games a retirement kept', () => {
+    const { state, stage, match } = setup();
+    const others = [matchBetween(state, stage, 'P2', 'P3').id, matchBetween(state, stage, 'P1', 'P2').id];
+    const next = run(
+      state,
+      { type: 'recordResult', match, result: { kind: 'walkover', winner: 0 }, at: T0 },
+      { type: 'assignMatch', match: others[0], table: tableId(state, 1), at: T0 + MIN },
+      { type: 'recordResult', match: others[0], result: { kind: 'retirement', winner: 1, games: [[11, 5], [4, 11]] }, at: T0 + 9 * MIN },
+      { type: 'recordResult', match: others[1], result: { kind: 'disqualification', winner: 0 }, at: T0 + 10 * MIN },
+    );
+    const log = getChangeLog(next);
+    expect(log.map((e) => e.type)).toEqual(['specialResultRecorded', 'specialResultRecorded', 'matchAssigned', 'specialResultRecorded']);
+    expect(log[0]).toMatchObject({ at: T0 + 10 * MIN, result: { kind: 'disqualification', winner: 0, gamesWon: [0, 0], games: null }, table: null, match: { id: others[1] } });
+    expect(log[1]).toMatchObject({ result: { kind: 'retirement', winner: 1, gamesWon: [1, 1], games: [[11, 5], [4, 11]] }, table: 1 });
+    expect(log[3]).toMatchObject({ result: { kind: 'walkover', winner: 0 }, match: { id: match } });
+  });
+
+  it('records a withdrawal with the competition and the player who left', () => {
+    const { state, competition, slotA } = setup();
+    const entry = getCompetition(state, competition)!.entries.find((e) => e.players[0].lastName === slotA)!.id;
+    const next = run(state, { type: 'withdrawPlayer', competition, entry, at: T0 + 5 * MIN });
+    const [logged] = getChangeLog(next);
+    expect(logged).toMatchObject({ type: 'playerWithdrew', at: T0 + 5 * MIN, competition, competitionName: 'Open' });
+    expect(lastNames((logged as { players: { lastName: string }[] }).players)).toEqual([slotA]);
+  });
+
+  it('writes nothing for a rejected withdrawal', () => {
+    const { state, competition, slotA } = setup();
+    const entry = getCompetition(state, competition)!.entries.find((e) => e.players[0].lastName === slotA)!.id;
+    const withdrawn = run(state, { type: 'withdrawPlayer', competition, entry, at: T0 });
+    errorOf(execute(withdrawn, { type: 'withdrawPlayer', competition, entry, at: T0 + MIN }));
+    expect(getChangeLog(withdrawn)).toHaveLength(1);
   });
 });
 

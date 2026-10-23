@@ -206,7 +206,7 @@ describe('single elimination: quick results', () => {
     const match = roundsOf(state, stage)[0][0];
     expect(match.gamesOnlyAllowed).toBe(true);
     const next = run(state, { type: 'recordResult', match: match.id, result: { kind: 'gamesOnly', games: [1, 3] }, at: 0 });
-    expect(getMatch(next, match.id, 0)!.result).toEqual({ winner: 1, gamesWon: [1, 3], games: null });
+    expect(getMatch(next, match.id, 0)!.result).toEqual({ kind: 'gamesOnly', winner: 1, gamesWon: [1, 3], games: null });
   });
 
   it('parses "3:1" as games only and game scores as games', () => {

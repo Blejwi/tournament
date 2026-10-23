@@ -1,7 +1,7 @@
 ---
 id: 8
 title: Draw editing before confirm
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -32,3 +32,7 @@ Confirming locks the draw.
 
 - #0003
 - #0007
+
+## Resolution
+
+Done on `integration/v1` in abf482c, 716b5e2, e4a6d20, 01239e4 and b531e52. `swapSlots` and `movePlayer` work for unconfirmed groups, single elimination and double elimination (round 1 of the winners bracket), and are rejected after confirmation. Re-drawing keeps seeded entries in place. On the canvas, a drawn but unconfirmed stage opens draw editing (drag-and-drop or click-to-pick, Re-draw, Confirm). The change log records `drawSlotsSwapped` and `drawPlayerMoved`. Not checked in the browser.

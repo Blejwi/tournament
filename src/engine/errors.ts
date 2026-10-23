@@ -26,6 +26,14 @@ export type EngineError =
   | { code: 'stageNotDrawn' }
   | { code: 'stageConfirmed' }
   | { code: 'notEnoughEntries'; needed: number }
+  | { code: 'drawPositionNotFound' }
+  /** A bracket position already holds an entrant: move only onto a BYE (or swap). */
+  | { code: 'positionTaken' }
+  /** Moving out would leave the group with fewer than `min` entries. */
+  | { code: 'groupTooSmall'; min: number }
+  /** A first-round bracket match can't have a BYE on both sides. */
+  | { code: 'byeAgainstBye' }
+  | { code: 'drawEditNotSupported' }
   | { code: 'tooManyEntries'; max: number }
   | { code: 'matchNotFound'; match: MatchId }
   /** The range isn't a shared place range of this stage that can have a play-off. */
@@ -51,6 +59,13 @@ export type EngineError =
   | { code: 'invalidGame'; game: number; a: number; b: number }
   | { code: 'gamesAfterDecided'; game: number }
   | { code: 'matchNotDecided'; gamesToWin: number }
+  /** A retirement's games already decide the match: record it as a normal result instead. */
+  | { code: 'retirementAfterDecided'; gamesToWin: number }
+  /** Withdrawal needs the competition's first stage to be confirmed (before that, remove the entry). */
+  | { code: 'competitionNotStarted' }
+  | { code: 'alreadyWithdrawn' }
+  /** The player is on a table in this competition: record that match's result (e.g. a retirement) first. */
+  | { code: 'withdrawalWhilePlaying'; number: number }
   | { code: 'invalidExpectedDuration' }
   | { code: 'importNotJson' }
   | { code: 'importNotTournamentFile' }

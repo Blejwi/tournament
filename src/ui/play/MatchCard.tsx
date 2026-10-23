@@ -7,6 +7,8 @@ import { formatClock } from '@/ui/format';
 import { matchCode, slotText } from '@/ui/matchLabels';
 import { busyLines } from './busy';
 import { overdueText } from './overdueStyle';
+import { ResultBadge } from './ResultBadge';
+import { hasGames } from './specialResults';
 
 /** Card frame by derived match status (spec user story 86). */
 const STATUS_STYLE: Record<MatchStatus, string> = {
@@ -58,7 +60,8 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
             )}
           >
             <span className={cn('min-w-0 break-words', slot.placeholder && 'text-slate-400 italic')}>{slot.text}</span>
-            <span className="ml-auto font-bold tabular-nums">{match.result?.gamesWon[side] ?? ''}</span>
+            <ResultBadge match={match} side={side} />
+            <span className="ml-auto font-bold tabular-nums">{hasGames(match) ? match.result!.gamesWon[side] : ''}</span>
           </span>
         );
       })}

@@ -17,7 +17,9 @@
  *   else found there is dropped, as it was never written by the app.
  * - 8: adds double elimination stages and the `winners`, `losers` and `secondFinal` bracket
  *   sections (#0010). Older files need no change; the bump lets older apps refuse them.
- * - 9: every single and double elimination stage gets `playOffs` (the place play-offs switched on,
+ * - 9: adds an entry's `withdrawnAt` (null: not withdrawn) and the special results walkover,
+ *   retirement and disqualification (#0014).
+ * - 10: every single and double elimination stage gets `playOffs` (the place play-offs switched on,
  *   none so far) and bracket matches may be in section `playOff` (#0012).
  */
 
@@ -56,6 +58,18 @@ export const migrations: Record<number, Migration> = {
   8: (file) => {
     const tournament = file.tournament as { competitions?: unknown };
     const competitions = Array.isArray(tournament?.competitions)
+      ? tournament.competitions.map((competition: { entries?: unknown }) => ({
+          ...competition,
+          entries: Array.isArray(competition?.entries)
+            ? competition.entries.map((entry: object) => ({ ...entry, withdrawnAt: null }))
+            : competition?.entries,
+        }))
+      : tournament?.competitions;
+    return { ...file, schemaVersion: 9, tournament: { ...tournament, competitions } };
+  },
+  9: (file) => {
+    const tournament = file.tournament as { competitions?: unknown };
+    const competitions = Array.isArray(tournament?.competitions)
       ? tournament.competitions.map((competition: { stages?: unknown }) => ({
           ...competition,
           stages: Array.isArray(competition?.stages)
@@ -65,6 +79,6 @@ export const migrations: Record<number, Migration> = {
             : competition?.stages,
         }))
       : tournament?.competitions;
-    return { ...file, schemaVersion: 9, tournament: { ...tournament, competitions } };
+    return { ...file, schemaVersion: 10, tournament: { ...tournament, competitions } };
   },
 };
