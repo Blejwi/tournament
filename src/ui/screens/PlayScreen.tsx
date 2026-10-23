@@ -5,9 +5,11 @@ import {
   getCompetition,
   getCompetitions,
   getMatch,
+  getMatchCounts,
   getOverdueMatches,
   getStage,
   getTableOverview,
+  type MatchCountsView,
   type MatchId,
   type MatchView,
 } from '@/engine';
@@ -19,7 +21,7 @@ import { useCanvas, type WorldRect } from '@/ui/play/canvasContext';
 import { GroupBox } from '@/ui/play/GroupBox';
 import { MatchPopover } from '@/ui/play/MatchPopover';
 import { TablesFullScreen, TablesPanel } from '@/ui/play/TablesPanel';
-import { WaitingList } from '@/ui/play/WaitingList';
+import { WaitingList, type WaitingListScope } from '@/ui/play/WaitingList';
 import { useNow } from '@/ui/useNow';
 
 const POPOVER_WIDTH = 350;
@@ -39,6 +41,8 @@ export function PlayScreen() {
   const now = useNow();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [pendingFocus, setPendingFocus] = useState<MatchId | null>(null);
+  const [scope, setScope] = useState<WaitingListScope>('all');
+  const counts = useQuery((s) => getMatchCounts(s, now), [now]) ?? [];
   const navigate = useNavigate();
   const selected = useQuery((s) => (selection ? getMatch(s, selection.match, now) : null), [selection, now]);
   const tableOverview = useQuery((s) => getTableOverview(s, now), [now]);
@@ -88,12 +92,13 @@ export function PlayScreen() {
             onClick={() => setSelection(null)}
             className={({ isActive }) =>
               cn(
-                '-mb-px border-b-[3px] px-4 py-2 text-sm font-semibold',
+                '-mb-px flex items-center gap-2 border-b-[3px] px-4 py-2 text-sm font-semibold',
                 isActive ? 'border-indigo-600 bg-slate-50' : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800',
               )
             }
           >
-            {c.name}
+            <span>{c.name}</span>
+            <TabCounts counts={counts.find((x) => x.competition === c.id)} />
           </NavLink>
         ))}
         <div className="ml-auto flex items-center gap-2 py-1">
@@ -133,9 +138,30 @@ export function PlayScreen() {
             <TablesFullScreen overview={tableOverview} onFocus={select} onClose={() => setTablesFull(false)} />
           )}
         </div>
-        <WaitingList now={now} selectedMatch={selection?.match ?? null} onSelect={select} />
+        <WaitingList
+          now={now}
+          competition={competitionId}
+          scope={scope}
+          onScopeChange={setScope}
+          selectedMatch={selection?.match ?? null}
+          onSelect={select}
+        />
       </div>
     </div>
+  );
+}
+
+/** A competition tab's badges: ready, live and overdue matches. */
+function TabCounts({ counts }: { counts: MatchCountsView | undefined }) {
+  const { t } = useTranslation();
+  if (!counts) return null;
+  const badge = 'rounded px-1.5 text-[10px] font-bold';
+  return (
+    <>
+      {counts.ready > 0 && <span className={cn(badge, 'bg-indigo-600 text-white')}>{t('play.tabReady', { count: counts.ready })}</span>}
+      {counts.live > 0 && <span className={cn(badge, 'bg-sky-100 text-sky-700')}>{t('play.tabLive', { count: counts.live })}</span>}
+      {counts.overdue > 0 && <span className={cn(badge, 'bg-red-600 text-white')}>{t('play.tabOverdue', { count: counts.overdue })}</span>}
+    </>
   );
 }
 

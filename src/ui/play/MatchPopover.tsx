@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pause, X } from 'lucide-react';
-import { gamesWon, getFreeTables, parseGames, validateResult, type EngineError, type MatchView } from '@/engine';
+import { gamesWon, getCompetitions, getFreeTables, parseGames, validateResult, type EngineError, type MatchView } from '@/engine';
 import { useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
 import { entryName, formatClock, formatGames } from '@/ui/format';
+import { busyLines } from './busy';
 import { overdueText } from './overdueStyle';
 
 /** Actions for one match, one click from the draw: call to a free table, enter the score. */
@@ -15,6 +16,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
   const { match, onClose } = props;
   const dispatch = useApp((s) => s.dispatch);
   const freeTables = useQuery(getFreeTables) ?? [];
+  const competitions = useQuery(getCompetitions) ?? [];
   const [error, setError] = useState<EngineError | null>(null);
   const live = match.status === 'in_progress' || match.status === 'overdue';
   const canScore = match.status === 'ready' || match.status === 'busy' || live;
@@ -58,10 +60,14 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
           <p className="rounded bg-slate-50 p-2 text-xs text-slate-500">{match.slots.every((s) => s.entry) ? t('match.pendingDraw') : t('match.pendingPlayers')}</p>
         )}
         {match.status === 'busy' && (
-          <p className="flex items-center gap-1 rounded bg-amber-50 p-2 text-xs text-amber-800">
-            <Pause className="size-3" aria-hidden />
-            {t('match.busy')}
-          </p>
+          <div className="grid gap-0.5 rounded bg-amber-50 p-2 text-xs text-amber-800">
+            {(match.busyWith.length ? busyLines(t, match, competitions) : [t('match.busy')]).map((line) => (
+              <p key={line} className="flex items-center gap-1">
+                <Pause className="size-3 shrink-0" aria-hidden />
+                {line}
+              </p>
+            ))}
+          </div>
         )}
 
         {match.status === 'ready' && (
