@@ -1,7 +1,8 @@
 import { shuffle } from '../random';
 import { fail, ok, type Result } from '../result';
-import type { Entry, Group, GroupsStage, Match, SlotSource } from '../types';
+import type { Entry, Group, GroupsStage, Match, SlotSource, TieResolution } from '../types';
 import type { DrawContext, StageHandler } from './handler';
+import { breakTies, type Tie, type TiebreakMatch, type TiebreakStep } from './tiebreak';
 
 /** Fewer than 2 entries in a group means no matches. */
 const MIN_GROUP_SIZE = 2;
@@ -25,7 +26,12 @@ export const groupsHandler: StageHandler<GroupsStage> = {
     const sizes = groupSizes(ctx.entrants.length, stage);
     if (!sizes.ok) return sizes;
     const members = snakeFill(ctx, sizes.value);
-    const groups: Group[] = members.map((entries, i) => ({ id: ctx.ids.next('group'), name: groupName(i), entries }));
+    const groups: Group[] = members.map((entries, i) => ({
+      id: ctx.ids.next('group'),
+      name: groupName(i),
+      entries,
+      tieResolutions: [],
+    }));
     const matches = groups.flatMap((group) => roundRobin(group, ctx));
     return ok({ ...stage, drawState: 'drawn', groups, matches });
   },
@@ -111,6 +117,8 @@ export interface StandingsRow {
   groupPoints: number;
   /** 1-based place in the standings. */
   place: number;
+  /** In a tie the rules can't break and the operator hasn't resolved: the place isn't decided. */
+  tied: boolean;
 }
 
 export interface Standings {
@@ -118,6 +126,10 @@ export interface Standings {
   rows: StandingsRow[];
   /** Every match of the group has a result. */
   complete: boolean;
+  /** The tiebreak trace: `steps[i]` says what separates `rows[i]` from `rows[i + 1]`. */
+  steps: TiebreakStep[];
+  /** Ties the rules can't break, resolved by the operator or not. */
+  ties: Tie[];
 }
 
 /** A group match with its resolved entries, as the standings need it. */
@@ -130,11 +142,8 @@ export interface PlayedMatch {
 /** Group points: 1 for a win, 0 for a loss. */
 const POINTS_FOR_WIN = 1;
 
-/**
- * Standings by group points. Entries level on points keep their draw order for now;
- * the ITTF tiebreak among the tied entries comes with #0004.
- */
-export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]): Standings {
+/** Standings by group points, then the ITTF tiebreak among tied entries (see `breakTies`). */
+export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[], resolutions: TieResolution[]): Standings {
   const rows: StandingsRow[] = members.map((entry, i) => ({
     position: i + 1,
     entry,
@@ -147,6 +156,7 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
     pointsLost: 0,
     groupPoints: 0,
     place: 0,
+    tied: false,
   }));
   const rowOf = (entry: Entry | null) => (entry ? rows.find((r) => r.entry?.id === entry.id) : undefined);
 
@@ -172,9 +182,21 @@ export function groupStandings(members: (Entry | null)[], matches: PlayedMatch[]
     });
   }
 
-  rows.sort((a, b) => b.groupPoints - a.groupPoints || a.position - b.position);
-  rows.forEach((row, i) => (row.place = i + 1));
-  return { rows, complete: matches.every((m) => m.match.result !== null) };
+  const finished: TiebreakMatch[] = [];
+  for (const { match, entries, winner } of matches) {
+    if (winner === null || !match.result || !entries[0] || !entries[1]) continue;
+    finished.push({ entries: [entries[0].id, entries[1].id], winner, games: match.result.kind === 'games' ? match.result.games : [] });
+  }
+  const tiebreak = breakTies(
+    rows.map((row) => ({ row, entry: row.entry?.id ?? null, groupPoints: row.groupPoints })),
+    finished,
+    resolutions,
+  );
+  const ordered = tiebreak.rows.map(({ row }) => row);
+  ordered.forEach((row, i) => (row.place = i + 1));
+  const unresolved = new Set(tiebreak.ties.filter((t) => t.resolution === null).flatMap((t) => t.entries));
+  for (const row of ordered) row.tied = row.entry !== null && unresolved.has(row.entry.id);
+  return { rows: ordered, complete: matches.every((m) => m.match.result !== null), steps: tiebreak.steps, ties: tiebreak.ties };
 }
 
 /** "A".."Z", then "AA", "AB", ... */

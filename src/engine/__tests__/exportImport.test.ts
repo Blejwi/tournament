@@ -18,7 +18,7 @@ import { errorOf, newTournament, unwrap } from './helpers';
 import { drawnBracket, drawnGroups, groupsOf, run, tableId } from './scenarios';
 import schemaV1 from './fixtures/schema-v1.json?raw';
 import schemaV2 from './fixtures/schema-v2.json?raw';
-
+import schemaV3 from './fixtures/schema-v3.json?raw';
 function setUpTournament(): TournamentState {
   let state = newTournament();
   state = unwrap(execute(state, { type: 'addTable', number: 1 }));
@@ -80,6 +80,23 @@ describe('exporting and importing a tournament', () => {
     expect(getFinalPlaces(imported, competition)).toEqual(getFinalPlaces(original, competition));
   });
 
+  it('keeps the operator’s order for a tie the rules cannot break', () => {
+    const { state, stage } = drawnGroups(3, { by: 'count', groups: 1 }, { seeds: { 1: 1, 2: 2, 3: 3 } });
+    // Everyone 1–1 with identical scores: a deadlock the operator settles.
+    const [group] = groupsOf(state, stage);
+    const threeNil = { kind: 'games' as const, games: [[11, 5], [11, 5], [11, 5]] as [number, number][] };
+    let played = state;
+    for (const match of group.matches) played = run(played, { type: 'recordResult', match: match.id, result: threeNil, at: 1000 });
+    const order = groupsOf(played, stage)[0].ties[0].entries.map((e) => e.id).reverse();
+    const original = run(played, { type: 'resolveTie', stage, group: group.id, order, method: 'lot' });
+
+    const imported = unwrap(importTournament({ id: original.id, file: exportTournament(original) }));
+
+    expect(imported).toEqual(original);
+    expect(getStage(imported, stage, 5000)).toEqual(getStage(original, stage, 5000));
+    expect(groupsOf(imported, stage)[0].ties[0].resolution).toBe('lot');
+  });
+
   it('gives the imported tournament the id chosen by the caller', () => {
     const file = exportTournament(setUpTournament());
     const imported = unwrap(importTournament({ id: 'copy', file }));
@@ -89,7 +106,7 @@ describe('exporting and importing a tournament', () => {
   it('writes the schema version, the tournament and an empty change log', () => {
     const file = JSON.parse(exportTournament(newTournament()));
     expect(file).toEqual({
-      schemaVersion: 3,
+      schemaVersion: 4,
       tournament: expect.objectContaining({ name: 'Spring Open' }),
       log: [],
     });
@@ -118,6 +135,19 @@ describe('importing a file with an older schema version', () => {
     expect(getCompetitions(imported)).toEqual([]);
     const next = unwrap(execute(imported, { type: 'addCompetition', name: 'Open' }));
     expect(getCompetitions(next).map((c) => c.id)).toEqual(['competition-3']);
+  });
+
+  it('migrates a version 3 file (before tie resolutions) to groups with no settled ties', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV3 }));
+
+    const [group] = groupsOf(imported, 'stage-9');
+    expect(group.standings.map((r) => [r.entry!.players[0].lastName, r.groupPoints])).toEqual([
+      ['Lis', 1],
+      ['Kowal', 0],
+      ['Sowa', 0],
+    ]);
+    expect(group.ties.map((t) => t.resolution)).toEqual([null]);
+    expect(group.matches.map((m) => m.status)).toEqual(['finished', 'ready', 'ready']);
   });
 
   it('keeps allocating fresh ids after the migration', () => {

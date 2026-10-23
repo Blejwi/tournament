@@ -127,6 +127,38 @@ export const en = {
     wonLost: 'W–L',
     games: 'Games',
     points: 'Pts',
+    openDetail: 'Open group {{name}}: standings, cross table and tiebreaks',
+    tieFlag: 'Tie to settle',
+  },
+  groupDetail: {
+    title: 'Group {{name}}',
+    standings: 'Standings',
+    pointsRatio: 'Points',
+    crossTable: 'Cross table',
+    crossTableHint: 'Each cell is the result from the row player’s side.',
+    tiebreak: 'Tiebreak',
+    noTies: 'No ties: group points decide every place.',
+    between: '{{upper}}–{{lower}}',
+    rule: {
+      groupPoints: 'group points',
+      tiedGroupPoints: 'points in the matches between {{names}}',
+      tiedGameRatio: 'game ratio in the matches between {{names}}',
+      tiedPointRatio: 'point ratio in the matches between {{names}}',
+      decision: 'operator’s decision ({{names}})',
+      lot: 'drawn by lot ({{names}})',
+      none: 'not decided yet: {{names}} are level on every rule',
+    },
+    record: '{{name}}: wins {{groupPoints}}, games {{gamesWon}}:{{gamesLost}}, points {{pointsWon}}:{{pointsLost}}',
+    tieHeading: 'Settle the tie',
+    tieIntro: 'The rules cannot separate {{names}}. Put them in order, then save it as your decision, or draw lots.',
+    moveUp: 'Move {{name}} up',
+    moveDown: 'Move {{name}} down',
+    saveDecision: 'Save as decision',
+    drawLots: 'Draw lots',
+    settled: 'Settled: {{how}}.',
+    settledDecision: 'operator’s decision',
+    settledLot: 'drawn by lot',
+    change: 'Change',
   },
   bracket: {
     /** Match names by round: how many matches the round has decides the name. */
@@ -180,6 +212,9 @@ export const en = {
     pendingDraw: 'The draw is not confirmed yet.',
     pendingPlayers: 'Waiting for the players to be known.',
     busy: 'A player is playing on another table.',
+    busyOn: '{{name}} is playing on table {{number}}.',
+    busyOnIn: '{{name}} is playing on table {{number}} in {{competition}}.',
+    busyChip: 'Busy · T{{number}}',
     takeOff: 'Take off table',
     scoreHeading: 'Enter score',
     scoreHint: 'Games separated by spaces, {{name}}’s points first. Enter saves, Esc closes.',
@@ -202,6 +237,17 @@ export const en = {
     fit: 'Fit',
     waitingList: 'Waiting list',
     readyCount: 'Ready: {{count}}',
+    tabReady_one: '{{count}} ready',
+    tabReady_other: '{{count}} ready',
+    tabLive_one: '{{count}} live',
+    tabLive_other: '{{count}} live',
+    tabOverdue_one: '{{count}} overdue',
+    tabOverdue_other: '{{count}} overdue',
+    scope: 'Show the waiting list of',
+    scopeAll: 'All',
+    noReadyIn: 'No ready matches in {{name}}.',
+    waitingMinutes: '{{minutes}} min',
+    waitingSince: 'Ready for {{minutes}} min',
     noReady: 'No ready matches.',
     busyHeading: 'Busy: a player is on another table',
     callTo: 'Call to table {{number}}',
@@ -262,6 +308,9 @@ export const en = {
     tableInactive: 'Table {{number}} is inactive.',
     tableInUse: 'Table {{number}} has a match on it. Finish the match or take it off the table first.',
     gamePointsRequired: 'Group matches need the points of every game, e.g. 11-7 9-11 11-5.',
+    groupNotFound: 'This group no longer exists.',
+    groupNotComplete: 'A tie can only be settled once every match of the group has a result.',
+    tieNotFound: 'These entries are not in a tie the rules cannot break.',
     invalidScoreFormat: '“{{text}}” is not a game score. Type games like 11-7 9-11 11-5.',
     invalidGame: 'Game {{game}} ({{a}}-{{b}}) is not valid: a game goes to 11 with a 2-point lead.',
     gamesAfterDecided: 'Game {{game}} comes after the match was already decided.',
@@ -273,7 +322,25 @@ export const en = {
   } satisfies Record<EngineErrorCode, string>,
 };
 
-type Strings<T> = { [K in keyof T]: T[K] extends string ? string : Strings<T[K]> };
+/** i18next plural suffixes (CLDR categories). */
+type PluralCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
 
-/** The shape every language must match exactly. */
-export type Translations = Strings<typeof en>;
+/**
+ * The shape of a language's strings: the same keys as EN, except plural keys. EN writes a plural as
+ * `key_one` + `key_other`; another language has its own categories instead (`Required`, plus any
+ * of `Optional`), e.g. Polish `key_one`, `key_few`, `key_many`.
+ */
+type Strings<T, Required extends PluralCategory, Optional extends PluralCategory> = {
+  [K in keyof T as K extends `${string}_${PluralCategory}` ? never : K]: T[K] extends string ? string : Strings<T[K], Required, Optional>;
+} & {
+  [K in keyof T as K extends `${infer Base}_${PluralCategory}` ? `${Base}_${Required}` : never]: string;
+} & {
+  [K in keyof T as K extends `${infer Base}_${PluralCategory}` ? `${Base}_${Exclude<Optional, Required>}` : never]?: string;
+};
+
+/** The shape a language with these plural categories must match (Polish: one, few, many; `_other` optional). */
+export type Translations<Required extends PluralCategory = 'one' | 'other', Optional extends PluralCategory = never> = Strings<
+  typeof en,
+  Required,
+  Optional
+>;

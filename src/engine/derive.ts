@@ -1,5 +1,5 @@
 import { groupStandings, type Standings } from './stages/groups';
-import type { Competition, Entry, Group, GroupsStage, Match, MatchId, PlayerId, SlotSource, Stage, TournamentState } from './types';
+import type { Competition, Entry, Group, GroupsStage, Match, MatchId, PlayerId, SlotSource, Stage, Timestamp, TournamentState } from './types';
 
 /**
  * A match's derived status (from the spec). Never stored: worked out from the draw and the results.
@@ -29,6 +29,14 @@ export interface DerivedMatch {
   /** Slot index of the winner, once there is a result (or a BYE decided it). */
   winner: 0 | 1 | null;
   status: MatchStatus;
+  /**
+   * Since when both players have been known and free: the latest of the results that decided the
+   * slots and the players' last finished matches (anywhere in the tournament). null when nothing
+   * like that happened yet (e.g. a first-round match). Set for ready and busy matches only.
+   */
+  waitingSince: Timestamp | null;
+  /** For a busy match: each of its players who is on a table elsewhere, with that match. */
+  busyWith: { player: PlayerId; match: Match; competition: Competition }[];
 }
 
 export interface Derived {
@@ -115,7 +123,7 @@ export function derive(state: TournamentState): Derived {
     const played = stage.matches
       .filter((m) => m.location.kind === 'group' && m.location.group === group.id)
       .map((m) => ({ match: m, entries: matchEntries(m.id), winner: winnerOf(m) }));
-    const result = groupStandings(members, played);
+    const result = groupStandings(members, played, group.tieResolutions);
     standingsMemo.set(group, result);
     return result;
   };
@@ -139,7 +147,7 @@ export function derive(state: TournamentState): Derived {
         if (!stage || stage.type !== 'groups' || !group) return null;
         const table = standings(stage, group);
         if (!table.complete) return null;
-        const row = table.rows.find((r) => r.place === source.place);
+        const row = table.rows.find((r) => r.place === source.place && !r.tied);
         return row?.entry ?? null;
       }
     }
@@ -154,10 +162,51 @@ export function derive(state: TournamentState): Derived {
     for (const entry of matchEntries(match.id)) for (const player of entry?.players ?? []) playing.set(player, match.id);
   }
 
+  // When each player last finished a match: from then on they are free again.
+  const lastFinished = new Map<PlayerId, Timestamp>();
+  for (const { match } of located.values()) {
+    if (!match.result || match.finishedAt === null) continue;
+    for (const entry of matchEntries(match.id)) {
+      for (const player of entry?.players ?? []) lastFinished.set(player, Math.max(lastFinished.get(player) ?? -Infinity, match.finishedAt));
+    }
+  }
+
+  /** When a slot's source got decided: the feeding result, or the last result of the feeding group. */
+  const decidedAt = (competition: Competition, source: SlotSource): Timestamp | null => {
+    switch (source.kind) {
+      case 'matchResult':
+        return located.get(source.match)?.match.finishedAt ?? null;
+      case 'groupPlace': {
+        const stage = competition.stages.find((s) => s.id === source.stage);
+        const times = (stage?.matches ?? [])
+          .filter((m) => m.location.kind === 'group' && m.location.group === source.group && m.finishedAt !== null)
+          .map((m) => m.finishedAt!);
+        return times.length ? Math.max(...times) : null;
+      }
+      default:
+        return null;
+    }
+  };
+
   const matches: DerivedMatch[] = [...located.values()].map(({ match, competition, stage, stageIndex }) => {
     const slots = matchSlots(match.id);
     const entries = matchEntries(match.id);
     const { winner, decidedByBye } = outcome(match.id);
+    const status = statusOf(match, stage, entries, decidedByBye, playing);
+    const players = entries.flatMap((e) => e?.players ?? []);
+    const waitingSince =
+      status === 'ready' || status === 'busy'
+        ? latest([...match.slots.map((s) => decidedAt(competition, s)), ...players.map((p) => lastFinished.get(p) ?? null)])
+        : null;
+    const busyWith =
+      status === 'busy'
+        ? players
+            .filter((p) => playing.has(p) && playing.get(p) !== match.id)
+            .map((player) => {
+              const other = located.get(playing.get(player)!)!;
+              return { player, match: other.match, competition: other.competition };
+            })
+        : [];
     return {
       match,
       competition,
@@ -167,12 +216,19 @@ export function derive(state: TournamentState): Derived {
       byes: [slots[0] === 'bye', slots[1] === 'bye'],
       decidedByBye,
       winner,
-      status: statusOf(match, stage, entries, decidedByBye, playing),
+      status,
+      waitingSince,
+      busyWith,
     };
   });
   const byId = new Map(matches.map((m) => [m.match.id, m]));
 
   return { matches, match: (id) => byId.get(id), standings, resolve };
+}
+
+function latest(times: (Timestamp | null)[]): Timestamp | null {
+  const known = times.filter((t) => t !== null);
+  return known.length ? Math.max(...known) : null;
 }
 
 function statusOf(

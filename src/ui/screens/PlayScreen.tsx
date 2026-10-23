@@ -1,7 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { getCompetition, getCompetitions, getMatch, getStage, type MatchId, type MatchView, type SingleEliminationStageView } from '@/engine';
+import {
+  getCompetition,
+  getCompetitions,
+  getMatch,
+  getMatchCounts,
+  getStage,
+  type GroupId,
+  type MatchCountsView,
+  type MatchId,
+  type MatchView,
+  type SingleEliminationStageView,
+} from '@/engine';
 import { useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
@@ -10,9 +21,10 @@ import { useCanvas, type WorldRect } from '@/ui/play/canvasContext';
 import { BracketBoard } from '@/ui/play/BracketBoard';
 import type { LayoutSection } from '@/ui/play/bracketLayout';
 import { GroupBox } from '@/ui/play/GroupBox';
+import { GroupDetail } from '@/ui/play/GroupDetail';
 import { roundTitle } from '@/ui/matchLabels';
 import { MatchPopover } from '@/ui/play/MatchPopover';
-import { WaitingList } from '@/ui/play/WaitingList';
+import { WaitingList, type WaitingListScope } from '@/ui/play/WaitingList';
 import { useNowMs } from '@/ui/useNow';
 
 const POPOVER_WIDTH = 350;
@@ -32,6 +44,8 @@ export function PlayScreen() {
   const now = useNowMs();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [pendingFocus, setPendingFocus] = useState<MatchId | null>(null);
+  const [scope, setScope] = useState<WaitingListScope>('all');
+  const counts = useQuery((s) => getMatchCounts(s, now), [now]) ?? [];
   const navigate = useNavigate();
   const selected = useQuery((s) => (selection ? getMatch(s, selection.match, now) : null), [selection, now]);
 
@@ -73,12 +87,13 @@ export function PlayScreen() {
             onClick={() => setSelection(null)}
             className={({ isActive }) =>
               cn(
-                '-mb-px border-b-[3px] px-4 py-2 text-sm font-semibold',
+                '-mb-px flex items-center gap-2 border-b-[3px] px-4 py-2 text-sm font-semibold',
                 isActive ? 'border-indigo-600 bg-slate-50' : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800',
               )
             }
           >
-            {c.name}
+            <span>{c.name}</span>
+            <TabCounts counts={counts.find((x) => x.competition === c.id)} />
           </NavLink>
         ))}
       </nav>
@@ -92,9 +107,30 @@ export function PlayScreen() {
           pendingFocus={pendingFocus}
           onFocused={() => setPendingFocus(null)}
         />
-        <WaitingList now={now} selectedMatch={selection?.match ?? null} onSelect={select} />
+        <WaitingList
+          now={now}
+          competition={competitionId}
+          scope={scope}
+          onScopeChange={setScope}
+          selectedMatch={selection?.match ?? null}
+          onSelect={select}
+        />
       </div>
     </div>
+  );
+}
+
+/** A competition tab's badges: ready, live and overdue matches. */
+function TabCounts({ counts }: { counts: MatchCountsView | undefined }) {
+  const { t } = useTranslation();
+  if (!counts) return null;
+  const badge = 'rounded px-1.5 text-[10px] font-bold';
+  return (
+    <>
+      {counts.ready > 0 && <span className={cn(badge, 'bg-indigo-600 text-white')}>{t('play.tabReady', { count: counts.ready })}</span>}
+      {counts.live > 0 && <span className={cn(badge, 'bg-sky-100 text-sky-700')}>{t('play.tabLive', { count: counts.live })}</span>}
+      {counts.overdue > 0 && <span className={cn(badge, 'bg-red-600 text-white')}>{t('play.tabOverdue', { count: counts.overdue })}</span>}
+    </>
   );
 }
 
@@ -111,6 +147,7 @@ function CompetitionCanvas(props: {
   const competition = useQuery((s) => getCompetition(s, props.competitionId), [props.competitionId]);
   const stageId = competition?.stages[0]?.id;
   const stage = useQuery((s) => (stageId ? getStage(s, stageId, props.now) : null), [stageId, props.now]);
+  const [detailGroup, setDetailGroup] = useState<GroupId | null>(null);
   if (!competition) return null;
 
   if (!stage || stage.drawState !== 'confirmed') {
@@ -129,50 +166,61 @@ function CompetitionCanvas(props: {
   }
 
   return (
-    <Canvas
-      className="flex-1"
-      fitKey={competition.id}
-      onBackgroundClick={() => props.onSelect(null)}
-      overlay={(view) => {
-        if (!props.selection || !props.selected) return null;
-        const { rect } = props.selection;
-        const left = view.x + (rect.x + rect.w) * view.k + 10;
-        const top = Math.max(8, view.y + rect.y * view.k - 10);
-        return (
-          <MatchPopover
-            key={props.selected.id}
-            match={props.selected}
-            style={{ left, top, width: POPOVER_WIDTH - 10, maxHeight: `calc(100% - ${top + 8}px)` }}
-            onClose={() => props.onSelect(null)}
-          />
-        );
-      }}
-    >
-      {stage.type === 'groups' ? (
-        <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>
-          {stage.groups.map((group) => (
-            <GroupBoxOnCanvas
-              key={group.id}
-              group={group}
+    <>
+      <Canvas
+        className="flex-1"
+        fitKey={competition.id}
+        onBackgroundClick={() => props.onSelect(null)}
+        overlay={(view) => {
+          if (!props.selection || !props.selected) return null;
+          const { rect } = props.selection;
+          const left = view.x + (rect.x + rect.w) * view.k + 10;
+          const top = Math.max(8, view.y + rect.y * view.k - 10);
+          return (
+            <MatchPopover
+              key={props.selected.id}
+              match={props.selected}
+              style={{
+                left,
+                top,
+                width: POPOVER_WIDTH - 10,
+                maxHeight: `calc(100% - ${top + 8}px)`,
+              }}
+              onClose={() => props.onSelect(null)}
+            />
+          );
+        }}
+      >
+        {stage.type === 'groups' ? (
+          <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>
+            {stage.groups.map((group) => (
+              <GroupBoxOnCanvas
+                key={group.id}
+                group={group}
+                selection={props.selection}
+                onSelect={props.onSelect}
+                pendingFocus={props.pendingFocus}
+                onFocused={props.onFocused}
+                onOpenDetail={() => setDetailGroup(group.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="p-8">
+            <BracketOnCanvas
+              stage={stage}
               selection={props.selection}
               onSelect={props.onSelect}
               pendingFocus={props.pendingFocus}
               onFocused={props.onFocused}
             />
-          ))}
-        </div>
-      ) : (
-        <div className="p-8">
-          <BracketOnCanvas
-            stage={stage}
-            selection={props.selection}
-            onSelect={props.onSelect}
-            pendingFocus={props.pendingFocus}
-            onFocused={props.onFocused}
-          />
-        </div>
+          </div>
+        )}
+      </Canvas>
+      {stage.type === 'groups' && (
+        <GroupDetail stage={stage.id} group={stage.groups.find((g) => g.id === detailGroup) ?? null} onClose={() => setDetailGroup(null)} />
       )}
-    </Canvas>
+    </>
   );
 }
 
@@ -247,6 +295,7 @@ function GroupBoxOnCanvas(props: {
   onSelect: (selection: Selection | null) => void;
   pendingFocus: MatchId | null;
   onFocused: () => void;
+  onOpenDetail: () => void;
 }) {
   const canvas = useCanvas();
   const { pendingFocus, onFocused, onSelect, group } = props;
@@ -266,6 +315,7 @@ function GroupBoxOnCanvas(props: {
       group={group}
       selectedMatch={props.selection?.match ?? null}
       onSelectMatch={(match, el) => onSelect({ match, rect: canvas.worldRectOf(el) })}
+      onOpenDetail={props.onOpenDetail}
     />
   );
 }

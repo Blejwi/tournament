@@ -13,6 +13,7 @@ import type {
   MatchId,
   MatchPlaces,
   MatchResult,
+  PlayerId,
   SlotSource,
   Stage,
   StageId,
@@ -79,6 +80,10 @@ export interface MatchView {
   /** How long it has been on its table, for a match in progress; otherwise null. */
   elapsedMs: number | null;
   result: ResultView | null;
+  /** For a ready match: since when it could have been called (see the waiting list); null if always. */
+  readySince: Timestamp | null;
+  /** For a busy match: where its players are playing right now. Empty otherwise. */
+  busyWith: BusyView[];
   /** A BYE decided the match: nobody plays it and the other slot goes through. */
   decidedByBye: boolean;
   /** Whether a games-only result (e.g. 3:1) is accepted; group matches need every game's points. */
@@ -115,8 +120,18 @@ function feederView(competition: Competition, source: SlotSource): FeederView | 
   return null;
 }
 
+/** A player of a busy match who is on a table elsewhere (possibly in another competition). */
+export interface BusyView {
+  player: PlayerId;
+  match: MatchId;
+  competition: CompetitionId;
+  /** The table number that match is on. */
+  table: number | null;
+}
+
 export function matchView(state: TournamentState, derived: DerivedMatch, now: Timestamp): MatchView {
   const { match, competition, stage, stageIndex, entries, byes, winner, status } = derived;
+  const tableNumber = (id: TableId | null) => (id === null ? null : (state.tables.find((t) => t.id === id)?.number ?? null));
   const table = match.table === null ? null : state.tables.find((t) => t.id === match.table);
   const { result } = match;
   return {
@@ -147,6 +162,8 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
             games: result.kind === 'games' ? result.games.map(([a, b]) => [a, b]) : null,
           }
         : null,
+    readySince: status === 'ready' ? derived.waitingSince : null,
+    busyWith: derived.busyWith.map((b) => ({ player: b.player, match: b.match.id, competition: b.competition.id, table: tableNumber(b.match.table) })),
     decidedByBye: derived.decidedByBye,
     gamesOnlyAllowed: handlerFor(stage).allowsGamesOnly,
     places: match.places ? structuredClone(match.places) : null,
@@ -161,21 +178,29 @@ export function getMatch(state: TournamentState, id: MatchId, now: Timestamp): M
 
 export type { Derived, MatchStatus };
 
+export interface WaitingListOptions {
+  /** Only this competition's matches; all competitions merged when left out. */
+  competition?: CompetitionId;
+}
+
 /**
- * The matches that could be called now: ready ones first, busy ones (a player is on another
- * table) last; within each, earlier stage, then earlier round, then competition and draw order.
- * The ready-since tiebreak and play-off ordering come with #0006 and #0012.
+ * The matches that could be called now, in priority order: busy ones (a player is on another
+ * table) last; then earlier stage, then earlier round, then the match that has been ready
+ * longest (never-played players count as ready from the start); then competition and draw order.
+ * Play-off ordering comes with #0012.
  */
-export function getWaitingList(state: TournamentState, now: Timestamp): MatchView[] {
+export function getWaitingList(state: TournamentState, now: Timestamp, options: WaitingListOptions = {}): MatchView[] {
   const competitionOrder = new Map(state.competitions.map((c, i) => [c.id, i]));
   return derive(state)
     .matches.map((m, drawOrder) => ({ m, drawOrder }))
     .filter(({ m }) => m.status === 'ready' || m.status === 'busy')
+    .filter(({ m }) => options.competition === undefined || m.competition.id === options.competition)
     .sort(
       (x, y) =>
         Number(x.m.status === 'busy') - Number(y.m.status === 'busy') ||
         x.m.stageIndex - y.m.stageIndex ||
         x.m.match.round - y.m.match.round ||
+        (x.m.waitingSince ?? -Infinity) - (y.m.waitingSince ?? -Infinity) ||
         competitionOrder.get(x.m.competition.id)! - competitionOrder.get(y.m.competition.id)! ||
         x.drawOrder - y.drawOrder,
     )

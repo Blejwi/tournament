@@ -1,5 +1,5 @@
 import type { MatchStatus } from './derive';
-import type { CompetitionId, EntryId, MatchId, PlayerId, StageId, TableId } from './types';
+import type { CompetitionId, EntryId, GroupId, MatchId, PlayerId, StageId, TableId } from './types';
 
 /**
  * Typed engine errors. They carry a `code` and data only, never display text:
@@ -35,6 +35,9 @@ export type EngineError =
   | { code: 'tableInactive'; number: number }
   | { code: 'tableInUse'; number: number }
   | { code: 'gamePointsRequired' }
+  | { code: 'groupNotFound'; group: GroupId }
+  | { code: 'groupNotComplete' }
+  | { code: 'tieNotFound' }
   | { code: 'invalidScoreFormat'; text: string }
   /** `game` is 1-based; `a` and `b` are the points as entered, slot A first. */
   | { code: 'invalidGame'; game: number; a: number; b: number }
