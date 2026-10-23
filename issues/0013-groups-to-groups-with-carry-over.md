@@ -1,7 +1,7 @@
 ---
 id: 13
 title: Groups → groups with carry-over
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -33,3 +33,7 @@ A second groups stage fed by the first:
 
 - #0004
 - #0008
+
+## Resolution
+
+Done on `integration/v1` (up to 9accc57). Groups → groups uses the #0009 chain (`FOLLOWERS.groups` includes `groups`). Phase-2 groups are filled snake-style by place with same-group separation, and stay editable before confirmation. Carry-over (`GroupsStage.carryOver`, on by default; schema v11) reuses the phase-1 result instead of a rematch, and corrections flow through. A final group works, and groups → groups → single elimination chains (engine only, as the format picker doesn't offer it yet). The cross table doesn't show carried-over results. Not checked in the browser.
