@@ -117,6 +117,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     confirmed: 'Losowanie jest zatwierdzone.',
     locked: 'Losowanie jest zatwierdzone, więc zgłoszeń i rozstawień nie można już zmienić.',
     openOnCanvas: 'Otwórz na planszy',
+    editOnCanvas: 'Edytuj losowanie na planszy',
   },
   groups: {
     group: 'Grupa {{name}}',
@@ -258,6 +259,20 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     heading: 'Przewidywany czas meczu',
     hint: 'Mecz trwający dłużej zmienia kolor na pomarańczowy, a po przekroczeniu 150% na czerwony.',
     label: 'Do {{count}} wygranych: minuty',
+  },
+  drawEdit: {
+    title: 'Edycja losowania',
+    hintGroups: 'Przeciągnij zawodnika na innego, aby ich zamienić, albo na pole upuszczania grupy, aby go tam przenieść. Możesz też kliknąć zawodnika, a potem cel.',
+    hintBracket: 'Przeciągnij zawodnika na inne miejsce, aby ich zamienić, albo na wolny los, aby go tam przenieść. Możesz też kliknąć zawodnika, a potem cel.',
+    canvasHint: 'Przeciągnij zawodnika, aby zamienić lub przenieść · przeciągnij tło, aby przesunąć · kółko, aby powiększyć · F, aby dopasować',
+    redrawTitle: 'Losować ten etap ponownie?',
+    redrawBody: 'Nowe losowanie zastąpi obecne razem z Twoimi zmianami. Rozstawieni zachowują swoje miejsca.',
+    picked: 'Wybrano zawodnika: kliknij innego, aby zamienić, albo pole upuszczania, aby przenieść.',
+    slot: '{{name}}, miejsce {{position}}',
+    moveHere: 'Upuść tutaj, aby przenieść do grupy {{name}}',
+    entries_one: '{{count}} zgłoszenie',
+    entries_few: '{{count}} zgłoszenia',
+    entries_many: '{{count}} zgłoszeń',
   },
   play: {
     noCompetitions: 'Nie ma jeszcze konkurencji.',

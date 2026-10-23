@@ -19,6 +19,8 @@ export function Canvas(props: {
   onBackgroundClick?: () => void;
   overlay?: (view: View) => ReactNode;
   className?: string;
+  /** Replaces the default usage hint in the corner. */
+  hint?: string;
 }) {
   const { t } = useTranslation();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -142,7 +144,7 @@ export function Canvas(props: {
           </div>
         </div>
         <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-md bg-white/80 px-2 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
-          {t('play.hint')}
+          {props.hint ?? t('play.hint')}
         </div>
         <div data-nopan className="absolute right-3 bottom-3 z-10 flex items-center rounded-lg bg-white text-sm shadow ring-1 ring-slate-200">
           <button type="button" className="size-8 rounded-l-lg hover:bg-slate-100" aria-label={t('play.zoomOut')} title={t('play.zoomOut')} onClick={() => zoomAround(0.8)}>

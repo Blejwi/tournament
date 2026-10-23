@@ -299,6 +299,13 @@ function DrawCard({ competition, stage }: { competition: CompetitionView; stage:
                   onConfirm={() => setError(dispatch({ type: 'confirmStage', stage: stage.id }))}
                 />
               )}
+              {stage.drawState === 'drawn' && (
+                <Button asChild variant="outline">
+                  <Link to={`../../play/${competition.id}`} relative="path">
+                    {t('competition.editOnCanvas')}
+                  </Link>
+                </Button>
+              )}
               {stage.drawState === 'notDrawn' && <span className="text-muted-foreground text-sm">{t('competition.notDrawn')}</span>}
             </>
           )}

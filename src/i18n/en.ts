@@ -117,6 +117,7 @@ export const en = {
     confirmed: 'The draw is confirmed.',
     locked: 'The draw is confirmed, so entries and seeds can no longer change.',
     openOnCanvas: 'Open on the canvas',
+    editOnCanvas: 'Edit the draw on the canvas',
   },
   groups: {
     group: 'Group {{name}}',
@@ -259,6 +260,19 @@ export const en = {
     heading: 'Expected match duration',
     hint: 'A match on its table longer than this turns amber; past 150% of it, red.',
     label: 'Best of {{best}}: minutes',
+  },
+  drawEdit: {
+    title: 'Editing the draw',
+    hintGroups: 'Drag a player onto another to swap them, or onto a group’s drop area to move them there. Or click a player, then the target.',
+    hintBracket: 'Drag a player onto another position to swap them, or onto a BYE to move them there. Or click a player, then the target.',
+    canvasHint: 'Drag a player to swap or move · drag the background to pan · wheel to zoom · F to fit',
+    redrawTitle: 'Re-draw this stage?',
+    redrawBody: 'A fresh random draw replaces this one, including your changes. Seeded entries keep their places.',
+    picked: 'Player picked: click another player to swap, or a drop area to move.',
+    slot: '{{name}}, position {{position}}',
+    moveHere: 'Drop here to move into group {{name}}',
+    entries_one: '{{count}} entry',
+    entries_other: '{{count}} entries',
   },
   play: {
     noCompetitions: 'No competitions yet.',

@@ -1,4 +1,5 @@
-import type { MatchId } from '@/engine';
+import type { ReactNode } from 'react';
+import type { MatchId, MatchView } from '@/engine';
 import { cn } from '@/lib/utils';
 import { CARD_H, CARD_W, layoutBracket, type LayoutSection } from './bracketLayout';
 import { MatchCard } from './MatchCard';
@@ -12,6 +13,8 @@ export function BracketBoard(props: {
   sections: LayoutSection[];
   selectedMatch: MatchId | null;
   onSelectMatch: (id: MatchId, el: HTMLElement) => void;
+  /** Draws a card differently (e.g. draw editing); falls back to the match card when it returns null. */
+  renderCard?: (match: MatchView) => ReactNode | null;
 }) {
   const layout = layoutBracket(props.sections);
   return (
@@ -43,7 +46,9 @@ export function BracketBoard(props: {
       ))}
       {layout.cards.map(({ match, x, y }) => (
         <div key={match.id} className="absolute" style={{ left: x, top: y, width: CARD_W, height: CARD_H }}>
-          <MatchCard match={match} selected={props.selectedMatch === match.id} onSelect={(el) => props.onSelectMatch(match.id, el)} />
+          {props.renderCard?.(match) ?? (
+            <MatchCard match={match} selected={props.selectedMatch === match.id} onSelect={(el) => props.onSelectMatch(match.id, el)} />
+          )}
         </div>
       ))}
     </div>

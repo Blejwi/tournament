@@ -14,7 +14,10 @@ import {
   type MatchId,
   type MatchView,
   type SingleEliminationStageView,
+  type StageView,
 } from '@/engine';
+import type { TFunction } from 'i18next';
+import { DrawEditor, DrawGroupBox, DrawMatchCard } from '@/ui/play/DrawEditing';
 import { useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
@@ -187,6 +190,8 @@ function CompetitionCanvas(props: {
   const [detailGroup, setDetailGroup] = useState<GroupId | null>(null);
   if (!competition) return null;
 
+  if (stage?.drawState === 'drawn') return <DrawEditCanvas stage={stage} fitKey={competition.id} />;
+
   if (!stage || stage.drawState !== 'confirmed') {
     return (
       <div className="grid flex-1 place-items-center gap-3 bg-slate-100 p-10 text-center">
@@ -261,6 +266,36 @@ function CompetitionCanvas(props: {
   );
 }
 
+/** The canvas while a stage's draw is drawn but not confirmed: drag-and-drop editing, re-draw and confirm. */
+function DrawEditCanvas({ stage, fitKey }: { stage: StageView; fitKey: string }) {
+  const { t } = useTranslation();
+  const bracket = stage.type !== 'groups';
+  return (
+    <DrawEditor stage={stage.id} bracket={bracket}>
+      <Canvas className="flex-1" fitKey={`${fitKey}:edit`} hint={t('drawEdit.canvasHint')}>
+        {stage.type === 'groups' ? (
+          <div className="grid gap-6 p-8" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>
+            {stage.groups.map((group) => (
+              <DrawGroupBox key={group.id} group={group} />
+            ))}
+          </div>
+        ) : (
+          <div className="p-8">
+            <BracketBoard
+              sections={bracketSections(t, stage)}
+              selectedMatch={null}
+              onSelectMatch={() => {}}
+              renderCard={(match) =>
+                match.location.kind === 'bracket' && match.location.section === 'main' && match.round === 1 ? <DrawMatchCard match={match} /> : null
+              }
+            />
+          </div>
+        )}
+      </Canvas>
+    </DrawEditor>
+  );
+}
+
 /** Groups in a roughly square grid. */
 const groupColumns = (count: number) => Math.min(count, Math.max(1, Math.ceil(Math.sqrt(count))));
 
@@ -284,21 +319,11 @@ function useFocusPending(
   return canvas;
 }
 
-/** A single elimination bracket: the main tree, and the 3rd-place match under the final. */
-function BracketOnCanvas(props: {
-  stage: SingleEliminationStageView;
-  selection: Selection | null;
-  onSelect: (selection: Selection | null) => void;
-  pendingFocus: MatchId | null;
-  onFocused: () => void;
-}) {
-  const { t } = useTranslation();
-  const { stage } = props;
-  const canvas = useFocusPending(props, stage.sections.flatMap((s) => s.rounds.flatMap((r) => r.matches.map((m) => m.id))).join());
-
+/** A single elimination bracket's layout sections: the main tree, and the 3rd-place match under the final. */
+function bracketSections(t: TFunction, stage: SingleEliminationStageView): LayoutSection[] {
   const main = stage.sections.find((s) => s.section === 'main');
   const final = main?.rounds.at(-1)?.matches[0];
-  const sections: LayoutSection[] = stage.sections.map((section) =>
+  return stage.sections.map((section) =>
     section.section === 'main'
       ? {
           key: section.section,
@@ -315,10 +340,23 @@ function BracketOnCanvas(props: {
           below: final?.id,
         },
   );
+}
+
+/** A single elimination bracket: the main tree, and the 3rd-place match under the final. */
+function BracketOnCanvas(props: {
+  stage: SingleEliminationStageView;
+  selection: Selection | null;
+  onSelect: (selection: Selection | null) => void;
+  pendingFocus: MatchId | null;
+  onFocused: () => void;
+}) {
+  const { t } = useTranslation();
+  const { stage } = props;
+  const canvas = useFocusPending(props, stage.sections.flatMap((s) => s.rounds.flatMap((r) => r.matches.map((m) => m.id))).join());
 
   return (
     <BracketBoard
-      sections={sections}
+      sections={bracketSections(t, stage)}
       selectedMatch={props.selection?.match ?? null}
       onSelectMatch={(match, el) => props.onSelect({ match, rect: canvas.worldRectOf(el) })}
     />
