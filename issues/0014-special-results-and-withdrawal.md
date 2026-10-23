@@ -1,7 +1,7 @@
 ---
 id: 14
 title: Walkover, retirement, disqualification and withdrawal
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -34,3 +34,7 @@ All three advance the winner correctly. In standings a walkover loss is worth 0 
 ## Blocked by
 
 - #0007
+
+## Resolution
+
+Done on `integration/v1` in c89eaa8, 0ff9433, 41f7aa2, d67c5e4 and 0e82b0a, merged in 5268571. Adds walkover, retirement (with the games played) and disqualification results, and `withdrawPlayer` (the remaining matches become walkovers). These are correct in standings, single elimination and double elimination, where the loser drops into the losers bracket. The popover has special-result entry and badges, and the competition screen has a Withdraw button. The change log records `specialResultRecorded` and `playerWithdrew`. Walkovers count toward progress but not toward durations. Schema v9. Not checked in the browser.
