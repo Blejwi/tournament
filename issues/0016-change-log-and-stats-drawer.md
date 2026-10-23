@@ -1,7 +1,7 @@
 ---
 id: 16
 title: Change log and stats drawer
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -32,3 +32,7 @@ A collapsible bottom drawer with two parts:
 ## Blocked by
 
 - #0005
+
+## Resolution
+
+Done on `integration/v1` (93f921a … 7c947bf). Commands now write the engine change log (`state.log`, schema v7; `matchAssigned`, `matchUnassigned` and `resultRecorded` so far), with `getChangeLog` and `getStats` (progress, averages per competition, stage and table, the longest matches, time left). The bottom drawer shows both. CLAUDE.md explains how to add a change-log entry. The walkover stats test is a todo for #0014.
