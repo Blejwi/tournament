@@ -73,7 +73,7 @@ Overdue matches and long-idle tables are highlighted. The UI ships in English (d
 
 ### Seeding and draws
 
-15. As an operator, I want to give explicit seed numbers to players with a known ranking, so that the strongest players are separated in the draw.
+15. As an operator, I want to give explicit seed numbers to players with a known ranking, so that the strongest players are separated in the draw. *(Decided 2026-10-23: explicit seeds are ordered and packed, so seeds 1, 2 and 5 take the positions of seeds 1, 2 and 3.)*
 16. As an operator, I want unseeded players to be assigned randomly, so that the draw is fair.
 17. As an operator, I want to move or swap players by drag-and-drop after the random draw and before confirming, so that I can fix the draw by hand.
 18. As an operator, I want to re-draw a stage before confirming it, so that I can get a fresh random draw.
@@ -100,7 +100,7 @@ Overdue matches and long-idle tables are highlighted. The UI ships in English (d
 30. As an operator, I want a 4-player single-elimination knockout (semis, final, optional 3rd place) allowed only as the stage after groups, so that 2 groups × top 2 works.
 31. As an operator, I want the bracket to show placeholders ("1A", "2C", "BYE") from the start, so that I can see the whole structure before the groups finish.
 32. As an operator, I want each placeholder to fill with a name as soon as its group is complete, so that I can see who is through.
-33. As an operator, I want the bracket confirmable (and runners-up drawable) only once every feeding group is complete, so that separation can be applied correctly.
+33. As an operator, I want the bracket confirmable only once every feeding group is complete, so that the operator sees who actually advanced before play starts. *(Decided 2026-10-23: the runners-up get their origin-label positions ("2C") when the groups are drawn, so the whole bracket is visible from the start. Separation is applied on group labels, and positions can still be swapped by hand before confirming.)*
 34. As an operator, I want every slot fed from a group to keep its origin label next to the name ("Kowalski · 1A"), so that I always know where a player came from.
 
 ### Groups → groups
