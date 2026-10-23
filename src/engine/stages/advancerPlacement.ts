@@ -17,8 +17,8 @@ export const MIN_ADVANCER_BRACKET_ENTRIES = 4;
  * - the runners-up are drawn at random among the valid positions.
  * Returns the sources top to bottom. A winner always meets a runner-up or a BYE in round 1.
  */
-export function placeGroupAdvancers(entrants: DrawEntrant[], random: Random): Result<SlotSource[]> {
-  if (entrants.length < MIN_ADVANCER_BRACKET_ENTRIES) return fail({ code: 'notEnoughAdvancers', needed: MIN_ADVANCER_BRACKET_ENTRIES });
+export function placeGroupAdvancers(entrants: DrawEntrant[], random: Random, minEntries = MIN_ADVANCER_BRACKET_ENTRIES): Result<SlotSource[]> {
+  if (entrants.length < minEntries) return fail({ code: 'notEnoughAdvancers', needed: minEntries });
   if (entrants.length > MAX_BRACKET_ENTRIES) return fail({ code: 'tooManyEntries', max: MAX_BRACKET_ENTRIES });
   const byGroup = (place: number) => entrants.filter((e) => e.origin?.place === place).sort((a, b) => a.origin!.group - b.origin!.group);
   const winners = byGroup(1);

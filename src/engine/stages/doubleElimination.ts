@@ -10,7 +10,11 @@ import {
   placeBySeedPositions,
   swapFirstRoundPositions,
 } from './bracket';
+import { placeGroupAdvancers } from './advancerPlacement';
 import type { StageHandler } from './handler';
+
+/** A double elimination fed by groups has at least 8 advancers (4 groups): a 4-entry one isn't defined. */
+const MIN_ADVANCER_DOUBLE_ELIMINATION_ENTRIES = 8;
 
 /**
  * Double elimination as on the user's 16-player paper sheet (ADR 0002), for 8, 16, 32 or 64:
@@ -40,9 +44,17 @@ export const doubleEliminationHandler: StageHandler<DoubleEliminationStage> = {
   config: () => ({ type: 'doubleElimination' }),
 
   draw(stage, ctx) {
-    const size = directBracketSize(ctx.entrants.length);
-    if (!size.ok) return size;
-    const positions = placeBySeedPositions(numberEntrants(ctx.entrants, size.value, ctx.random));
+    // Fed by groups: the advancers are placed by origin (as in #0009); otherwise by seed.
+    let positions: SlotSource[];
+    if (ctx.entrants.length > 0 && ctx.entrants.every((e) => e.origin)) {
+      const placed = placeGroupAdvancers(ctx.entrants, ctx.random, MIN_ADVANCER_DOUBLE_ELIMINATION_ENTRIES);
+      if (!placed.ok) return placed;
+      positions = placed.value;
+    } else {
+      const size = directBracketSize(ctx.entrants.length);
+      if (!size.ok) return size;
+      positions = placeBySeedPositions(numberEntrants(ctx.entrants, size.value, ctx.random));
+    }
     return ok({ ...stage, drawState: 'drawn', matches: doubleEliminationMatches(positions, ctx.ids), playOffs: [] });
   },
 

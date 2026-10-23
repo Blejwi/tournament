@@ -228,11 +228,12 @@ function ExistingPlayerDialog({ competition, onClose }: { competition: Competiti
 }
 
 /** The formats the operator picks from: a single stage, or groups followed by single elimination. */
-type Format = StageType | 'groupsSingleElimination';
+type Format = StageType | 'groupsSingleElimination' | 'groupsDoubleElimination';
 
 const formatLabelKeys = {
   groups: 'competition.formatGroups',
   groupsSingleElimination: 'competition.formatGroupsSingleElimination',
+  groupsDoubleElimination: 'competition.formatGroupsDoubleElimination',
   singleElimination: 'competition.formatSingleElimination',
   doubleElimination: 'competition.formatDoubleElimination',
 } as const;
@@ -242,7 +243,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
   const dispatch = useApp((s) => s.dispatch);
   const current: Grouping = stage?.type === 'groups' ? stage.grouping : { by: 'count', groups: 2 };
   const second = competition.stages[1];
-  const [format, setFormat] = useState<Format>(second?.type === 'singleElimination' ? 'groupsSingleElimination' : (stage?.type ?? 'groups'));
+  const [format, setFormat] = useState<Format>(second?.type === 'singleElimination' ? 'groupsSingleElimination' : second?.type === 'doubleElimination' ? 'groupsDoubleElimination' : (stage?.type ?? 'groups'));
   const [by, setBy] = useState<Grouping['by']>(current.by);
   const [value, setValue] = useState(String(current.by === 'count' ? current.groups : current.size));
   const bracketStage = stage?.type === 'singleElimination' ? stage : second?.type === 'singleElimination' ? second : null;
@@ -262,7 +263,9 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
               { type: 'groups', grouping },
               { type: 'singleElimination', thirdPlace },
             ]
-          : format === 'doubleElimination'
+          : format === 'groupsDoubleElimination'
+            ? [{ type: 'groups', grouping }, { type: 'doubleElimination' }]
+            : format === 'doubleElimination'
             ? [{ type: 'doubleElimination' }]
             : [{ type: 'singleElimination', thirdPlace }];
     const failure = dispatch({ type: 'configureStages', competition: competition.id, stages });
@@ -279,7 +282,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
         <form onSubmit={submit} noValidate className="grid gap-3">
           <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
             <legend className="sr-only">{t('competition.formatHeading')}</legend>
-            {(['groups', 'groupsSingleElimination', 'singleElimination', 'doubleElimination'] as const).map((option) => (
+            {(['groups', 'groupsSingleElimination', 'groupsDoubleElimination', 'singleElimination', 'doubleElimination'] as const).map((option) => (
               <label key={option} className="flex items-center gap-2 text-sm font-medium">
                 <input type="radio" name="format" checked={format === option} onChange={() => setFormat(option)} />
                 {t(formatLabelKeys[option])}
@@ -287,7 +290,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
             ))}
           </fieldset>
           <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
-            {format === 'groups' || format === 'groupsSingleElimination' ? (
+            {format === 'groups' || format === 'groupsSingleElimination' || format === 'groupsDoubleElimination' ? (
               <>
                 <legend className="sr-only">{t('competition.splitBy')}</legend>
                 {(['count', 'size'] as const).map((option) => (
@@ -305,6 +308,9 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                 />
+                {format === 'groupsDoubleElimination' && (
+                  <span className="text-muted-foreground text-xs">{t('competition.groupsDoubleEliminationHint')}</span>
+                )}
                 {format === 'groupsSingleElimination' && (
                   <>
                     <label className="flex items-center gap-2 text-sm">
