@@ -47,6 +47,11 @@ export interface Entry {
   players: PlayerId[];
   /** Explicit ranking number that fixes the entry's place in the draw; null = placed at random. */
   seed: number | null;
+  /**
+   * When the player withdrew from the competition (`withdrawPlayer`); null while still in it.
+   * Every match of a withdrawn entry that has no result is a walkover for the opponent (derived, never stored).
+   */
+  withdrawnAt: Timestamp | null;
 }
 
 /**
@@ -68,10 +73,21 @@ export type GameScore = [number, number];
 
 /**
  * The recorded outcome of a match, slot A first. `gamesOnly` (e.g. 3:1) is for stages that allow it
- * (brackets); groups need the points of every game. Walkover, retirement and disqualification
- * join this union with #0014.
+ * (brackets); groups need the points of every game. The special results name their winner (slot index).
  */
-export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'gamesOnly'; games: [number, number] };
+export type MatchResult = { kind: 'games'; games: GameScore[] } | { kind: 'gamesOnly'; games: [number, number] } | SpecialResult;
+
+/**
+ * - walkover: won without playing, because the opponent did not play
+ * - retirement: the opponent stopped part-way; `games` are the games completed so far (they count in the ratios)
+ * - disqualification: the opponent was disqualified
+ */
+export type SpecialResult =
+  | { kind: 'walkover'; winner: 0 | 1 }
+  | { kind: 'retirement'; winner: 0 | 1; games: GameScore[] }
+  | { kind: 'disqualification'; winner: 0 | 1 };
+
+export type SpecialResultKind = SpecialResult['kind'];
 
 /**
  * A part of a bracket stage, drawn as its own labelled block on the canvas.

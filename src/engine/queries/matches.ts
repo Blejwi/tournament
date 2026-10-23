@@ -1,5 +1,6 @@
 import { checkResult } from '../commands/matches';
-import { derive, gamesWon, type Derived, type DerivedMatch, type MatchStatus } from '../derive';
+import { derive, resultGamesWon, type Derived, type DerivedMatch, type MatchStatus } from '../derive';
+import { gameScoresOf } from '../score';
 import type { EngineError } from '../errors';
 import { handlerFor } from '../stages';
 import type {
@@ -54,11 +55,16 @@ export type MatchLocationView =
   | { kind: 'bracket'; section: BracketSection; roundMatches: number; rounds: number };
 
 export interface ResultView {
+  /**
+   * How the match was decided: played (`games`, `gamesOnly`) or a special result, shown as a badge.
+   * A withdrawal makes the withdrawn player's remaining matches walkovers (`withdrawal` on the match).
+   */
+  kind: MatchResult['kind'];
   /** Slot index of the winner. */
   winner: 0 | 1;
-  /** Games won by slot A and slot B. */
+  /** Games won by slot A and slot B; for a retirement the games completed, for a walkover or disqualification 0:0. */
   gamesWon: [number, number];
-  /** Points of each game, slot A first; null for a games-only result. */
+  /** Points of each game, slot A first (for a retirement the games completed); null when not known. */
   games: GameScore[] | null;
 }
 
@@ -91,6 +97,11 @@ export interface MatchView {
   busyWith: BusyView[];
   /** A BYE decided the match: nobody plays it and the other slot goes through. */
   decidedByBye: boolean;
+  /**
+   * A player of the match withdrew before it had a result: it is a walkover for the opponent
+   * (`result.kind === 'walkover'`), or has no result at all when both players withdrew.
+   */
+  withdrawal: boolean;
   /** Whether a games-only result (e.g. 3:1) is accepted; group matches need every game's points. */
   gamesOnlyAllowed: boolean;
   /** The final places the match decides (bracket matches), e.g. a quarter-final's loser: 5–8. */
@@ -143,7 +154,7 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
   const status: MatchStatus = overdue ? 'overdue' : derived.status;
   const tableNumber = (id: TableId | null) => (id === null ? null : (state.tables.find((t) => t.id === id)?.number ?? null));
   const table = match.table === null ? null : state.tables.find((t) => t.id === match.table);
-  const { result } = match;
+  const { result } = derived;
   return {
     id: match.id,
     competition: competition.id,
@@ -162,21 +173,23 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
     status,
     table: table ? { id: table.id, number: table.number } : null,
     assignedAt: match.assignedAt,
-    finishedAt: match.finishedAt,
+    finishedAt: derived.finishedAt,
     elapsedMs,
     expectedMs: expected,
     overdue,
     result:
       result && winner !== null
         ? {
+            kind: result.kind,
             winner,
-            gamesWon: result.kind === 'games' ? gamesWon(result.games) : [...result.games],
-            games: result.kind === 'games' ? result.games.map(([a, b]) => [a, b]) : null,
+            gamesWon: resultGamesWon(result),
+            games: gameScoresOf(result)?.map(([a, b]) => [a, b]) ?? null,
           }
         : null,
     readySince: status === 'ready' ? derived.waitingSince : null,
     busyWith: derived.busyWith.map((b) => ({ player: b.player, match: b.match.id, competition: b.competition.id, table: tableNumber(b.match.table) })),
     decidedByBye: derived.decidedByBye,
+    withdrawal: derived.withdrawal,
     gamesOnlyAllowed: handlerFor(stage).allowsGamesOnly,
     places: match.places ? structuredClone(match.places) : null,
   };

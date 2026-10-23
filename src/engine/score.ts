@@ -14,6 +14,16 @@ function isValidGame([a, b]: GameScore): boolean {
 
 /** Checks a result against the table tennis scoring rules for `gamesToWin`. */
 export function validateScore(result: MatchResult, gamesToWin: GamesToWin): Result<void> {
+  if (result.kind === 'walkover' || result.kind === 'disqualification') return ok(undefined);
+  if (result.kind === 'retirement') {
+    // The games completed before the retirement: valid games that don't decide the match yet.
+    const won = [0, 0];
+    for (const [i, game] of result.games.entries()) {
+      if (!isValidGame(game)) return fail({ code: 'invalidGame', game: i + 1, a: game[0], b: game[1] });
+      won[game[0] > game[1] ? 0 : 1]++;
+    }
+    return won[0] < gamesToWin && won[1] < gamesToWin ? ok(undefined) : fail({ code: 'retirementAfterDecided', gamesToWin });
+  }
   if (result.kind === 'gamesOnly') {
     const [a, b] = result.games;
     const valid = [a, b].every((g) => Number.isInteger(g) && g >= 0) && Math.max(a, b) === gamesToWin && Math.min(a, b) < gamesToWin;
@@ -27,6 +37,11 @@ export function validateScore(result: MatchResult, gamesToWin: GamesToWin): Resu
   }
   if (won[0] !== gamesToWin && won[1] !== gamesToWin) return fail({ code: 'matchNotDecided', gamesToWin });
   return ok(undefined);
+}
+
+/** The points of each game played, slot A first: all games, the games before a retirement, or null when unknown (games only, walkover, disqualification). */
+export function gameScoresOf(result: MatchResult): GameScore[] | null {
+  return result.kind === 'games' || result.kind === 'retirement' ? result.games : null;
 }
 
 /**

@@ -176,7 +176,7 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; onDone: () =>
   }
 
   let preview: string | null = null;
-  if (valid) {
+  if (valid && (result.kind === 'games' || result.kind === 'gamesOnly')) {
     const [a, b] = result.kind === 'games' ? gamesWon(result.games) : result.games;
     preview = t('match.scorePreview', { games: `${a}:${b}`, name: entryName(match.slots[a > b ? 0 : 1].entry) });
   }

@@ -57,11 +57,13 @@ const id = z.string().min(1);
 const timestamp = z.number().int().nullable();
 const points = z.number().int().min(0);
 const minutes = z.number().int().min(1);
+const slotIndex = z.union([z.literal(0), z.literal(1)]);
 
 const entrySchema = z.object({
   id,
   players: z.array(id).min(1),
   seed: z.number().int().min(1).nullable(),
+  withdrawnAt: timestamp,
 }) satisfies z.ZodType<Entry>;
 
 const slotSourceSchema = z.discriminatedUnion('kind', [
@@ -74,6 +76,9 @@ const slotSourceSchema = z.discriminatedUnion('kind', [
 const matchResultSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('games'), games: z.array(z.tuple([points, points])) }),
   z.object({ kind: z.literal('gamesOnly'), games: z.tuple([points, points]) }),
+  z.object({ kind: z.literal('walkover'), winner: slotIndex }),
+  z.object({ kind: z.literal('retirement'), winner: slotIndex, games: z.array(z.tuple([points, points])) }),
+  z.object({ kind: z.literal('disqualification'), winner: slotIndex }),
 ]) satisfies z.ZodType<MatchResult>;
 
 const placeRangeSchema = z
