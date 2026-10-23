@@ -31,6 +31,7 @@ const handlers: { [K in CommandType]: Handler<Extract<Command, { type: K }>> } =
   addPlayer: players.addPlayer,
   updatePlayer: players.updatePlayer,
   addCompetition: competitions.addCompetition,
+  registerPlayer: competitions.registerPlayer,
   enterPlayer: competitions.enterPlayer,
   removeEntry: competitions.removeEntry,
   setSeed: competitions.setSeed,

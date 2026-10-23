@@ -1,76 +1,15 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pencil, UserPlus } from 'lucide-react';
-import { getPlayers, type EngineError, type PlayerView } from '@/engine';
-import { useApp, useQuery } from '@/app/useApp';
+import { type EngineError, type PlayerView } from '@/engine';
+import { useApp } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { Button } from '@/ui/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/components/ui/table';
 import { FormError, FormField } from '@/ui/components/FormField';
 import { errorField, optionalNumber } from '@/ui/formErrors';
 
-/** `null` = registering a new player; otherwise the player being edited. */
-type Editing = { player: PlayerView | null } | null;
-
-export function PlayersScreen() {
-  const { t } = useTranslation();
-  const players = useQuery(getPlayers) ?? [];
-  const [editing, setEditing] = useState<Editing>(null);
-
-  return (
-    <section className="grid gap-4">
-      <h2 className="sr-only">{t('players.heading')}</h2>
-      <div>
-        <Button onClick={() => setEditing({ player: null })}>
-          <UserPlus />
-          {t('players.add')}
-        </Button>
-      </div>
-      {players.length === 0 ? (
-        <p className="text-muted-foreground">{t('players.empty')}</p>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('players.lastName')}</TableHead>
-              <TableHead>{t('players.firstName')}</TableHead>
-              <TableHead>{t('players.club')}</TableHead>
-              <TableHead className="text-right">{t('players.rating')}</TableHead>
-              <TableHead className="text-right">{t('players.birthYear')}</TableHead>
-              <TableHead className="w-20 text-right">{t('common.actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {players.map((player) => (
-              <TableRow key={player.id}>
-                <TableCell className="font-medium">{player.lastName}</TableCell>
-                <TableCell>{player.firstName}</TableCell>
-                <TableCell>{player.club}</TableCell>
-                <TableCell className="text-right tabular-nums">{player.rating ?? ''}</TableCell>
-                <TableCell className="text-right tabular-nums">{player.birthYear ?? ''}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={t('common.edit')}
-                    title={t('common.edit')}
-                    onClick={() => setEditing({ player })}
-                  >
-                    <Pencil />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-      {editing && <PlayerDialog player={editing.player} onClose={() => setEditing(null)} />}
-    </section>
-  );
-}
-
-function PlayerDialog({ player, onClose }: { player: PlayerView | null; onClose: () => void }) {
+/** Registers a new player into `competition` (player and entry in one step), or edits `player` (the change shows in every competition). */
+export function PlayerDialog({ competition, player, onClose }: { competition: string; player: PlayerView | null; onClose: () => void }) {
   const { t } = useTranslation();
   const dispatch = useApp((s) => s.dispatch);
   const [firstName, setFirstName] = useState(player?.firstName ?? '');
@@ -91,7 +30,7 @@ function PlayerDialog({ player, onClose }: { player: PlayerView | null; onClose:
     };
     const failure = player
       ? dispatch({ type: 'updatePlayer', player: player.id, ...fields })
-      : dispatch({ type: 'addPlayer', ...fields });
+      : dispatch({ type: 'registerPlayer', competition, ...fields });
     if (failure) setError(failure);
     else onClose();
   }
@@ -118,7 +57,7 @@ function PlayerDialog({ player, onClose }: { player: PlayerView | null; onClose:
             <Button type="button" variant="outline" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit">{t('common.save')}</Button>
+            <Button type="submit">{player ? t('common.save') : t('players.add')}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
