@@ -1,4 +1,4 @@
-import type { BracketSection, CompetitionId, DrawState, MatchId, SingleEliminationStage, Stage, StageId } from '../types';
+import type { BracketSection, CompetitionId, DoubleEliminationStage, DrawState, MatchId, SingleEliminationStage, Stage, StageId } from '../types';
 import type { MatchView } from './matches';
 
 /**
@@ -45,6 +45,32 @@ export function bracketSections(stage: Stage, view: (match: MatchId) => MatchVie
       .sort(([a], [b]) => a - b)
       .map(([round, matches]) => ({ round, matches: matches.sort((a, b) => a.order - b.order) })),
   }));
+}
+
+export interface DoubleEliminationStageView {
+  type: 'doubleElimination';
+  id: StageId;
+  competition: CompetitionId;
+  index: number;
+  drawState: DrawState;
+  /** Bracket positions (8, 16, 32 or 64); 0 before the draw. */
+  size: number;
+  /** `winners`, `losers` (round r = losers round LRr) and `secondFinal`, once drawn. */
+  sections: BracketSectionView[];
+}
+
+/** A stage drawn as a bracket. */
+export type BracketStageView = SingleEliminationStageView | DoubleEliminationStageView;
+
+export function doubleEliminationView(
+  stage: DoubleEliminationStage,
+  competition: CompetitionId,
+  index: number,
+  view: (match: MatchId) => MatchView,
+): DoubleEliminationStageView {
+  const sections = bracketSections(stage, view);
+  const firstRound = sections.find((s) => s.section === 'winners')?.rounds[0]?.matches.length ?? 0;
+  return { type: 'doubleElimination', id: stage.id, competition, index, drawState: stage.drawState, size: firstRound * 2, sections };
 }
 
 export function singleEliminationView(

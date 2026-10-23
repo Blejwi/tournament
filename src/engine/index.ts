@@ -75,6 +75,8 @@ export {
   type GroupView,
   type StandingsRowView,
   type SingleEliminationStageView,
+  type DoubleEliminationStageView,
+  type BracketStageView,
   type BracketSectionView,
   type BracketRoundView,
   type TiebreakStepView,

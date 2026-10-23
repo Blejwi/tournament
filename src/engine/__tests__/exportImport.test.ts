@@ -16,12 +16,13 @@ import {
   type TournamentState,
 } from '@/engine';
 import { errorOf, newTournament, unwrap } from './helpers';
-import { drawnBracket, drawnGroups, groupsOf, run, tableId } from './scenarios';
+import { drawnBracket, drawnDoubleElimination, drawnGroups, groupsOf, run, tableId } from './scenarios';
 import schemaV1 from './fixtures/schema-v1.json?raw';
 import schemaV2 from './fixtures/schema-v2.json?raw';
 import schemaV3 from './fixtures/schema-v3.json?raw';
 import schemaV4 from './fixtures/schema-v4.json?raw';
 import schemaV5 from './fixtures/schema-v5.json?raw';
+import schemaV6 from './fixtures/schema-v6.json?raw';
 
 function setUpTournament(): TournamentState {
   let state = newTournament();
@@ -86,6 +87,22 @@ describe('exporting and importing a tournament', () => {
     expect(getFinalPlaces(imported, competition)).toEqual(getFinalPlaces(original, competition));
   });
 
+  it('gives back a double elimination bracket with its sections, drop-ins, BYEs and places', () => {
+    const { state, competition, stage } = drawnDoubleElimination(13, { tables: 1 });
+    const ready = getWaitingList(state, 0);
+    const original = run(
+      state,
+      { type: 'recordResult', match: ready[0].id, result: { kind: 'gamesOnly', games: [3, 1] }, at: 1000 },
+      { type: 'assignMatch', match: ready[1].id, table: tableId(state, 1), at: 2000 },
+    );
+
+    const imported = unwrap(importTournament({ id: original.id, file: exportTournament(original) }));
+
+    expect(imported).toEqual(original);
+    expect(getStage(imported, stage, 5000)).toEqual(getStage(original, stage, 5000));
+    expect(getFinalPlaces(imported, competition)).toEqual(getFinalPlaces(original, competition));
+  });
+
   it('keeps the operator’s order for a tie the rules cannot break', () => {
     const { state, stage } = drawnGroups(3, { by: 'count', groups: 1 }, { seeds: { 1: 1, 2: 2, 3: 3 } });
     // Everyone 1–1 with identical scores: a deadlock the operator settles.
@@ -112,7 +129,7 @@ describe('exporting and importing a tournament', () => {
   it('writes the schema version, the tournament and an empty change log', () => {
     const file = JSON.parse(exportTournament(newTournament()));
     expect(file).toEqual({
-      schemaVersion: 6,
+      schemaVersion: 7,
       tournament: expect.objectContaining({ name: 'Spring Open' }),
       log: [],
     });
@@ -141,6 +158,16 @@ describe('importing a file with an older schema version', () => {
     expect(getCompetitions(imported)).toEqual([]);
     const next = unwrap(execute(imported, { type: 'addCompetition', name: 'Open' }));
     expect(getCompetitions(next).map((c) => c.id)).toEqual(['competition-3']);
+  });
+
+  it('migrates a version 6 file (before double elimination) unchanged', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV6 }));
+
+    expect(getCompetition(imported, 'competition-4')!.stages).toEqual([
+      { id: 'stage-7', drawState: 'confirmed', type: 'groups', grouping: { by: 'count', groups: 1 } },
+    ]);
+    expect(groupsOf(imported, 'stage-7')[0].matches.map((m) => [m.status, m.result?.winner])).toEqual([['finished', 0]]);
+    expect(JSON.parse(exportTournament(imported)).schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
   });
 
   it('migrates a version 5 file (before brackets) unchanged', () => {

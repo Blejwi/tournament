@@ -13,6 +13,8 @@
  * - 5: adds `tournament.expectedDurations` (minutes per games-to-win value, the defaults; #0005).
  * - 6: adds single elimination stages, bracket match locations and a match's optional `places`
  *   (#0007). Older files need no change; the bump lets older apps refuse files with brackets.
+ * - 7: adds double elimination stages and the `winners`, `losers` and `secondFinal` bracket
+ *   sections (#0010). Older files need no change; the bump lets older apps refuse them.
  */
 
 /** A document parsed from JSON whose shape isn't trusted yet. */
@@ -45,4 +47,5 @@ export const migrations: Record<number, Migration> = {
     tournament: { ...(file.tournament as object), expectedDurations: { 2: 15, 3: 25, 4: 35 } },
   }),
   5: (file) => ({ ...file, schemaVersion: 6 }),
+  6: (file) => ({ ...file, schemaVersion: 7 }),
 };
