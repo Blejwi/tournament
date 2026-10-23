@@ -12,6 +12,7 @@ import {
   type SlotSource,
   type TournamentState,
 } from '@/engine';
+import { getChangeLog } from '@/engine';
 import { errorOf, unwrap } from './helpers';
 import { drawnBracket, drawnGroups, groupsOf, matchBetween, roundsOf, run, slotName, tableId } from './scenarios';
 
@@ -44,7 +45,7 @@ describe('corrections: nothing after the match has started', () => {
     const [[qf1], [sf1]] = roundsOf(state, stage);
     expect(names(state, sf1.id)).toEqual(['P1', 'P4']);
 
-    const corrected = unwrap(execute(state, { type: 'correctResult', match: qf1.id, result: quick(1) }));
+    const corrected = unwrap(execute(state, { type: 'correctResult', at: 9000, match: qf1.id, result: quick(1) }));
 
     expect(getMatch(corrected, qf1.id, 0)!.result).toEqual({ winner: 1, gamesWon: [1, 3], games: null });
     expect(names(corrected, sf1.id)).toEqual(['P8', 'P4']);
@@ -56,7 +57,7 @@ describe('corrections: nothing after the match has started', () => {
     const [[qf1], [sf1]] = roundsOf(state, stage);
     const started = run(state, { type: 'assignMatch', match: sf1.id, table: tableId(state, 1), at: 5000 });
 
-    const corrected = unwrap(execute(started, { type: 'correctResult', match: qf1.id, result: { kind: 'gamesOnly', games: [3, 2] } }));
+    const corrected = unwrap(execute(started, { type: 'correctResult', at: 9000, match: qf1.id, result: { kind: 'gamesOnly', games: [3, 2] } }));
 
     expect(getMatch(corrected, sf1.id, 0)!.status).toBe('in_progress');
   });
@@ -70,7 +71,7 @@ describe('corrections: nothing after the match has started', () => {
       { type: 'recordResult', match: qf1.id, result: quick(0), at: 9000 },
     );
 
-    const corrected = unwrap(execute(played, { type: 'correctResult', match: qf1.id, result: quick(1) }));
+    const corrected = unwrap(execute(played, { type: 'correctResult', at: 9000, match: qf1.id, result: quick(1) }));
 
     const match = getMatch(corrected, qf1.id, 0)!;
     expect([match.table?.number, match.assignedAt, match.finishedAt]).toEqual([1, 1000, 9000]);
@@ -80,8 +81,8 @@ describe('corrections: nothing after the match has started', () => {
   it('only corrects a match that has a result, and checks the new score', () => {
     const { state, stage } = afterQuarterFinals();
     const [[qf1], [sf1]] = roundsOf(state, stage);
-    expect(errorOf(execute(state, { type: 'correctResult', match: sf1.id, result: quick(0) }))).toEqual({ code: 'matchNotFinished' });
-    expect(errorOf(execute(state, { type: 'correctResult', match: qf1.id, result: { kind: 'gamesOnly', games: [3, 3] } }))).toEqual({
+    expect(errorOf(execute(state, { type: 'correctResult', at: 9000, match: sf1.id, result: quick(0) }))).toEqual({ code: 'matchNotFinished' });
+    expect(errorOf(execute(state, { type: 'correctResult', at: 9000, match: qf1.id, result: { kind: 'gamesOnly', games: [3, 3] } }))).toEqual({
       code: 'matchNotDecided',
       gamesToWin: 3,
     });
@@ -91,7 +92,7 @@ describe('corrections: nothing after the match has started', () => {
   it('cannot correct a match decided by a BYE', () => {
     const { state, stage } = drawnBracket(13);
     const bye = roundsOf(state, stage)[0].find((m) => m.decidedByBye)!;
-    expect(errorOf(execute(state, { type: 'correctResult', match: bye.id, result: quick(0) }))).toEqual({ code: 'matchNotFinished' });
+    expect(errorOf(execute(state, { type: 'correctResult', at: 9000, match: bye.id, result: quick(0) }))).toEqual({ code: 'matchNotFinished' });
   });
 });
 
@@ -113,18 +114,26 @@ describe('corrections: later matches already used the wrong player', () => {
     const { state, stage } = finalOnTable();
     const [[qf1], [sf1], [final]] = roundsOf(state, stage);
 
-    expect(errorOf(execute(state, { type: 'correctResult', match: qf1.id, result: quick(1) }))).toEqual({
+    expect(errorOf(execute(state, { type: 'correctResult', at: 9000, match: qf1.id, result: quick(1) }))).toEqual({
       code: 'correctionNeedsForce',
       matches: [sf1.id, final.id],
     });
     expect(getCorrectionPreview(state, qf1.id, quick(1), 0).resets.map((m) => m.id)).toEqual([sf1.id, final.id]);
   });
 
+  it('logs a forced correction with the matches it reset', () => {
+    const { state, stage } = finalOnTable();
+    const [[qf1], [sf1], [final]] = roundsOf(state, stage);
+    const corrected = unwrap(execute(state, { type: 'correctResult', at: 9000, match: qf1.id, result: quick(1), force: true }));
+    const entry = getChangeLog(corrected)[0];
+    expect(entry.type === 'resultCorrected' && entry.reset.map((m) => m.id)).toEqual([sf1.id, final.id]);
+  });
+
   it('with force, resets those matches and frees their table; the corrected player is through', () => {
     const { state, stage } = finalOnTable();
     const [[qf1], [sf1, sf2], [final]] = roundsOf(state, stage);
 
-    const corrected = unwrap(execute(state, { type: 'correctResult', match: qf1.id, result: quick(1), force: true }));
+    const corrected = unwrap(execute(state, { type: 'correctResult', at: 9000, match: qf1.id, result: quick(1), force: true }));
 
     const semiFinal = getMatch(corrected, sf1.id, 0)!;
     expect([semiFinal.status, semiFinal.result, semiFinal.table, semiFinal.assignedAt, semiFinal.finishedAt]).toEqual(['ready', null, null, null, null]);
@@ -173,7 +182,7 @@ describe('match start time and taking a match off its table', () => {
 
   it('takes a match off its table: the table frees and the match is ready again', () => {
     const { state, match } = onTable();
-    const off = unwrap(execute(state, { type: 'unassignMatch', match }));
+    const off = unwrap(execute(state, { type: 'unassignMatch', match, at: 0 }));
     expect(getMatch(off, match, 0)!).toMatchObject({ status: 'ready', table: null, assignedAt: null });
     expect(getFreeTables(off).map((t) => t.number)).toEqual([1]);
   });
@@ -253,12 +262,12 @@ describe('corrections: groups → bracket, where a correction can change the sta
     const match = matchBetween(state, setup.groupStage, first, second);
     const corrected: MatchResult = { kind: 'games', games: flip(match.result!.games!) };
     expect(getCorrectionPreview(state, match.id, corrected, 0).resets.map((m) => m.id)).toEqual(['sf1', 'sf2']);
-    expect(errorOf(execute(state, { type: 'correctResult', match: match.id, result: corrected }))).toEqual({
+    expect(errorOf(execute(state, { type: 'correctResult', at: 9000, match: match.id, result: corrected }))).toEqual({
       code: 'correctionNeedsForce',
       matches: ['sf1', 'sf2'],
     });
 
-    const forced = unwrap(execute(state, { type: 'correctResult', match: match.id, result: corrected, force: true }));
+    const forced = unwrap(execute(state, { type: 'correctResult', at: 9000, match: match.id, result: corrected, force: true }));
     expect(groupA(forced, setup.groupStage).slice(0, 2)).toEqual([second, first]);
     expect(names(forced, 'sf1')[0]).toBe(second);
     expect(names(forced, 'sf2')[1]).toBe(first);
@@ -272,7 +281,7 @@ describe('corrections: groups → bracket, where a correction can change the sta
     const match = matchBetween(state, setup.groupStage, third, fourth);
     const closer: GameScore[] = match.result!.games!.map(([a, b]) => (a > b ? [11, 9] : [9, 11]));
 
-    const corrected = unwrap(execute(state, { type: 'correctResult', match: match.id, result: { kind: 'games', games: closer } }));
+    const corrected = unwrap(execute(state, { type: 'correctResult', at: 9000, match: match.id, result: { kind: 'games', games: closer } }));
     expect(getMatch(corrected, 'sf1', 0)!.status).toBe('finished');
   });
 });

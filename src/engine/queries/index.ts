@@ -9,3 +9,5 @@ export * from './places';
 export * from './tables';
 export * from './matchCounts';
 export * from './corrections';
+export * from './changeLog';
+export * from './stats';

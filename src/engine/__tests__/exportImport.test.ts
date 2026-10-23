@@ -6,6 +6,7 @@ import {
   getCompetition,
   getCompetitions,
   getExpectedDurations,
+  getChangeLog,
   getFinalPlaces,
   getPlayers,
   getWaitingList,
@@ -22,6 +23,7 @@ import schemaV2 from './fixtures/schema-v2.json?raw';
 import schemaV3 from './fixtures/schema-v3.json?raw';
 import schemaV4 from './fixtures/schema-v4.json?raw';
 import schemaV5 from './fixtures/schema-v5.json?raw';
+import schemaV6 from './fixtures/schema-v6.json?raw';
 
 function setUpTournament(): TournamentState {
   let state = newTournament();
@@ -112,10 +114,22 @@ describe('exporting and importing a tournament', () => {
   it('writes the schema version, the tournament and an empty change log', () => {
     const file = JSON.parse(exportTournament(newTournament()));
     expect(file).toEqual({
-      schemaVersion: 6,
+      schemaVersion: 7,
       tournament: expect.objectContaining({ name: 'Spring Open' }),
       log: [],
     });
+    expect(file.tournament).not.toHaveProperty('log');
+  });
+
+  it('gives back the change log, in its own section of the file', () => {
+    const { state: original } = setUpCompetition();
+
+    const file = exportTournament(original);
+    const imported = unwrap(importTournament({ id: original.id, file }));
+
+    expect(JSON.parse(file).log).toHaveLength(2);
+    expect(getChangeLog(imported)).toEqual(getChangeLog(original));
+    expect(getChangeLog(imported).map((e) => e.type)).toEqual(['matchAssigned', 'resultRecorded']);
   });
 });
 
@@ -141,6 +155,15 @@ describe('importing a file with an older schema version', () => {
     expect(getCompetitions(imported)).toEqual([]);
     const next = unwrap(execute(imported, { type: 'addCompetition', name: 'Open' }));
     expect(getCompetitions(next).map((c) => c.id)).toEqual(['competition-3']);
+  });
+
+  it('migrates a version 6 file (before the change log) to an empty log that records from now on', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV6 }));
+
+    expect(getChangeLog(imported)).toEqual([]);
+    expect(groupsOf(imported, 'stage-7')[0].matches.map((m) => m.status)).toEqual(['finished']);
+    const next = unwrap(execute(imported, { type: 'addTable', number: 2 }));
+    expect(getChangeLog(next)).toEqual([]);
   });
 
   it('migrates a version 5 file (before brackets) unchanged', () => {
@@ -256,6 +279,15 @@ describe('importing an invalid file', () => {
     expect(errorOf(importTournament({ id: 'x', file: JSON.stringify(data) }))).toEqual({
       code: 'importInvalidData',
       path: 'tournament.competitions.0.stages.0.matches.0.result.games.0.1',
+    });
+  });
+
+  it('rejects a change-log entry of an unknown type', () => {
+    const data = JSON.parse(exportTournament(setUpCompetition().state));
+    data.log[1].type = 'somethingHappened';
+    expect(errorOf(importTournament({ id: 'x', file: JSON.stringify(data) }))).toEqual({
+      code: 'importInvalidData',
+      path: 'log.1.type',
     });
   });
 

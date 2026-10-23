@@ -23,7 +23,7 @@ The one person at the laptop who runs the tournament: sets up draws, calls match
 _Avoid_: Manager, referee, admin, user
 
 **Player**:
-A person registered once per tournament, who may be entered in several competitions.
+A person taking part in a tournament. They are registered through the competition they play in, and the same player can be entered in another competition without being registered again.
 _Avoid_: Participant, competitor, contestant
 
 **Entry**:
