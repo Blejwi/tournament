@@ -1,4 +1,5 @@
 import { groupStandings, type PlayedMatch, type Standings } from './stages/groups';
+import { isDisabledPlayOffMatch } from './stages/playOffs';
 import type {
   Competition,
   Entry,
@@ -330,6 +331,7 @@ function statusOf(
   withdrawal: boolean,
   playing: Map<PlayerId, MatchId>,
 ): MatchStatus {
+  if (isDisabledPlayOffMatch(stage, match)) return 'disabled'; // its result (if any) is kept, but it doesn't count
   if (match.result) return match.result.kind === 'walkover' ? 'walkover' : 'finished';
   if (match.table !== null) return 'in_progress';
   if (stage.drawState !== 'confirmed') return 'pending';

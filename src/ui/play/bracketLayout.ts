@@ -1,4 +1,4 @@
-import type { MatchId, MatchView } from '@/engine';
+import type { MatchId, MatchView, PlayOffView } from '@/engine';
 
 /**
  * Where to draw a bracket stage's match cards, connector lines and labels on the canvas.
@@ -24,6 +24,8 @@ export interface LayoutSection {
   subtitle?: string;
   /** Rounds left to right, each top to bottom. */
   rounds: MatchView[][];
+  /** A place play-off block: its on/off switch is drawn next to the title. */
+  playOff?: PlayOffView;
   /** Headings over the round columns. */
   roundTitles?: string[];
   /** First column of the section (default 0), e.g. a 3rd-place match under the final. */
@@ -56,6 +58,7 @@ export interface PlacedLabel {
   y: number;
   title: string;
   subtitle?: string;
+  playOff?: PlayOffView;
 }
 
 export interface BracketLayout {
@@ -79,7 +82,7 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
     const top = anchor ? anchor.y + CARD_H + SECTION_GAP / 2 : cursor;
     const hasRoundTitles = !!section.roundTitles?.length;
     const cardsTop = top + SECTION_TITLE_H + (hasRoundTitles ? ROUND_TITLE_H : 0);
-    labels.push({ kind: 'section', x: column * (CARD_W + GAP_X), y: top, title: section.title, subtitle: section.subtitle });
+    labels.push({ kind: 'section', x: column * (CARD_W + GAP_X), y: top, title: section.title, subtitle: section.subtitle, playOff: section.playOff });
 
     let sectionBottom = cardsTop;
     section.rounds.forEach((matches, r) => {

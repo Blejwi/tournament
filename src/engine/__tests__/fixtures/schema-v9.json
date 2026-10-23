@@ -1,31 +1,72 @@
 {
   "schemaVersion": 9,
   "tournament": {
-    "id": "winter-cup",
-    "name": "Winter Cup",
-    "date": "2026-12-12",
-    "venue": "",
-    "tables": [
-      {
-        "id": "table-1",
-        "number": 1,
-        "name": "",
-        "active": true
-      }
-    ],
+    "id": "spring",
+    "name": "Spring Open",
+    "date": "2026-05-01",
+    "venue": "City Hall",
+    "tables": [],
     "players": [
       {
+        "id": "player-1",
+        "firstName": "Player",
+        "lastName": "P1",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
         "id": "player-2",
-        "firstName": "Ola",
-        "lastName": "Kowal",
+        "firstName": "Player",
+        "lastName": "P2",
         "club": "",
         "rating": null,
         "birthYear": null
       },
       {
         "id": "player-3",
-        "firstName": "Iga",
-        "lastName": "Lis",
+        "firstName": "Player",
+        "lastName": "P3",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-4",
+        "firstName": "Player",
+        "lastName": "P4",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-5",
+        "firstName": "Player",
+        "lastName": "P5",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-6",
+        "firstName": "Player",
+        "lastName": "P6",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-7",
+        "firstName": "Player",
+        "lastName": "P7",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-8",
+        "firstName": "Player",
+        "lastName": "P8",
         "club": "",
         "rating": null,
         "birthYear": null
@@ -33,22 +74,70 @@
     ],
     "competitions": [
       {
-        "id": "competition-4",
-        "name": "Women",
+        "id": "competition-9",
+        "name": "Open",
         "gamesToWin": 3,
         "entries": [
           {
-            "id": "entry-5",
+            "id": "entry-10",
+            "players": [
+              "player-1"
+            ],
+            "seed": 1,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-11",
             "players": [
               "player-2"
+            ],
+            "seed": 2,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-12",
+            "players": [
+              "player-3"
             ],
             "seed": null,
             "withdrawnAt": null
           },
           {
-            "id": "entry-6",
+            "id": "entry-13",
             "players": [
-              "player-3"
+              "player-4"
+            ],
+            "seed": null,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-14",
+            "players": [
+              "player-5"
+            ],
+            "seed": null,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-15",
+            "players": [
+              "player-6"
+            ],
+            "seed": null,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-16",
+            "players": [
+              "player-7"
+            ],
+            "seed": null,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-17",
+            "players": [
+              "player-8"
             ],
             "seed": null,
             "withdrawnAt": null
@@ -56,69 +145,378 @@
         ],
         "stages": [
           {
-            "id": "stage-7",
-            "type": "groups",
+            "id": "stage-18",
+            "type": "doubleElimination",
             "drawState": "confirmed",
-            "grouping": {
-              "by": "count",
-              "groups": 1
-            },
-            "groups": [
-              {
-                "id": "group-8",
-                "name": "A",
-                "entries": [
-                  {
-                    "kind": "entry",
-                    "entry": "entry-5"
-                  },
-                  {
-                    "kind": "entry",
-                    "entry": "entry-6"
-                  }
-                ],
-                "tieResolutions": []
-              }
-            ],
             "matches": [
               {
-                "id": "match-9",
+                "id": "match-19",
                 "location": {
-                  "kind": "group",
-                  "group": "group-8"
+                  "kind": "bracket",
+                  "section": "winners"
                 },
                 "round": 1,
                 "order": 1,
                 "slots": [
                   {
                     "kind": "entry",
-                    "entry": "entry-5"
+                    "entry": "entry-10"
                   },
                   {
                     "kind": "entry",
-                    "entry": "entry-6"
+                    "entry": "entry-15"
                   }
                 ],
-                "table": "table-1",
-                "assignedAt": 1000,
-                "result": {
-                  "kind": "games",
-                  "games": [
-                    [
-                      11,
-                      7
-                    ],
-                    [
-                      11,
-                      9
-                    ],
-                    [
-                      11,
-                      5
-                    ]
-                  ]
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              },
+              {
+                "id": "match-20",
+                "location": {
+                  "kind": "bracket",
+                  "section": "winners"
                 },
-                "finishedAt": 2000
+                "round": 1,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-16"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-12"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              },
+              {
+                "id": "match-21",
+                "location": {
+                  "kind": "bracket",
+                  "section": "winners"
+                },
+                "round": 1,
+                "order": 3,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-13"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-17"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              },
+              {
+                "id": "match-22",
+                "location": {
+                  "kind": "bracket",
+                  "section": "winners"
+                },
+                "round": 1,
+                "order": 4,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-14"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-11"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              },
+              {
+                "id": "match-23",
+                "location": {
+                  "kind": "bracket",
+                  "section": "winners"
+                },
+                "round": 2,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-19",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-20",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              },
+              {
+                "id": "match-24",
+                "location": {
+                  "kind": "bracket",
+                  "section": "winners"
+                },
+                "round": 2,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-21",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-22",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null
+              },
+              {
+                "id": "match-25",
+                "location": {
+                  "kind": "bracket",
+                  "section": "winners"
+                },
+                "round": 3,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-23",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-24",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null,
+                "places": {
+                  "winner": {
+                    "from": 1,
+                    "to": 1
+                  },
+                  "loser": null
+                }
+              },
+              {
+                "id": "match-26",
+                "location": {
+                  "kind": "bracket",
+                  "section": "losers"
+                },
+                "round": 1,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-19",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-20",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 7,
+                    "to": 8
+                  }
+                }
+              },
+              {
+                "id": "match-27",
+                "location": {
+                  "kind": "bracket",
+                  "section": "losers"
+                },
+                "round": 1,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-21",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-22",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 7,
+                    "to": 8
+                  }
+                }
+              },
+              {
+                "id": "match-28",
+                "location": {
+                  "kind": "bracket",
+                  "section": "losers"
+                },
+                "round": 2,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-26",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-24",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 5,
+                    "to": 6
+                  }
+                }
+              },
+              {
+                "id": "match-29",
+                "location": {
+                  "kind": "bracket",
+                  "section": "losers"
+                },
+                "round": 2,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-27",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-23",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 5,
+                    "to": 6
+                  }
+                }
+              },
+              {
+                "id": "match-30",
+                "location": {
+                  "kind": "bracket",
+                  "section": "losers"
+                },
+                "round": 3,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-28",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-29",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 4,
+                    "to": 4
+                  }
+                }
+              },
+              {
+                "id": "match-31",
+                "location": {
+                  "kind": "bracket",
+                  "section": "secondFinal"
+                },
+                "round": 4,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-25",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-30",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": null,
+                "finishedAt": null,
+                "places": {
+                  "winner": {
+                    "from": 2,
+                    "to": 2
+                  },
+                  "loser": {
+                    "from": 3,
+                    "to": 3
+                  }
+                }
               }
             ]
           }
@@ -130,7 +528,7 @@
       "3": 25,
       "4": 35
     },
-    "nextId": 10
+    "nextId": 32
   },
   "log": []
 }

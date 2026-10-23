@@ -19,7 +19,9 @@
  *   sections (#0010). Older files need no change; the bump lets older apps refuse them.
  * - 9: adds an entry's `withdrawnAt` (null: not withdrawn) and the special results walkover,
  *   retirement and disqualification (#0014).
- * - 10: adds a groups stage's `carryOver` (groups → groups, #0013); true for every older groups stage.
+ * - 10: every single and double elimination stage gets `playOffs` (the place play-offs switched on,
+ *   none so far) and bracket matches may be in section `playOff` (#0012).
+ * - 11: adds a groups stage's `carryOver` (groups → groups, #0013); true for every older groups stage.
  */
 
 /** A document parsed from JSON whose shape isn't trusted yet. */
@@ -72,10 +74,24 @@ export const migrations: Record<number, Migration> = {
       ? tournament.competitions.map((competition: { stages?: unknown }) => ({
           ...competition,
           stages: Array.isArray(competition?.stages)
-            ? competition.stages.map((stage: { type?: unknown }) => (stage?.type === 'groups' ? { ...stage, carryOver: true } : stage))
+            ? competition.stages.map((stage: { type?: unknown }) =>
+                stage?.type === 'singleElimination' || stage?.type === 'doubleElimination' ? { ...stage, playOffs: [] } : stage,
+              )
             : competition?.stages,
         }))
       : tournament?.competitions;
     return { ...file, schemaVersion: 10, tournament: { ...tournament, competitions } };
+  },
+  10: (file) => {
+    const tournament = file.tournament as { competitions?: unknown };
+    const competitions = Array.isArray(tournament?.competitions)
+      ? tournament.competitions.map((competition: { stages?: unknown }) => ({
+          ...competition,
+          stages: Array.isArray(competition?.stages)
+            ? competition.stages.map((stage: { type?: unknown }) => (stage?.type === 'groups' ? { ...stage, carryOver: true } : stage))
+            : competition?.stages,
+        }))
+      : tournament?.competitions;
+    return { ...file, schemaVersion: 11, tournament: { ...tournament, competitions } };
   },
 };

@@ -1,4 +1,4 @@
-import type { SpecialResultKind, LogEntry, LoggedDrawPlace, LoggedMatch, MatchId, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
+import type { SpecialResultKind, LogEntry, LoggedDrawPlace, LoggedMatch, MatchId, PlaceRange, StageId, Timestamp, TournamentState, CompetitionId } from '../types';
 import type { EntryPlayerView } from './competitions';
 import { locationView, resultView, type MatchLocationView, type ResultView } from './matches';
 
@@ -42,6 +42,7 @@ export type ChangeLogEntryView = { seq: number; at: Timestamp } & (
   | { type: 'specialResultRecorded'; match: LoggedMatchView; result: ResultView & { kind: SpecialResultKind }; table: number | null }
   | { type: 'playerWithdrew'; competition: CompetitionId; competitionName: string; players: EntryPlayerView[] }
   | { type: 'resultCorrected'; match: LoggedMatchView; before: ResultView; after: ResultView; reset: LoggedMatchView[] }
+  | { type: 'playOffSet'; competition: CompetitionId; competitionName: string; stage: StageId; range: PlaceRange; enabled: boolean }
 );
 
 /** The change log, newest first. */
@@ -108,6 +109,16 @@ function entryView(state: TournamentState, entry: LogEntry, seq: number): Change
         before: resultView(entry.before),
         after: resultView(entry.after),
         reset: entry.reset.map((m) => loggedMatchView(state, m)),
+      };
+    case 'playOffSet':
+      return {
+        ...base,
+        type: entry.type,
+        competition: entry.competition,
+        competitionName: state.competitions.find((c) => c.id === entry.competition)?.name ?? '',
+        stage: entry.stage,
+        range: { ...entry.range },
+        enabled: entry.enabled,
       };
   }
 }

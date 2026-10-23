@@ -229,6 +229,7 @@ describe('corrections: groups → bracket, where a correction can change the sta
       type: 'singleElimination',
       drawState: 'confirmed',
       thirdPlace: false,
+      playOffs: [],
       matches: [
         bracketMatch('sf1', 1, 1, [place(a, 1), place(b, 2)]),
         bracketMatch('sf2', 1, 2, [place(b, 1), place(a, 2)]),

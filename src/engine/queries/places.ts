@@ -1,5 +1,6 @@
 import { derive, type Derived } from '../derive';
 import type { CompetitionId, Entry, GroupsStage, PlaceRange, Stage, TournamentState } from '../types';
+import { findPlayOff, sameRange } from '../stages/playOffs';
 import { entryView, type EntryView } from './competitions';
 
 export interface FinalPlaceView {
@@ -72,12 +73,17 @@ function placeSlots(derived: Derived, stage: Stage): PlaceSlot[] {
 /** One slot per side of every match that assigns a place, except the loser side of a BYE match. */
 function bracketPlaceSlots(derived: Derived, stage: Exclude<Stage, GroupsStage>): PlaceSlot[] {
   const slots: PlaceSlot[] = [];
+  const splitByPlayOff = (range: PlaceRange) => stage.playOffs.some((p) => p.enabled && sameRange(p.range, range));
   for (const match of stage.matches) {
     if (!match.places) continue;
+    // A switched-on play-off decides the places of its range; a switched-off one leaves them shared.
+    if (match.playOff && !findPlayOff(stage, match.playOff)?.enabled) continue;
     const view = derived.match(match.id)!;
+    if (view.decidedByBye && view.winner === null) continue; // both sides empty: nobody lands here
     for (const take of ['winner', 'loser'] as const) {
       const range = match.places[take];
       if (!range) continue;
+      if (!match.playOff && splitByPlayOff(range)) continue;
       if (view.decidedByBye && take === 'loser') continue;
       const side = view.winner === null ? null : take === 'winner' ? view.winner : 1 - view.winner;
       slots.push({ range, entry: side === null ? null : view.entries[side] });
