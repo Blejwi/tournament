@@ -296,6 +296,7 @@ export const en = {
     stageType: {
       groups: 'Groups',
       singleElimination: 'Single elimination',
+      doubleElimination: 'Double elimination',
     },
     tablesHeading: 'Average by table',
     tableAverage: 'Table {{number}}',

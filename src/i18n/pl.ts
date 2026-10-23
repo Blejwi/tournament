@@ -295,6 +295,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     stageType: {
       groups: 'Grupy',
       singleElimination: 'System pucharowy',
+      doubleElimination: 'Do dwóch porażek',
     },
     tablesHeading: 'Średnio na stole',
     tableAverage: 'Stół {{number}}',

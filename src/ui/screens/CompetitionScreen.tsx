@@ -65,7 +65,7 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
         <CardTitle>{t('competition.entriesHeading', { count: competition.entries.length })}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3">
-        <p className="text-muted-foreground text-sm">{t(competition.stages[0]?.type === 'singleElimination' ? 'competition.seedHintBracket' : 'competition.seedHint')}</p>
+        <p className="text-muted-foreground text-sm">{t(competition.stages[0]?.type !== 'groups' ? 'competition.seedHintBracket' : 'competition.seedHint')}</p>
         {competition.entries.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t('competition.noEntries')}</p>
         ) : (
@@ -184,6 +184,12 @@ function PlayersCard({ competition, locked }: { competition: CompetitionView; lo
   );
 }
 
+const formatLabelKeys = {
+  groups: 'competition.formatGroups',
+  singleElimination: 'competition.formatSingleElimination',
+  doubleElimination: 'competition.formatDoubleElimination',
+} as const;
+
 function FormatCard({ competition, stage, locked }: { competition: CompetitionView; stage: StageSummaryView | null; locked: boolean }) {
   const { t } = useTranslation();
   const dispatch = useApp((s) => s.dispatch);
@@ -199,7 +205,12 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
     event.preventDefault();
     const n = Number(value);
     const grouping: Grouping = by === 'count' ? { by, groups: n } : { by, size: n };
-    const config: StageConfig = format === 'groups' ? { type: 'groups', grouping } : { type: 'singleElimination', thirdPlace };
+    const config: StageConfig =
+      format === 'groups'
+        ? { type: 'groups', grouping }
+        : format === 'doubleElimination'
+          ? { type: 'doubleElimination' }
+          : { type: 'singleElimination', thirdPlace };
     const failure = dispatch({ type: 'configureStages', competition: competition.id, stages: [config] });
     setError(failure);
     setSaved(!failure);
@@ -214,10 +225,10 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
         <form onSubmit={submit} noValidate className="grid gap-3">
           <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
             <legend className="sr-only">{t('competition.formatHeading')}</legend>
-            {(['groups', 'singleElimination'] as const).map((option) => (
+            {(['groups', 'singleElimination', 'doubleElimination'] as const).map((option) => (
               <label key={option} className="flex items-center gap-2 text-sm font-medium">
                 <input type="radio" name="format" checked={format === option} onChange={() => setFormat(option)} />
-                {option === 'groups' ? t('competition.formatGroups') : t('competition.formatSingleElimination')}
+                {t(formatLabelKeys[option])}
               </label>
             ))}
           </fieldset>
@@ -240,6 +251,11 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                 />
+              </>
+            ) : format === 'doubleElimination' ? (
+              <>
+                <legend className="sr-only">{t('competition.formatDoubleElimination')}</legend>
+                <span className="text-muted-foreground text-xs">{t('competition.doubleEliminationHint')}</span>
               </>
             ) : (
               <>
@@ -304,11 +320,11 @@ function DrawCard({ competition, stage }: { competition: CompetitionView; stage:
           )}
         </div>
         <FormError message={error && errorMessage(t, error)} />
-        {view?.type === 'singleElimination' && view.size > 0 && (
+        {(view?.type === 'singleElimination' || view?.type === 'doubleElimination') && view.size > 0 && (
           <div className="grid gap-1">
             <p className="font-medium">{t('competition.firstRound', { size: view.size })}</p>
             <ol className="grid gap-x-6 gap-y-0.5 text-sm sm:grid-cols-2">
-              {(view.sections.find((s) => s.section === 'main')?.rounds[0]?.matches ?? []).map((match, i) => (
+              {(view.sections.find((s) => s.section === 'main' || s.section === 'winners')?.rounds[0]?.matches ?? []).map((match, i) => (
                 <li key={match.id} className="flex gap-2">
                   <span className="text-muted-foreground w-5 tabular-nums">{i + 1}.</span>
                   {match.slots.map((slot, side) => (
