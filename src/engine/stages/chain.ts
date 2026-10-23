@@ -15,7 +15,7 @@ export const ADVANCERS_PER_GROUP = 2;
 
 /** Which stage types may follow each stage type. A type that isn't listed ends the chain. */
 const FOLLOWERS: Partial<Record<StageType, StageType[]>> = {
-  groups: ['groups', 'singleElimination'],
+  groups: ['groups', 'singleElimination', 'doubleElimination'],
 };
 
 /** Whether the chain of stage options is allowed: any first stage, each later one fed by the one before. */
