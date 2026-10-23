@@ -28,6 +28,13 @@ export function entryText(t: TFunction, entry: ChangeLogEntryView): string {
       return t(`changeLog.${entry.type}`, { match: loggedMatchText(t, entry.match), table: entry.table });
     case 'resultRecorded':
       return t('changeLog.resultRecorded', { match: loggedMatchText(t, entry.match), score: scoreText(entry.result) });
+    case 'resultCorrected':
+      return t(entry.reset.length ? 'changeLog.resultCorrectedResets' : 'changeLog.resultCorrected', {
+        match: loggedMatchText(t, entry.match),
+        before: scoreText(entry.before),
+        after: scoreText(entry.after),
+        count: entry.reset.length,
+      });
   }
 }
 
