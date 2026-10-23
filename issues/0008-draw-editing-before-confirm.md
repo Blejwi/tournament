@@ -1,7 +1,7 @@
 ---
 id: 8
 title: Draw editing before confirm
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

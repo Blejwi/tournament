@@ -1,7 +1,7 @@
 ---
 id: 7
 title: Direct single elimination
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -35,3 +35,7 @@ A competition whose stage is a single elimination **bracket** of 8, 16, 32 or 64
 ## Blocked by
 
 - #0003
+
+## Resolution
+
+Done on `integration/v1` in 29ed2cf, a7ea58b, d132518 and d2f489a. Single elimination for 8/16/32/64: seed positions, BYEs on the highest numbers (resolved in `derive`), an optional 3rd-place match, final places (`getFinalPlaces`) and games-only results. The canvas bracket has connector lines. Reusable helpers are in `stages/bracket.ts` (`knockoutTree`, `seedPositions`, …), plus `queries/bracket.ts` and `ui/play/bracketLayout.ts`. Schema v6. There's no connector line into the 3rd-place match yet.

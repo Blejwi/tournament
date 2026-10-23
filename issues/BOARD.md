@@ -17,26 +17,26 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0015](0015-corrections.md) | Corrections | started 2026-10-23 |
+| [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | started 2026-10-23 |
+| [#0010](0010-direct-double-elimination.md) | Direct double elimination | started 2026-10-23 |
+| [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | started 2026-10-23 |
 | [#0016](0016-change-log-and-stats-drawer.md) | Change log and stats drawer | started 2026-10-23 |
-| [#0007](0007-direct-single-elimination.md) | Direct single elimination | started 2026-10-22 |
 
 ## ⛔ Blocked
 
 | Ticket | Title | Blocked by |
 |---|---|---|
-| [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | #0003, #0007 |
 | [#0009](0009-groups-to-single-elimination.md) | Groups → single elimination | #0004, #0007, #0008 |
-| [#0010](0010-direct-double-elimination.md) | Direct double elimination | #0007 |
 | [#0011](0011-groups-to-double-elimination.md) | Groups → double elimination | #0009, #0010 |
 | [#0012](0012-place-playoffs-and-final-places.md) | Place play-offs and final places | #0010 |
 | [#0013](0013-groups-to-groups-with-carry-over.md) | Groups → groups with carry-over | #0004, #0008 |
-| [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | #0007 |
-| [#0015](0015-corrections.md) | Corrections | #0007 |
 
 ## ✅ Done
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0007](0007-direct-single-elimination.md) | Direct single elimination | 29ed2cf..d2f489a |
 | [#0005](0005-tables-panel-overdue-and-idle.md) | Tables panel, overdue and idle | 5ba4faf..817b486 |
 | [#0004](0004-ittf-tiebreaks-and-group-detail.md) | ITTF tiebreaks and group detail | a9bcfc4, 12b8ba8 |
 | [#0006](0006-multiple-competitions-busy-players-waiting-list.md) | Multiple competitions: busy players and waiting-list order | e297c64, c1520e8 |

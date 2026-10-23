@@ -1,7 +1,7 @@
 ---
 id: 14
 title: Walkover, retirement, disqualification and withdrawal
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

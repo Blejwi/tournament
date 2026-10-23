@@ -1,7 +1,7 @@
 ---
 id: 10
 title: Direct double elimination
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
