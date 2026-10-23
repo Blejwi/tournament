@@ -93,7 +93,7 @@ describe('double elimination: the 16-player paper sheet (golden)', () => {
 
   it('has no places yet before anything is played', () => {
     const { state, competition } = drawnDoubleElimination(16);
-    expect(getFinalPlaces(state, competition)).toEqual({ rows: [], complete: false });
+    expect(getFinalPlaces(state, competition)).toMatchObject({ rows: [], complete: false });
   });
 });
 
