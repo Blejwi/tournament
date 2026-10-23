@@ -1,7 +1,7 @@
 ---
 id: 11
 title: Groups → double elimination
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -27,3 +27,7 @@ A competition with groups followed by a double elimination stage. Group advancer
 
 - #0009
 - #0010
+
+## Resolution
+
+Done on `integration/v1`. `FOLLOWERS.groups` now includes `doubleElimination`. The double elimination draw places origin-carrying advancers with `placeGroupAdvancers` into round 1 of the winners bracket, and needs at least 8 advancers (`notEnoughAdvancers`). The format picker has "Groups, then double elimination". Confirming waits for the groups. BYE priority with a non-power-of-two count is covered by the shared single-elimination tests. Not checked in the browser.
