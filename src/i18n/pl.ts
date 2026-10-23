@@ -113,6 +113,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     byCount: 'Liczba grup',
     bySize: 'Wielkość grupy',
     formatGroupsGroups: 'Grupy, potem grupy',
+    formatGroupsGroupsSingleElimination: 'Grupy, potem grupy, potem system pucharowy',
     secondGroupingLabel: 'Druga faza',
     carryOver: 'Przenieś wyniki z pierwszej fazy',
     carryOverHint: 'Zawodnicy z tej samej grupy pierwszej fazy nie grają ze sobą ponownie; liczy się ich wynik.',

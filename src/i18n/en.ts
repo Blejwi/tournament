@@ -113,6 +113,7 @@ export const en = {
     byCount: 'Number of groups',
     bySize: 'Group size',
     formatGroupsGroups: 'Groups, then groups',
+    formatGroupsGroupsSingleElimination: 'Groups, then groups, then single elimination',
     secondGroupingLabel: 'Second stage',
     carryOver: 'Carry over results from the first stage',
     carryOverHint: 'Entries from the same first-stage group do not play each other again; their result counts.',

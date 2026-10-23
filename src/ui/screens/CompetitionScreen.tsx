@@ -228,11 +228,12 @@ function ExistingPlayerDialog({ competition, onClose }: { competition: Competiti
 }
 
 /** The formats the operator picks from: a single stage, or groups followed by single elimination. */
-type Format = StageType | 'groupsSingleElimination' | 'groupsDoubleElimination' | 'groupsGroups';
+type Format = StageType | 'groupsSingleElimination' | 'groupsDoubleElimination' | 'groupsGroups' | 'groupsGroupsSingleElimination';
 
 const formatLabelKeys = {
   groups: 'competition.formatGroups',
   groupsGroups: 'competition.formatGroupsGroups',
+  groupsGroupsSingleElimination: 'competition.formatGroupsGroupsSingleElimination',
   groupsSingleElimination: 'competition.formatGroupsSingleElimination',
   groupsDoubleElimination: 'competition.formatGroupsDoubleElimination',
   singleElimination: 'competition.formatSingleElimination',
@@ -245,13 +246,16 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
   const current: Grouping = stage?.type === 'groups' ? stage.grouping : { by: 'count', groups: 2 };
   const second = competition.stages[1];
   const secondGroups = second?.type === 'groups' ? second : null;
+  const third = competition.stages[2];
   const [format, setFormat] = useState<Format>(
     second?.type === 'singleElimination'
       ? 'groupsSingleElimination'
       : second?.type === 'doubleElimination'
         ? 'groupsDoubleElimination'
         : secondGroups
-          ? 'groupsGroups'
+          ? third?.type === 'singleElimination'
+            ? 'groupsGroupsSingleElimination'
+            : 'groupsGroups'
           : (stage?.type ?? 'groups'),
   );
   const [by2, setBy2] = useState<Grouping['by']>(secondGroups?.grouping.by ?? 'count');
@@ -259,8 +263,8 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
   const [carryOver, setCarryOver] = useState(secondGroups?.carryOver ?? true);
   const [by, setBy] = useState<Grouping['by']>(current.by);
   const [value, setValue] = useState(String(current.by === 'count' ? current.groups : current.size));
-  const bracketStage = stage?.type === 'singleElimination' ? stage : second?.type === 'singleElimination' ? second : null;
-  const [thirdPlace, setThirdPlace] = useState(bracketStage?.thirdPlace ?? false);
+  const bracketStage = [stage, second, third].find((s) => s?.type === 'singleElimination');
+  const [thirdPlace, setThirdPlace] = useState(bracketStage?.type === 'singleElimination' && bracketStage.thirdPlace);
   const [error, setError] = useState<EngineError | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -268,14 +272,18 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
     event.preventDefault();
     const n = Number(value);
     const grouping: Grouping = by === 'count' ? { by, groups: n } : { by, size: n };
+    const secondStage: StageConfig = {
+      type: 'groups',
+      grouping: by2 === 'count' ? { by: by2, groups: Number(value2) } : { by: by2, size: Number(value2) },
+      carryOver,
+    };
     const stages: StageConfig[] =
       format === 'groups'
         ? [{ type: 'groups', grouping }]
         : format === 'groupsGroups'
-          ? [
-              { type: 'groups', grouping },
-              { type: 'groups', grouping: by2 === 'count' ? { by: by2, groups: Number(value2) } : { by: by2, size: Number(value2) }, carryOver },
-            ]
+          ? [{ type: 'groups', grouping }, secondStage]
+          : format === 'groupsGroupsSingleElimination'
+            ? [{ type: 'groups', grouping }, secondStage, { type: 'singleElimination', thirdPlace }]
         : format === 'groupsSingleElimination'
           ? [
               { type: 'groups', grouping },
@@ -300,7 +308,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
         <form onSubmit={submit} noValidate className="grid gap-3">
           <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
             <legend className="sr-only">{t('competition.formatHeading')}</legend>
-            {(['groups', 'groupsGroups', 'groupsSingleElimination', 'groupsDoubleElimination', 'singleElimination', 'doubleElimination'] as const).map((option) => (
+            {(['groups', 'groupsGroups', 'groupsGroupsSingleElimination', 'groupsSingleElimination', 'groupsDoubleElimination', 'singleElimination', 'doubleElimination'] as const).map((option) => (
               <label key={option} className="flex items-center gap-2 text-sm font-medium">
                 <input type="radio" name="format" checked={format === option} onChange={() => setFormat(option)} />
                 {t(formatLabelKeys[option])}
@@ -308,7 +316,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
             ))}
           </fieldset>
           <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
-            {format === 'groups' || format === 'groupsSingleElimination' || format === 'groupsDoubleElimination' || format === 'groupsGroups' ? (
+            {format === 'groups' || format === 'groupsSingleElimination' || format === 'groupsDoubleElimination' || format === 'groupsGroups' || format === 'groupsGroupsSingleElimination' ? (
               <>
                 <legend className="sr-only">{t('competition.splitBy')}</legend>
                 {(['count', 'size'] as const).map((option) => (
@@ -326,7 +334,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                 />
-                {format === 'groupsGroups' && (
+                {(format === 'groupsGroups' || format === 'groupsGroupsSingleElimination') && (
                   <>
                     <span className="text-sm font-medium">{t('competition.secondGroupingLabel')}</span>
                     {(['count', 'size'] as const).map((option) => (
@@ -352,7 +360,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
                 {format === 'groupsDoubleElimination' && (
                   <span className="text-muted-foreground text-xs">{t('competition.groupsDoubleEliminationHint')}</span>
                 )}
-                {format === 'groupsSingleElimination' && (
+                {(format === 'groupsSingleElimination' || format === 'groupsGroupsSingleElimination') && (
                   <>
                     <label className="flex items-center gap-2 text-sm">
                       <input type="checkbox" checked={thirdPlace} onChange={(e) => setThirdPlace(e.target.checked)} />
