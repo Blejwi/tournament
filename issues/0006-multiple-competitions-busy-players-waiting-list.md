@@ -1,7 +1,7 @@
 ---
 id: 6
 title: Multiple competitions — busy players and waiting-list order
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -33,3 +33,7 @@ A tournament runs several **competitions** on the same tables:
 ## Blocked by
 
 - #0003
+
+## Resolution
+
+Done on `integration/v1` in e297c64 (engine: busy players across competitions, waiting list ordered by ready-since, per-competition filter, `getMatchCounts`) and c1520e8 (UI: tab counts, merged/per-competition toggle, busy cards say where the player is; per-language i18n plural types). Ready-since is derived rather than stored. Play-off ordering is left to #0012.

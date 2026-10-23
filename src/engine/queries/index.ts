@@ -4,3 +4,4 @@ export * from './competitions';
 export * from './stages';
 export type { TiebreakRule } from '../stages/tiebreak';
 export * from './matches';
+export * from './matchCounts';

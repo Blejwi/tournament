@@ -1,4 +1,4 @@
-import type { EntryView, GameScore } from '@/engine';
+import type { EntryPlayerView, EntryView, GameScore } from '@/engine';
 
 /** Formats an ISO date (YYYY-MM-DD) for display in the given language. */
 export function formatDate(isoDate: string, language: string): string {
@@ -9,10 +9,15 @@ export function formatDate(isoDate: string, language: string): string {
   );
 }
 
+/** A player's name, e.g. "J. Kowalski" (short) or "Jan Kowalski". */
+export function playerName(player: EntryPlayerView, short = true): string {
+  return short ? `${player.firstName.slice(0, 1)}. ${player.lastName}` : `${player.firstName} ${player.lastName}`;
+}
+
 /** An entry's name, e.g. "J. Kowalski" (short) or "Jan Kowalski"; null when the slot isn't decided. */
 export function entryName(entry: EntryView | null, short = true): string | null {
   if (!entry) return null;
-  return entry.players.map((p) => (short ? `${p.firstName.slice(0, 1)}. ${p.lastName}` : `${p.firstName} ${p.lastName}`)).join(' / ');
+  return entry.players.map((p) => playerName(p, short)).join(' / ');
 }
 
 /** Elapsed time as m:ss (or h:mm:ss). */
