@@ -105,7 +105,7 @@ export function getStage(state: TournamentState, id: StageId, now: Timestamp): S
       name: group.name,
       entries: group.entries.map((source) => {
         const entry = derived.resolve(competition, source);
-        return { source: structuredClone(source), entry: entry ? entryView(state, entry) : null, bye: source.kind === 'bye', feeder: null };
+        return { source: structuredClone(source), entry: entry ? entryView(state, entry) : null, bye: source.kind === 'bye', feeder: null, origin: null };
       }),
       standings: standings.rows.map((row) => ({ ...row, entry: row.entry ? entryView(state, row.entry) : null })),
       tiebreak: standings.steps.map((step) => ({

@@ -13,6 +13,11 @@ export type DrawPosition = { kind: 'group'; group: GroupId; position: number } |
 export interface DrawEntrant {
   source: SlotSource;
   seed: number | null;
+  /**
+   * For an advancer from a groups stage: the 0-based index of its group (in group order) and its
+   * place there, so a bracket can place it by origin ("1A", "2C") instead of by seed.
+   */
+  origin?: { group: number; place: number };
 }
 
 export interface DrawContext {

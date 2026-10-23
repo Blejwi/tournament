@@ -131,6 +131,7 @@ function changeEntries(
   if (first?.drawState === 'confirmed') return fail({ code: 'stageConfirmed' });
   const entries = change(competition.entries);
   if (!entries.ok) return entries;
-  const stages = first ? [handlerFor(first).clearDraw(first), ...rest] : [];
+  // Later stages are fed by the first one, so its draw going stale clears theirs too.
+  const stages = first ? [first, ...rest].map((stage) => handlerFor(stage).clearDraw(stage)) : [];
   return ok(replaceCompetition(state, { ...competition, entries: entries.value, stages }));
 }

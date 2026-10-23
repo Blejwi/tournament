@@ -1,4 +1,5 @@
 import { derive, type Derived } from '../derive';
+import { ADVANCERS_PER_GROUP, advancersOf } from '../stages';
 import type { CompetitionId, Entry, GroupsStage, PlaceRange, Stage, TournamentState } from '../types';
 import { entryView, type EntryView } from './competitions';
 
@@ -43,7 +44,10 @@ export function getFinalPlaces(state: TournamentState, id: CompetitionId): Final
   const stage = competition.stages.at(-1);
   if (!stage) return { rows: [], open: [], complete: false };
 
-  const slots = placeSlots(derive(state), stage);
+  const derived = derive(state);
+  const slots = placeSlots(derived, stage);
+  // Entries that did not advance from an earlier stage are placed below everyone who did.
+  for (let i = competition.stages.length - 2; i >= 0; i--) slots.push(...nonAdvancerSlots(derived, competition.stages[i]));
   const key = (range: PlaceRange) => `${range.from}-${range.to}`;
   const size = new Map<string, number>(); // entries that will land in each range
   for (const slot of slots) size.set(key(slot.range), (size.get(key(slot.range)) ?? 0) + 1);
@@ -63,6 +67,17 @@ export function getFinalPlaces(state: TournamentState, id: CompetitionId): Final
   }
   const open = [...missing.values()].sort((a, b) => a.place.from - b.place.from);
   return { rows, open, complete: competition.entries.length > 0 && rows.length === competition.entries.length };
+}
+
+/**
+ * The places of the entries that did not advance from a stage that feeds a later one: they rank
+ * below all the advancers, sharing a range per group position (4 groups of 4 into 8: the 3rd
+ * places share 9–12, the 4th places 13–16).
+ */
+function nonAdvancerSlots(derived: Derived, stage: Stage): PlaceSlot[] {
+  const advancers = advancersOf(stage);
+  if (!advancers || stage.type !== 'groups') return [];
+  return groupPlaceSlots(derived, stage, ADVANCERS_PER_GROUP + 1, advancers.length + 1);
 }
 
 function placeSlots(derived: Derived, stage: Stage): PlaceSlot[] {
@@ -91,12 +106,12 @@ function bracketPlaceSlots(derived: Derived, stage: Exclude<Stage, GroupsStage>)
  * 1–4 and the runners-up 5–8; with one group every place is its own. A group's places are decided
  * once all its matches are played and no tie is left for the operator to settle.
  */
-function groupPlaceSlots(derived: Derived, stage: GroupsStage): PlaceSlot[] {
+function groupPlaceSlots(derived: Derived, stage: GroupsStage, firstPosition = 1, firstPlace = 1): PlaceSlot[] {
   const standings = stage.groups.map((group) => derived.standings(stage, group));
   const positions = Math.max(0, ...stage.groups.map((g) => g.entries.length));
   const slots: PlaceSlot[] = [];
-  let from = 1;
-  for (let position = 1; position <= positions; position++) {
+  let from = firstPlace;
+  for (let position = firstPosition; position <= positions; position++) {
     const sharing = standings.filter((s) => s.rows.length >= position);
     const range = { from, to: from + sharing.length - 1 };
     for (const s of sharing) {

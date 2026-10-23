@@ -26,6 +26,10 @@ export type EngineError =
   | { code: 'stageNotDrawn' }
   | { code: 'stageConfirmed' }
   | { code: 'notEnoughEntries'; needed: number }
+  /** The earlier stage hands on fewer advancers than this stage needs. */
+  | { code: 'notEnoughAdvancers'; needed: number }
+  /** A stage fed by an earlier one can be confirmed only when the earlier stage is complete (every advancer known). */
+  | { code: 'previousStageNotComplete' }
   | { code: 'drawPositionNotFound' }
   /** A bracket position already holds an entrant: move only onto a BYE (or swap). */
   | { code: 'positionTaken' }

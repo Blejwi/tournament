@@ -1,5 +1,6 @@
 import { fail, ok, type Result } from '../result';
-import type { Match, MatchPlaces, PlaceRange, SingleEliminationStage } from '../types';
+import type { Match, MatchPlaces, PlaceRange, SingleEliminationStage, SlotSource } from '../types';
+import { placeGroupAdvancers } from './advancerPlacement';
 import {
   directBracketSize,
   knockoutTree,
@@ -26,10 +27,19 @@ export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
   config: (stage) => ({ type: 'singleElimination', thirdPlace: stage.thirdPlace }),
 
   draw(stage, ctx) {
-    const checked = directBracketSize(ctx.entrants.length);
-    if (!checked.ok) return checked;
-    const size = checked.value;
-    const positions = placeBySeedPositions(numberEntrants(ctx.entrants, size, ctx.random));
+    // Fed by an earlier stage: the advancers are placed by origin; a direct bracket places entries by seed.
+    const fed = ctx.entrants.length > 0 && ctx.entrants.every((e) => e.origin);
+    let positions: SlotSource[];
+    if (fed) {
+      const placed = placeGroupAdvancers(ctx.entrants, ctx.random);
+      if (!placed.ok) return placed;
+      positions = placed.value;
+    } else {
+      const checked = directBracketSize(ctx.entrants.length);
+      if (!checked.ok) return checked;
+      positions = placeBySeedPositions(numberEntrants(ctx.entrants, checked.value, ctx.random));
+    }
+    const size = positions.length;
     const tree = knockoutTree({
       positions,
       section: 'main',
