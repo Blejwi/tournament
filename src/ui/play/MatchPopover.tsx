@@ -48,7 +48,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
               <div key={side} className={cn('flex items-center gap-2', match.result?.winner === side && 'font-semibold')}>
                 <span className="w-4 text-[10px] text-slate-400">{side === 0 ? 'A' : 'B'}</span>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate">{entry ? entryName(entry, false) : <i className="text-slate-400">{slotText(t, match.slots[side], false).text}</i>}</div>
+                  <div className="break-words">{entry ? entryName(entry) : <i className="text-slate-400">{slotText(t, match.slots[side]).text}</i>}</div>
                   {entry?.players[0]?.club && <div className="text-xs font-normal text-slate-400">{entry.players[0].club}</div>}
                 </div>
                 {match.result && <span className="text-lg tabular-nums">{match.result.gamesWon[side]}</span>}
@@ -69,7 +69,7 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
         )}
         {match.decidedByBye && (
           <p className="rounded bg-slate-50 p-2 text-xs text-slate-500">
-            {t('bracket.decidedByBye', { name: entryName(match.slots[0].entry ?? match.slots[1].entry, false) ?? t('bracket.bye') })}
+            {t('bracket.decidedByBye', { name: entryName(match.slots[0].entry ?? match.slots[1].entry) ?? t('bracket.bye') })}
           </p>
         )}
         {match.status === 'pending' && (

@@ -8,7 +8,7 @@ import type { MatchId, MatchView } from '@/engine';
  */
 
 /** Match card size and the gaps between cards (world px). Must match MatchCard. */
-export const CARD_W = 212;
+export const CARD_W = 292;
 export const CARD_H = 64;
 /** Vertical centre of slot A and slot B inside a card (below the 18px header, 21px per slot). */
 export const SLOT_Y: [number, number] = [28, 49];

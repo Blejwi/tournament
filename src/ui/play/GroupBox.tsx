@@ -18,7 +18,7 @@ export function GroupBox(props: {
   const tieToSettle = group.ties.some((tie) => tie.resolution === null);
 
   return (
-    <div className="w-[458px] rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className="w-[628px] rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
       <button
         type="button"
         className="mb-2 flex w-full items-center gap-2 rounded text-left hover:bg-slate-50"
@@ -58,7 +58,7 @@ export function GroupBox(props: {
               >
                 {row.place}
               </td>
-              <td className="truncate">
+              <td className="py-[2px] break-words">
                 {entryName(row.entry) ?? t('match.unknown')}{' '}
                 {row.entry?.players[0]?.club && <span className="text-[10px] text-slate-400">{row.entry.players[0].club}</span>}
               </td>

@@ -74,7 +74,7 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
               <li key={entry.id} className="flex items-center gap-2">
                 <SeedInput key={`${entry.id}:${entry.seed}`} competition={competition.id} entry={entry} disabled={locked} onError={setError} />
                 <span className="min-w-0 flex-1 truncate">
-                  {entryName(entry, false)}
+                  {entryName(entry)}
                   {entry.players[0]?.club && <span className="text-muted-foreground text-xs"> · {entry.players[0].club}</span>}
                 </span>
                 <Button
@@ -122,7 +122,7 @@ function SeedInput(props: { competition: string; entry: EntryView; disabled: boo
       value={value}
       disabled={props.disabled}
       aria-invalid={invalid || undefined}
-      aria-label={t('competition.seedLabel', { name: entryName(props.entry, false) })}
+      aria-label={t('competition.seedLabel', { name: entryName(props.entry) })}
       title={t('competition.seed')}
       onChange={(e) => setValue(e.target.value)}
       onBlur={save}
@@ -314,7 +314,7 @@ function DrawCard({ competition, stage }: { competition: CompetitionView; stage:
                   {match.slots.map((slot, side) => (
                     <span key={side} className={side === 0 ? 'min-w-0 flex-1 truncate' : 'min-w-0 flex-1 truncate text-right'}>
                       {slot.entry?.seed != null && <span className="text-muted-foreground text-xs">[{slot.entry.seed}] </span>}
-                      <span className={slot.entry ? undefined : 'text-muted-foreground italic'}>{slotText(t, slot, false).text}</span>
+                      <span className={slot.entry ? undefined : 'text-muted-foreground italic'}>{slotText(t, slot).text}</span>
                     </span>
                   ))}
                 </li>
@@ -331,7 +331,7 @@ function DrawCard({ competition, stage }: { competition: CompetitionView; stage:
                   {group.entries.map((slot, i) => (
                     <li key={i} className="flex gap-2">
                       <span className="text-muted-foreground w-4 tabular-nums">{i + 1}</span>
-                      <span className="truncate">{entryName(slot.entry, false) ?? t('match.unknown')}</span>
+                      <span className="truncate">{entryName(slot.entry) ?? t('match.unknown')}</span>
                       {slot.entry?.seed != null && <span className="text-muted-foreground ml-auto text-xs">[{slot.entry.seed}]</span>}
                     </li>
                   ))}
