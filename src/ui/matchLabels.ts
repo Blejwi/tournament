@@ -55,7 +55,7 @@ export function matchTitle(t: TFunction, match: Pick<MatchView, 'location' | 'ro
 
 /** A match's short code, e.g. "QF3", "SF1", "F", "M3", "C", "L5", "2F" (groups: "R2"). */
 export function matchCode(t: TFunction, location: MatchLocationView, round: number, order: number): string {
-  if (location.kind === 'group') return `R${round}`;
+  if (location.kind === 'group') return t('bracket.short.groupRound', { round });
   switch (location.section) {
     case 'thirdPlace':
       return t('bracket.short.thirdPlace');

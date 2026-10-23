@@ -44,7 +44,7 @@ export function CompetitionScreen() {
           {t('competition.backToList')}
         </Link>
         <h2 className="text-xl font-semibold">{competition.name}</h2>
-        <p className="text-muted-foreground text-sm">{t('competitions.gamesToWinOption', { count: competition.gamesToWin, best: 2 * competition.gamesToWin - 1 })}</p>
+        <p className="text-muted-foreground text-sm">{t('competitions.gamesToWinOption', { count: competition.gamesToWin })}</p>
       </div>
       {locked && <p className="bg-muted rounded-md p-3 text-sm">{t('competition.locked')}</p>}
       <EntriesCard competition={competition} locked={locked} />

@@ -20,7 +20,7 @@ export function GamesToWinSelect({ value, onChange }: { value: GamesToWin; onCha
       >
         {OPTIONS.map((n) => (
           <option key={n} value={n}>
-            {t('competitions.gamesToWinOption', { count: n, best: 2 * n - 1 })}
+            {t('competitions.gamesToWinOption', { count: n })}
           </option>
         ))}
       </select>

@@ -93,7 +93,7 @@ function ExpectedDurationsForm() {
             type="number"
             min={1}
             step={1}
-            label={t('durations.label', { best: 2 * n - 1, count: n })}
+            label={t('durations.label', { count: n })}
             value={drafts[n] ?? String(durations[n])}
             onChange={(e) => setDrafts({ ...drafts, [n]: e.target.value })}
             onBlur={() => save(n)}

@@ -28,6 +28,7 @@ import {
 import { Button } from '@/ui/components/ui/button';
 import { entryName, formatClock, formatGames } from '@/ui/format';
 import { formatPlace, matchTitle, slotText } from '@/ui/matchLabels';
+import { useNow } from '@/ui/useNow';
 import { busyLines } from './busy';
 import { overdueText } from './overdueStyle';
 import { ResultBadge } from './ResultBadge';
@@ -233,6 +234,7 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; correcting?: 
   const { match, correcting = false } = props;
   const dispatch = useApp((s) => s.dispatch);
   const [text, setText] = useState('');
+  const now = useNow();
   const [saveError, setSaveError] = useState<EngineError | null>(null);
   const [confirming, setConfirming] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -244,7 +246,7 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; correcting?: 
   const parsed = text.trim() ? parseResult(text) : null;
   const result = parsed?.ok ? parsed.value : null;
   const recording = useQuery((s) => (result && !correcting ? validateResult(s, match.id, result) : null), [match.id, text, correcting]);
-  const correction = useQuery((s) => (result && correcting ? getCorrectionPreview(s, match.id, result, Date.now()) : null), [match.id, text, correcting]);
+  const correction = useQuery((s) => (result && correcting ? getCorrectionPreview(s, match.id, result, now) : null), [match.id, text, correcting, now]);
   const validation = correcting ? (correction?.error ?? null) : recording;
   const error = saveError ?? (parsed && !parsed.ok ? parsed.error : validation);
   const valid = result !== null && !error;
