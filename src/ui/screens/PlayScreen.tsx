@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { getCompetition, getCompetitions, getMatch, getStage, type MatchId, type MatchView } from '@/engine';
+import {
+  getCompetition,
+  getCompetitions,
+  getMatch,
+  getOverdueMatches,
+  getStage,
+  getTableOverview,
+  type MatchId,
+  type MatchView,
+} from '@/engine';
 import { useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/components/ui/button';
@@ -9,8 +18,9 @@ import { Canvas } from '@/ui/play/Canvas';
 import { useCanvas, type WorldRect } from '@/ui/play/canvasContext';
 import { GroupBox } from '@/ui/play/GroupBox';
 import { MatchPopover } from '@/ui/play/MatchPopover';
+import { TablesFullScreen, TablesPanel } from '@/ui/play/TablesPanel';
 import { WaitingList } from '@/ui/play/WaitingList';
-import { useNowMs } from '@/ui/useNow';
+import { useNow } from '@/ui/useNow';
 
 const POPOVER_WIDTH = 350;
 
@@ -20,20 +30,28 @@ interface Selection {
   rect: WorldRect;
 }
 
-/** The main screen: a pan/zoom canvas of one competition, with the waiting list on the right. */
+/** The main screen: a pan/zoom canvas of one competition, the tables on the left and the waiting list on the right. */
 export function PlayScreen() {
   const { t } = useTranslation();
   const { tournamentId, competitionId } = useParams();
   const base = `/tournaments/${tournamentId}`;
   const competitions = useQuery(getCompetitions) ?? [];
-  const now = useNowMs();
+  const now = useNow();
   const [selection, setSelection] = useState<Selection | null>(null);
   const [pendingFocus, setPendingFocus] = useState<MatchId | null>(null);
   const navigate = useNavigate();
   const selected = useQuery((s) => (selection ? getMatch(s, selection.match, now) : null), [selection, now]);
+  const tableOverview = useQuery((s) => getTableOverview(s, now), [now]);
+  const overdue = useQuery((s) => getOverdueMatches(s, now), [now]) ?? [];
+  const [tablesFull, setTablesFull] = useState(false);
+  const [alarmIndex, setAlarmIndex] = useState(0);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setSelection(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setSelection(null);
+      setTablesFull(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -78,17 +96,43 @@ export function PlayScreen() {
             {c.name}
           </NavLink>
         ))}
+        <div className="ml-auto flex items-center gap-2 py-1">
+          {overdue.length > 0 && (
+            <button
+              type="button"
+              title={t('alarm.overdueTitle')}
+              onClick={() => {
+                select(overdue[alarmIndex % overdue.length]);
+                setAlarmIndex(alarmIndex + 1);
+              }}
+              className="overdue-alarm rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white"
+            >
+              ⚠ {t('alarm.overdue', { count: overdue.length })}
+            </button>
+          )}
+          {(tableOverview?.idleCount ?? 0) > 0 && (
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+              {t('alarm.idle', { count: tableOverview?.idleCount })}
+            </span>
+          )}
+        </div>
       </nav>
       <div className="flex min-h-0 flex-1">
-        <CompetitionCanvas
-          competitionId={competitionId}
-          now={now}
-          selection={selection}
-          selected={selected?.competition === competitionId ? selected : null}
-          onSelect={setSelection}
-          pendingFocus={pendingFocus}
-          onFocused={() => setPendingFocus(null)}
-        />
+        {tableOverview && <TablesPanel overview={tableOverview} onFocus={select} onFullScreen={() => setTablesFull(true)} />}
+        <div className="relative flex min-w-0 flex-1">
+          <CompetitionCanvas
+            competitionId={competitionId}
+            now={now}
+            selection={selection}
+            selected={selected?.competition === competitionId ? selected : null}
+            onSelect={setSelection}
+            pendingFocus={pendingFocus}
+            onFocused={() => setPendingFocus(null)}
+          />
+          {tablesFull && tableOverview && (
+            <TablesFullScreen overview={tableOverview} onFocus={select} onClose={() => setTablesFull(false)} />
+          )}
+        </div>
         <WaitingList now={now} selectedMatch={selection?.match ?? null} onSelect={select} />
       </div>
     </div>

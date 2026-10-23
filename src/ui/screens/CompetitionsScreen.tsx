@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { getCompetition, getCompetitions, type DrawState, type EngineError, type GamesToWin, type TournamentState } from '@/engine';
+import { getCompetition, getCompetitions, getExpectedDurations, type DrawState, type EngineError, type GamesToWin, type TournamentState } from '@/engine';
 import { useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { Button } from '@/ui/components/ui/button';
@@ -57,7 +57,53 @@ export function CompetitionsScreen() {
           </TableBody>
         </Table>
       )}
+      <ExpectedDurationsForm />
     </section>
+  );
+}
+
+const GAMES_TO_WIN: GamesToWin[] = [2, 3, 4];
+
+/** Expected match duration per games-to-win value: a match on its table longer than this is overdue. */
+function ExpectedDurationsForm() {
+  const { t } = useTranslation();
+  const dispatch = useApp((s) => s.dispatch);
+  const durations = useQuery(getExpectedDurations);
+  const [drafts, setDrafts] = useState<Partial<Record<GamesToWin, string>>>({});
+  const [error, setError] = useState<EngineError | null>(null);
+  if (!durations) return null;
+
+  function save(gamesToWin: GamesToWin) {
+    const draft = drafts[gamesToWin];
+    if (draft === undefined) return;
+    const failure = dispatch({ type: 'setExpectedDuration', gamesToWin, minutes: draft.trim() === '' ? Number.NaN : Number(draft) });
+    setError(failure);
+    if (!failure) setDrafts((current) => ({ ...current, [gamesToWin]: undefined }));
+  }
+
+  return (
+    <div className="grid gap-2 border-t pt-4">
+      <h3 className="font-semibold">{t('durations.heading')}</h3>
+      <p className="text-muted-foreground text-sm">{t('durations.hint')}</p>
+      <div className="flex flex-wrap items-end gap-3">
+        {GAMES_TO_WIN.map((n) => (
+          <FormField
+            key={n}
+            className="w-44"
+            type="number"
+            min={1}
+            step={1}
+            label={t('durations.label', { best: 2 * n - 1, count: n })}
+            value={drafts[n] ?? String(durations[n])}
+            onChange={(e) => setDrafts({ ...drafts, [n]: e.target.value })}
+            onBlur={() => save(n)}
+            onKeyDown={(e) => e.key === 'Enter' && save(n)}
+            invalid={drafts[n] !== undefined && error !== null}
+          />
+        ))}
+      </div>
+      <FormError message={error && errorMessage(t, error)} />
+    </div>
   );
 }
 
