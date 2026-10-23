@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type {
   Competition,
+  DoubleEliminationStage,
   Entry,
   Group,
   LogEntry,
@@ -87,7 +88,7 @@ const matchSchema = z.object({
   id,
   location: z.discriminatedUnion('kind', [
     z.object({ kind: z.literal('group'), group: id }),
-    z.object({ kind: z.literal('bracket'), section: z.enum(['main', 'thirdPlace']) }),
+    z.object({ kind: z.literal('bracket'), section: z.enum(['main', 'thirdPlace', 'winners', 'losers', 'secondFinal']) }),
   ]),
   round: z.number().int().min(1),
   order: z.number().int().min(1),
@@ -134,8 +135,19 @@ const singleEliminationStageSchema = z.object({
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<SingleEliminationStage>;
 
+const doubleEliminationStageSchema = z.object({
+  id,
+  type: z.literal('doubleElimination'),
+  drawState: z.enum(['notDrawn', 'drawn', 'confirmed']),
+  matches: uniqueArray(matchSchema, ['id']),
+}) satisfies z.ZodType<DoubleEliminationStage>;
+
 /** One option per stage type. */
-const stageSchema = z.discriminatedUnion('type', [groupsStageSchema, singleEliminationStageSchema]) satisfies z.ZodType<Stage>;
+const stageSchema = z.discriminatedUnion('type', [
+  groupsStageSchema,
+  singleEliminationStageSchema,
+  doubleEliminationStageSchema,
+]) satisfies z.ZodType<Stage>;
 
 const competitionSchema = z.object({
   id,

@@ -1,10 +1,8 @@
 import { fail, ok } from '../result';
 import type { MatchPlaces, PlaceRange, SingleEliminationStage } from '../types';
 import {
-  bracketSize,
+  directBracketSize,
   knockoutTree,
-  MAX_BRACKET_ENTRIES,
-  MIN_DIRECT_BRACKET_ENTRIES,
   newBracketMatch,
   numberEntrants,
   placeBySeedPositions,
@@ -23,10 +21,9 @@ export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
   config: (stage) => ({ type: 'singleElimination', thirdPlace: stage.thirdPlace }),
 
   draw(stage, ctx) {
-    const count = ctx.entrants.length;
-    if (count < MIN_DIRECT_BRACKET_ENTRIES) return fail({ code: 'notEnoughEntries', needed: MIN_DIRECT_BRACKET_ENTRIES });
-    if (count > MAX_BRACKET_ENTRIES) return fail({ code: 'tooManyEntries', max: MAX_BRACKET_ENTRIES });
-    const size = bracketSize(count);
+    const checked = directBracketSize(ctx.entrants.length);
+    if (!checked.ok) return checked;
+    const size = checked.value;
     const positions = placeBySeedPositions(numberEntrants(ctx.entrants, size, ctx.random));
     const tree = knockoutTree({
       positions,

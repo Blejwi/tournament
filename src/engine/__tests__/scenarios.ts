@@ -5,7 +5,7 @@ import {
   getPlayers,
   getStage,
   getTables,
-  type SingleEliminationStageView,
+  type BracketStageView,
   type Command,
   type Grouping,
   type GroupsStageView,
@@ -71,9 +71,22 @@ export function drawnBracket(
   return { state, competition: setup.competition, stage };
 }
 
-export function bracketOf(state: TournamentState, stage: string, now = 0): SingleEliminationStageView {
+/** Configures a double elimination stage, draws it with `randomSeed` and (by default) confirms it. */
+export function drawnDoubleElimination(
+  count: number,
+  options: Parameters<typeof competitionWith>[1] & { randomSeed?: number; confirm?: boolean } = {},
+) {
+  const setup = competitionWith(count, options);
+  let state = run(setup.state, { type: 'configureStages', competition: setup.competition, stages: [{ type: 'doubleElimination' }] });
+  const stage = getCompetition(state, setup.competition)!.stages[0].id;
+  state = run(state, { type: 'generateDraw', stage, randomSeed: options.randomSeed ?? 42 });
+  if (options.confirm ?? true) state = run(state, { type: 'confirmStage', stage });
+  return { state, competition: setup.competition, stage };
+}
+
+export function bracketOf(state: TournamentState, stage: string, now = 0): BracketStageView {
   const view = getStage(state, stage, now);
-  if (view?.type !== 'singleElimination') throw new Error(`Stage ${stage} is not a bracket stage`);
+  if (view?.type !== 'singleElimination' && view?.type !== 'doubleElimination') throw new Error(`Stage ${stage} is not a bracket stage`);
   return view;
 }
 
