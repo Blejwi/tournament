@@ -25,7 +25,8 @@ Folder layout (`@/` = `src/`):
   - `commands/<area>.ts` command types + handlers; `commands/index.ts` the `Command` union, the handler map and `execute(state, command)`.
   - `queries.ts` (split into `queries/` when it grows): pure `(state, now?)` functions returning fresh view objects.
   - `tournamentFile/`: the tournament file format, used for export/import AND for each stored tournament. `schema.ts` (Zod schema of the current version), `migrations.ts` (one step per old version), `index.ts` (`exportTournament(state)` → JSON text, `importTournament({ id, file })` → `Result<TournamentState>`).
-  - `backupReminder.ts`: `getBackupReminder(state, { now, lastChangeAt, unsavedSince, postponedUntil? })`; the app tracks those times.
+  - `backupReminder.ts`: `getBackupReminder(state, { now, unsavedSince, postponedUntil? })` (epoch ms); the app tracks those times. "Live" (a match in progress, or a result in the last 30 minutes) is read from `state`.
+  - Every time in the engine is epoch milliseconds (`Timestamp`), both command fields (`at`) and query arguments (`now`). The UI gets `now` from `useNow()` (`src/ui/useNow.ts`).
   - `__tests__/`: the only tests. They import `@/engine` alone: set up with commands, assert on queries.
 - `src/app/`: thin Zustand store (`store.ts`). Holds the open tournament, calls `execute`, autosaves through `TournamentStorage` after each successful command. Hooks `useApp(selector)` and `useQuery(query, deps)` in `useApp.ts`. No rules here.
 - `src/storage/`: `TournamentStorage` interface + localStorage adapter (index key `tm:tournaments`, one document per tournament at `tm:tournament:<id>`). Each document is a tournament file: written with `exportTournament`, read with `importTournament`, so stored tournaments migrate like imported files.
