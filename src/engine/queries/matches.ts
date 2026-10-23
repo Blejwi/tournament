@@ -22,6 +22,7 @@ import type {
   TournamentState,
 } from '../types';
 import { entryView, type EntryView } from './competitions';
+import { expectedMs, overdueLevel, type OverdueLevel } from '../overdue';
 
 export interface SlotView {
   source: SlotSource;
@@ -79,6 +80,10 @@ export interface MatchView {
   finishedAt: Timestamp | null;
   /** How long it has been on its table, for a match in progress; otherwise null. */
   elapsedMs: number | null;
+  /** How long a match of this format is expected to take (the tournament's setting for its games to win). */
+  expectedMs: number;
+  /** Amber past 100% of the expected duration, red past 150%; null unless the match is overdue. */
+  overdue: OverdueLevel | null;
   result: ResultView | null;
   /** For a ready match: since when it could have been called (see the waiting list); null if always. */
   readySince: Timestamp | null;
@@ -130,7 +135,12 @@ export interface BusyView {
 }
 
 export function matchView(state: TournamentState, derived: DerivedMatch, now: Timestamp): MatchView {
-  const { match, competition, stage, stageIndex, entries, byes, winner, status } = derived;
+  const { match, competition, stage, stageIndex, entries, byes, winner } = derived;
+  const expected = expectedMs(state, competition.gamesToWin);
+  const elapsedMs = derived.status === 'in_progress' && match.assignedAt !== null ? now - match.assignedAt : null;
+  const overdue = elapsedMs === null ? null : overdueLevel(elapsedMs, expected);
+  // Overdue needs `now`, so it is decided here rather than in `derive`.
+  const status: MatchStatus = overdue ? 'overdue' : derived.status;
   const tableNumber = (id: TableId | null) => (id === null ? null : (state.tables.find((t) => t.id === id)?.number ?? null));
   const table = match.table === null ? null : state.tables.find((t) => t.id === match.table);
   const { result } = match;
@@ -153,7 +163,9 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
     table: table ? { id: table.id, number: table.number } : null,
     assignedAt: match.assignedAt,
     finishedAt: match.finishedAt,
-    elapsedMs: (status === 'in_progress' || status === 'overdue') && match.assignedAt !== null ? now - match.assignedAt : null,
+    elapsedMs,
+    expectedMs: expected,
+    overdue,
     result:
       result && winner !== null
         ? {

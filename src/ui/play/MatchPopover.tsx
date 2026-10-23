@@ -9,6 +9,7 @@ import { Button } from '@/ui/components/ui/button';
 import { entryName, formatClock, formatGames } from '@/ui/format';
 import { formatPlace, matchTitle, slotText } from '@/ui/matchLabels';
 import { busyLines } from './busy';
+import { overdueText } from './overdueStyle';
 
 /** Actions for one match, one click from the draw: call to a free table, enter the score. */
 export function MatchPopover(props: { match: MatchView; style: CSSProperties; onClose: () => void }) {
@@ -114,11 +115,17 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
         {live && (
           <div className="flex items-center gap-2">
             <span className="rounded bg-slate-900 px-2 py-0.5 font-bold text-white">{t('match.table', { number: match.table?.number })}</span>
-            <span className="text-base font-bold text-sky-700 tabular-nums">{formatClock(match.elapsedMs ?? 0)}</span>
+            <span className={cn('text-base font-bold tabular-nums', overdueText(match))}>{formatClock(match.elapsedMs ?? 0)}</span>
+            <span className="text-xs text-slate-400">{t('tablesPanel.expected', { minutes: Math.round(match.expectedMs / 60_000) })}</span>
             <Button variant="ghost" size="sm" className="ml-auto text-red-600" onClick={() => setError(dispatch({ type: 'unassignMatch', match: match.id }))}>
               {t('match.takeOff')}
             </Button>
           </div>
+        )}
+        {match.overdue && match.elapsedMs !== null && (
+          <p className={cn('rounded p-2 text-xs', match.overdue === 'red' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800')}>
+            {t('match.overdueNote', { percent: Math.round((match.elapsedMs / match.expectedMs) * 100) })}
+          </p>
         )}
 
         {canScore && <ScoreEntry key={match.id} match={match} autoFocus={live} onDone={onClose} />}

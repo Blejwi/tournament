@@ -38,6 +38,9 @@ export type MatchId = string;
 /** How many games decide a match. */
 export type GamesToWin = 2 | 3 | 4;
 
+/** Expected duration of a match in whole minutes, for each games-to-win value (overdue detection). */
+export type ExpectedDurations = Record<GamesToWin, number>;
+
 /** A player's place in one competition. Singles only in v1, but the shape allows 1..n players. */
 export interface Entry {
   id: EntryId;
@@ -194,6 +197,8 @@ export interface TournamentState {
   tables: Table[];
   players: Player[];
   competitions: Competition[];
+  /** How long a match is expected to take, per games-to-win value; a match on its table past that is overdue. */
+  expectedDurations: ExpectedDurations;
   /** Counter for engine-made ids (tables, players, ...), so ids are never reused. */
   nextId: number;
 }

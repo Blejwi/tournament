@@ -9,7 +9,11 @@
  * - 1: `{ schemaVersion, tournament }`, the first saved format (tournament, tables, players).
  * - 2: adds the change log section `log` (empty until #0016).
  * - 3: adds `tournament.competitions` (entries, stage chain, draws and matches; #0003).
- * - 4: adds `tieResolutions` (the operator's orders for unbreakable ties) to every group (#0004). */
+ * - 4: adds `tieResolutions` (the operator's orders for unbreakable ties) to every group (#0004).
+ * - 5: adds `tournament.expectedDurations` (minutes per games-to-win value, the defaults; #0005).
+ * - 6: adds single elimination stages, bracket match locations and a match's optional `places`
+ *   (#0007). Older files need no change; the bump lets older apps refuse files with brackets.
+ */
 
 /** A document parsed from JSON whose shape isn't trusted yet. */
 export type RawFile = { schemaVersion: number } & Record<string, unknown>;
@@ -35,4 +39,10 @@ export const migrations: Record<number, Migration> = {
       : tournament?.competitions;
     return { ...file, schemaVersion: 4, tournament: { ...tournament, competitions } };
   },
+  4: (file) => ({
+    ...file,
+    schemaVersion: 5,
+    tournament: { ...(file.tournament as object), expectedDurations: { 2: 15, 3: 25, 4: 35 } },
+  }),
+  5: (file) => ({ ...file, schemaVersion: 6 }),
 };

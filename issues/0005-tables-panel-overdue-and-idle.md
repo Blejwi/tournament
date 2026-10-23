@@ -1,7 +1,7 @@
 ---
 id: 5
 title: Tables panel, overdue and idle
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -39,3 +39,7 @@ Clicking a free table lists the ready matches, so the operator can call one from
 ## Blocked by
 
 - #0003
+
+## Resolution
+
+Done on `integration/v1` in 5ba4faf, ca55b0d, c0142da, df86c6d and 817b486. Adds expected durations (one tournament-wide setting per games-to-win value; schema v5), the overdue rule (amber past 100%, red past 150%), the `getTableOverview` and `getOverdueMatches` queries, the tables panel with badges and full-screen tiles, the header overdue alarm, and calling a match from a free table. The backup reminder now uses epoch ms, and "live" means a match on a table or a result in the last 30 minutes. Overdue status exists only on views built with `now`.

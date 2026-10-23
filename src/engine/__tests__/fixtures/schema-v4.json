@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 4,
+  "tournament": {
+    "id": "summer-cup",
+    "name": "Summer Cup",
+    "date": "2026-07-11",
+    "venue": "School gym",
+    "tables": [{ "id": "table-1", "number": 1, "name": "", "active": true }],
+    "players": [
+      { "id": "player-2", "firstName": "Adam", "lastName": "Lis", "club": "", "rating": null, "birthYear": null },
+      { "id": "player-3", "firstName": "Olga", "lastName": "Wróbel", "club": "", "rating": null, "birthYear": null }
+    ],
+    "competitions": [
+      {
+        "id": "competition-4",
+        "name": "Open",
+        "gamesToWin": 2,
+        "entries": [
+          { "id": "entry-5", "players": ["player-2"], "seed": null },
+          { "id": "entry-6", "players": ["player-3"], "seed": null }
+        ],
+        "stages": []
+      }
+    ],
+    "nextId": 7
+  },
+  "log": []
+}

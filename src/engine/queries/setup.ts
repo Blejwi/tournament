@@ -1,4 +1,4 @@
-import type { PlayerId, TableId, TournamentId, TournamentState } from '../types';
+import type { ExpectedDurations, PlayerId, TableId, TournamentId, TournamentState } from '../types';
 
 /**
  * Queries are pure functions of the state (plus `now` once a query depends on time).
@@ -14,6 +14,11 @@ export interface TournamentView {
 
 export function getTournament(state: TournamentState): TournamentView {
   return { id: state.id, name: state.name, date: state.date, venue: state.venue };
+}
+
+/** Expected match duration in minutes for each games-to-win value. */
+export function getExpectedDurations(state: TournamentState): ExpectedDurations {
+  return { ...state.expectedDurations };
 }
 
 export interface TableView {

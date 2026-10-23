@@ -11,6 +11,7 @@ export type {
   PlaceRange,
   DrawState,
   EntryId,
+  ExpectedDurations,
   GameScore,
   GamesToWin,
   GroupId,
@@ -32,6 +33,7 @@ export type {
 export { createTournament, type CreateTournamentInput } from './tournament';
 export { execute, type Command, type CommandType } from './commands';
 
+export { DEFAULT_EXPECTED_DURATIONS, type OverdueLevel } from './overdue';
 /** Parses typed game scores ("11-7 9-11 11-5"); check them with validateResult. */
 export { parseGames, parseResult } from './score';
 /** Games won by slot A and slot B, from the points of each game (e.g. for a score preview). */
@@ -53,6 +55,7 @@ export {
   type BackupReminder,
 } from './backupReminder';
 export {
+  getExpectedDurations,
   getPlayers,
   getTables,
   getTournament,
@@ -86,6 +89,11 @@ export {
   getFreeTables,
   validateResult,
   type FreeTableView,
+  getTableOverview,
+  getOverdueMatches,
+  type TableOverview,
+  type TableOverviewRow,
+  type TableStatus,
   type BusyView,
   type WaitingListOptions,
   getMatchCounts,

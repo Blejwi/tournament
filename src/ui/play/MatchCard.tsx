@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { formatClock } from '@/ui/format';
 import { matchCode, slotText } from '@/ui/matchLabels';
 import { busyLines } from './busy';
+import { overdueText } from './overdueStyle';
 
 /** Card frame by derived match status (spec user story 86). */
 const STATUS_STYLE: Record<MatchStatus, string> = {
@@ -18,6 +19,8 @@ const STATUS_STYLE: Record<MatchStatus, string> = {
   walkover: 'border border-slate-200 bg-slate-100 text-slate-500',
   disabled: 'border border-dashed border-slate-300 bg-white opacity-30',
 };
+/** Past 150% of the expected duration: visually stronger than amber overdue. */
+const RED_OVERDUE_STYLE = 'border-2 border-red-500 bg-red-50 overdue-alarm';
 
 export function MatchCard(props: { match: MatchView; selected: boolean; onSelect: (el: HTMLElement) => void }) {
   const { t } = useTranslation();
@@ -32,7 +35,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
       onClick={(e) => props.onSelect(e.currentTarget)}
       className={cn(
         'relative block h-16 w-[212px] overflow-hidden rounded-md text-left text-slate-900 select-none hover:shadow-md',
-        STATUS_STYLE[match.status],
+        match.overdue === 'red' ? RED_OVERDUE_STYLE : STATUS_STYLE[match.status],
         props.selected && 'outline-2 outline-offset-2 outline-slate-900',
       )}
     >
@@ -59,6 +62,14 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
           </span>
         );
       })}
+      {match.elapsedMs !== null && (
+        <span className="absolute bottom-0 left-0 h-[3px] w-full bg-black/5">
+          <span
+            className={cn('block h-full', match.overdue === 'red' ? 'bg-red-500' : match.overdue ? 'bg-amber-500' : 'bg-sky-500')}
+            style={{ width: `${Math.min(100, (match.elapsedMs / match.expectedMs) * 100)}%` }}
+          />
+        </span>
+      )}
       <span className="sr-only">
         {t(`match.status.${match.status}`)}
         {busy && ` ${busy}`}
@@ -83,8 +94,15 @@ function StatusChip({ match }: { match: MatchView }) {
     case 'overdue':
       return (
         <span className="flex items-center gap-1">
-          <span className="rounded bg-sky-600 px-1 font-bold text-white">{t('match.table', { number: match.table?.number })}</span>
-          <span className="font-bold text-sky-700 tabular-nums">{formatClock(match.elapsedMs ?? 0)}</span>
+          <span
+            className={cn(
+              'rounded px-1 font-bold text-white',
+              match.overdue === 'red' ? 'bg-red-600' : match.overdue === 'amber' ? 'bg-amber-500' : 'bg-sky-600',
+            )}
+          >
+            {t('match.table', { number: match.table?.number })}
+          </span>
+          <span className={cn('font-bold tabular-nums', overdueText(match))}>{formatClock(match.elapsedMs ?? 0)}</span>
         </span>
       );
     case 'finished':

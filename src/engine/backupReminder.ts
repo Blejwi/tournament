@@ -1,22 +1,17 @@
-import type { TournamentState } from './types';
+import type { Timestamp, TournamentState } from './types';
 
-/** How recent the last change must be for the tournament to count as live. */
+/** How long after the last result the tournament still counts as live. */
 export const LIVE_WINDOW_MINUTES = 30;
 /** Default time between backup reminders. */
 export const BACKUP_INTERVAL_MINUTES = 30;
 
-/**
- * When the operator last changed things and backed up, as tracked by the app (the engine has no clock).
- * All times are ISO timestamps.
- */
+/** When the operator last backed up, as tracked by the app (the engine has no clock). Epoch milliseconds. */
 export interface BackupActivity {
-  now: string;
-  /** The last successful change to the tournament, or null if none was made in this session. */
-  lastChangeAt: string | null;
+  now: Timestamp;
   /** The oldest change not yet in a downloaded backup, or null when everything is backed up. */
-  unsavedSince: string | null;
+  unsavedSince: Timestamp | null;
   /** The operator chose "later": no reminder before this time. */
-  postponedUntil?: string | null;
+  postponedUntil?: Timestamp | null;
   intervalMinutes?: number;
 }
 
@@ -27,22 +22,31 @@ export interface BackupReminder {
 }
 
 const MINUTE = 60_000;
-const minutesBetween = (from: string, to: string) => (Date.parse(to) - Date.parse(from)) / MINUTE;
+
+/** Live: a match is in progress, or a result was recorded in the last LIVE_WINDOW_MINUTES. */
+function isLive(state: TournamentState, now: Timestamp): boolean {
+  return state.competitions.some((c) =>
+    c.stages.some((s) =>
+      s.matches.some((m) =>
+        m.result
+          ? m.finishedAt !== null && now - m.finishedAt < LIVE_WINDOW_MINUTES * MINUTE
+          : m.table !== null,
+      ),
+    ),
+  );
+}
 
 /**
  * Whether to remind the operator to download a backup: only while the tournament is live, and only
  * once changes have gone `intervalMinutes` without a backup.
- *
- * "Live" is deliberately simple for now: any change in the last LIVE_WINDOW_MINUTES. Once matches
- * exist it should become "a match is in progress or a result was recorded recently", read from `state`.
  */
-export function getBackupReminder(_state: TournamentState, activity: BackupActivity): BackupReminder {
-  const { now, lastChangeAt, unsavedSince, postponedUntil, intervalMinutes = BACKUP_INTERVAL_MINUTES } = activity;
-  const live = lastChangeAt !== null && minutesBetween(lastChangeAt, now) < LIVE_WINDOW_MINUTES;
+export function getBackupReminder(state: TournamentState, activity: BackupActivity): BackupReminder {
+  const { now, unsavedSince, postponedUntil, intervalMinutes = BACKUP_INTERVAL_MINUTES } = activity;
+  const live = isLive(state, now);
   const due =
     live &&
     unsavedSince !== null &&
-    minutesBetween(unsavedSince, now) >= intervalMinutes &&
-    (postponedUntil == null || Date.parse(now) >= Date.parse(postponedUntil));
+    now - unsavedSince >= intervalMinutes * MINUTE &&
+    (postponedUntil == null || now >= postponedUntil);
   return { live, due };
 }

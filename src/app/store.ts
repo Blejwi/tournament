@@ -8,19 +8,19 @@ import {
   type Command,
   type CreateTournamentInput,
   type EngineError,
+  type Timestamp,
   type TournamentId,
   type TournamentState,
 } from '@/engine';
 import type { TournamentStorage, TournamentSummary } from '@/storage/storage';
 
-/** What the backup reminder needs to know about the open tournament (see `getBackupReminder`). ISO times. */
+/** What the backup reminder needs to know about the open tournament (see `getBackupReminder`). Epoch ms. */
 export interface BackupTracking {
-  lastChangeAt: string | null;
-  unsavedSince: string | null;
-  postponedUntil: string | null;
+  unsavedSince: Timestamp | null;
+  postponedUntil: Timestamp | null;
 }
 
-const NO_BACKUP_ACTIVITY: BackupTracking = { lastChangeAt: null, unsavedSince: null, postponedUntil: null };
+const NO_BACKUP_ACTIVITY: BackupTracking = { unsavedSince: null, postponedUntil: null };
 
 /** "Import as new" (gets a fresh id) or "replace" an existing tournament (keeps its id). */
 export type ImportTarget = { mode: 'new' } | { mode: 'replace'; id: TournamentId };
@@ -60,7 +60,7 @@ const MINUTE = 60_000;
 export function createAppStore(
   storage: TournamentStorage,
   newId: () => string,
-  now: () => string = () => new Date().toISOString(),
+  now: () => Timestamp = () => Date.now(),
 ): AppStore {
   return createStore<AppState>()((set, get) => {
     const refreshList = () => set({ tournaments: storage.listTournaments() });
@@ -101,12 +101,11 @@ export function createAppStore(
         const result = execute(current, command);
         if (!result.ok) return result.error;
         storage.saveTournament(result.value);
-        const at = now();
         const { backup } = get();
         set({
           current: result.value,
           tournaments: storage.listTournaments(),
-          backup: { ...backup, lastChangeAt: at, unsavedSince: backup.unsavedSince ?? at },
+          backup: { ...backup, unsavedSince: backup.unsavedSince ?? now() },
         });
         return null;
       },
@@ -130,8 +129,7 @@ export function createAppStore(
       },
 
       postponeBackup() {
-        const until = new Date(Date.parse(now()) + BACKUP_INTERVAL_MINUTES * MINUTE).toISOString();
-        set({ backup: { ...get().backup, postponedUntil: until } });
+        set({ backup: { ...get().backup, postponedUntil: now() + BACKUP_INTERVAL_MINUTES * MINUTE } });
       },
     };
   });

@@ -43,6 +43,7 @@ export type EngineError =
   | { code: 'invalidGame'; game: number; a: number; b: number }
   | { code: 'gamesAfterDecided'; game: number }
   | { code: 'matchNotDecided'; gamesToWin: number }
+  | { code: 'invalidExpectedDuration' }
   | { code: 'importNotJson' }
   | { code: 'importNotTournamentFile' }
   | { code: 'importNewerVersion'; version: number }

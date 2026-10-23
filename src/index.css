@@ -50,6 +50,38 @@
   --color-ring: var(--ring);
 }
 
+/* Overdue (red) and idle-while-matches-wait alarms: a pulsing ring that doesn't fade the content. */
+@keyframes overdue-alarm {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(220 38 38 / 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgb(220 38 38 / 0);
+  }
+}
+@keyframes idle-alarm {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(245 158 11 / 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgb(245 158 11 / 0);
+  }
+}
+.overdue-alarm {
+  animation: overdue-alarm 1.2s ease-in-out infinite;
+}
+.idle-alarm {
+  animation: idle-alarm 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .overdue-alarm,
+  .idle-alarm {
+    animation: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

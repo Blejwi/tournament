@@ -6,4 +6,5 @@ export type { TiebreakRule } from '../stages/tiebreak';
 export * from './matches';
 export * from './bracket';
 export * from './places';
+export * from './tables';
 export * from './matchCounts';

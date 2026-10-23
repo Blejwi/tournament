@@ -1,7 +1,7 @@
 ---
 id: 16
 title: Change log and stats drawer
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-22
 ---

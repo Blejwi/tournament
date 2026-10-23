@@ -5,6 +5,7 @@ import {
   exportTournament,
   getCompetition,
   getCompetitions,
+  getExpectedDurations,
   getFinalPlaces,
   getPlayers,
   getWaitingList,
@@ -19,11 +20,15 @@ import { drawnBracket, drawnGroups, groupsOf, run, tableId } from './scenarios';
 import schemaV1 from './fixtures/schema-v1.json?raw';
 import schemaV2 from './fixtures/schema-v2.json?raw';
 import schemaV3 from './fixtures/schema-v3.json?raw';
+import schemaV4 from './fixtures/schema-v4.json?raw';
+import schemaV5 from './fixtures/schema-v5.json?raw';
+
 function setUpTournament(): TournamentState {
   let state = newTournament();
   state = unwrap(execute(state, { type: 'addTable', number: 1 }));
   state = unwrap(execute(state, { type: 'addTable', number: 2, name: 'Centre court' }));
   state = unwrap(execute(state, { type: 'setTableActive', table: 'table-2', active: false }));
+  state = unwrap(execute(state, { type: 'setExpectedDuration', gamesToWin: 4, minutes: 40 }));
   state = unwrap(execute(state, { type: 'addPlayer', firstName: 'Anna', lastName: 'Nowak', club: 'KS Orzeł', rating: 1520 }));
   state = unwrap(execute(state, { type: 'addPlayer', firstName: 'Jan', lastName: 'Kowalski', club: '', birthYear: 2011 }));
   return state;
@@ -52,6 +57,7 @@ describe('exporting and importing a tournament', () => {
     expect(getTournament(imported)).toEqual(getTournament(original));
     expect(getTables(imported)).toEqual(getTables(original));
     expect(getPlayers(imported)).toEqual(getPlayers(original));
+    expect(getExpectedDurations(imported)).toEqual({ 2: 15, 3: 25, 4: 40 });
   });
 
   it('gives back a competition with its entries, draw, results and matches in play', () => {
@@ -106,7 +112,7 @@ describe('exporting and importing a tournament', () => {
   it('writes the schema version, the tournament and an empty change log', () => {
     const file = JSON.parse(exportTournament(newTournament()));
     expect(file).toEqual({
-      schemaVersion: 4,
+      schemaVersion: 6,
       tournament: expect.objectContaining({ name: 'Spring Open' }),
       log: [],
     });
@@ -137,6 +143,23 @@ describe('importing a file with an older schema version', () => {
     expect(getCompetitions(next).map((c) => c.id)).toEqual(['competition-3']);
   });
 
+  it('migrates a version 5 file (before brackets) unchanged', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV5 }));
+
+    expect(getCompetition(imported, 'competition-4')!.stages).toEqual([
+      { id: 'stage-7', drawState: 'confirmed', type: 'groups', grouping: { by: 'count', groups: 1 } },
+    ]);
+    expect(groupsOf(imported, 'stage-7')[0].matches.map((m) => [m.status, m.result?.winner, m.places])).toEqual([['finished', 0, null]]);
+    expect(getExpectedDurations(imported)).toEqual({ 2: 15, 3: 30, 4: 35 });
+  });
+
+  it('migrates a version 4 file (before expected durations) to the default expected durations', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV4 }));
+
+    expect(getCompetitions(imported).map((c) => c.name)).toEqual(['Open']);
+    expect(getExpectedDurations(imported)).toEqual({ 2: 15, 3: 25, 4: 35 });
+  });
+
   it('migrates a version 3 file (before tie resolutions) to groups with no settled ties', () => {
     const imported = unwrap(importTournament({ id: 'restored', file: schemaV3 }));
 
@@ -148,6 +171,7 @@ describe('importing a file with an older schema version', () => {
     ]);
     expect(group.ties.map((t) => t.resolution)).toEqual([null]);
     expect(group.matches.map((m) => m.status)).toEqual(['finished', 'ready', 'ready']);
+    expect(getExpectedDurations(imported)).toEqual({ 2: 15, 3: 25, 4: 35 });
   });
 
   it('keeps allocating fresh ids after the migration', () => {

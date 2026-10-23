@@ -27,7 +27,7 @@ export function DownloadBackupButton() {
 /** Non-blocking reminder to download a backup, shown only while the tournament is live. */
 export function BackupReminder() {
   const { t } = useTranslation();
-  const now = useNow();
+  const now = useNow(30_000);
   const backup = useApp((s) => s.backup);
   const postpone = useApp((s) => s.postponeBackup);
   const download = useDownloadBackup();
