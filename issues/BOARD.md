@@ -17,11 +17,8 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
-| [#0021](0021-classification-panel.md) | Classification panel | started 2026-10-23 |
-| [#0020](0020-full-player-names-on-canvas.md) | Full player names on the canvas | started 2026-10-23 |
-| [#0019](0019-register-players-per-competition.md) | Register players per competition | started 2026-10-23 |
+| [#0012](0012-place-playoffs-and-final-places.md) | Place play-offs and final places | started 2026-10-23 |
 | [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | started 2026-10-23 |
-| [#0010](0010-direct-double-elimination.md) | Direct double elimination | started 2026-10-23 |
 | [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | started 2026-10-23 |
 
 ## ⛔ Blocked
@@ -30,13 +27,16 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 |---|---|---|
 | [#0009](0009-groups-to-single-elimination.md) | Groups → single elimination | #0004, #0007, #0008 |
 | [#0011](0011-groups-to-double-elimination.md) | Groups → double elimination | #0009, #0010 |
-| [#0012](0012-place-playoffs-and-final-places.md) | Place play-offs and final places | #0010 |
 | [#0013](0013-groups-to-groups-with-carry-over.md) | Groups → groups with carry-over | #0004, #0008 |
 
 ## ✅ Done
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0010](0010-direct-double-elimination.md) | Direct double elimination | f0c6fdf..d6bbd58, 46dc025 |
+| [#0019](0019-register-players-per-competition.md) | Register players per competition | d7e2492, 4afbf49 |
+| [#0020](0020-full-player-names-on-canvas.md) | Full player names on the canvas | 404855e, b9eafd4 |
+| [#0021](0021-classification-panel.md) | Classification panel | 51398fb, c9edd69, 052cebc |
 | [#0015](0015-corrections.md) | Corrections | d84cd67, 9574b95, 093a039 |
 | [#0016](0016-change-log-and-stats-drawer.md) | Change log and stats drawer | 93f921a..7c947bf |
 | [#0007](0007-direct-single-elimination.md) | Direct single elimination | 29ed2cf..d2f489a |
