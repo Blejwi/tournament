@@ -342,6 +342,8 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     matchNotReady: 'Tego meczu nie można jeszcze rozegrać.',
     matchNotOnTable: 'Ten mecz nie jest przy stole.',
     matchFinished: 'Ten mecz ma już wynik.',
+    matchNotFinished: 'Ten mecz nie ma wyniku do poprawienia.',
+    correctionNeedsForce: 'Kolejne mecze zostały już rozegrane z zawodnikiem, którego ta poprawka zmienia. Potwierdź, aby je zresetować.',
     tableBusy: 'Przy stole {{number}} trwa już mecz.',
     tableInactive: 'Stół {{number}} jest nieaktywny.',
     tableInUse: 'Przy stole {{number}} trwa mecz. Najpierw zakończ mecz albo zdejmij go ze stołu.',

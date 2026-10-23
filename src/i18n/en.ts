@@ -340,6 +340,8 @@ export const en = {
     matchNotReady: 'This match cannot be played yet.',
     matchNotOnTable: 'This match is not on a table.',
     matchFinished: 'This match already has a result.',
+    matchNotFinished: 'This match has no result to correct.',
+    correctionNeedsForce: 'Later matches were already played with the player this correction replaces. Confirm to reset them.',
     tableBusy: 'Table {{number}} already has a match on it.',
     tableInactive: 'Table {{number}} is inactive.',
     tableInUse: 'Table {{number}} has a match on it. Finish the match or take it off the table first.',
