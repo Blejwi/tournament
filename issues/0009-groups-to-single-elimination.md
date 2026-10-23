@@ -1,7 +1,7 @@
 ---
 id: 9
 title: Groups → single elimination
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-22
 ---
@@ -48,3 +48,7 @@ A competition with groups followed by a single elimination bracket. The top 2 of
 - #0004
 - #0007
 - #0008
+
+## Resolution
+
+Done on `integration/v1` (up to edec94a). There is now a general stage chain (`stages/chain.ts`, a `FOLLOWERS` table): stage N is drawn from the advancers of stage N-1 (`advancersOf`, top 2 per group). Group advancers are placed with `placeGroupAdvancers` (`stages/advancerPlacement.ts`): 1A at the top, 1B at the bottom, 1st places play 2nd places, 2X never in 1X's half, and BYEs to winners first. Tested for 2–17 groups and many random seeds. The bracket is drawn together with the groups, with "1A" placeholders that fill per group. Confirming waits for the groups (`previousStageNotComplete`), and a 4-entry bracket is allowed after groups. `getFinalPlaces` places group non-advancers below the bracket. The canvas lays the stages out left to right. No schema change. Not checked in the browser.
