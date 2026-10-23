@@ -97,7 +97,17 @@ export interface MatchView {
   places: MatchPlaces | null;
 }
 
-function locationView(match: Match, stage: Stage): MatchLocationView {
+/** A recorded result as shown: winner, games won and (unless games-only) each game's points. */
+export function resultView(result: MatchResult): ResultView {
+  const won: [number, number] = result.kind === 'games' ? gamesWon(result.games) : [...result.games];
+  return {
+    winner: won[0] > won[1] ? 0 : 1,
+    gamesWon: won,
+    games: result.kind === 'games' ? result.games.map(([a, b]) => [a, b]) : null,
+  };
+}
+
+export function locationView(match: Match, stage: Stage): MatchLocationView {
   const { location } = match;
   switch (location.kind) {
     case 'group': {
@@ -166,14 +176,7 @@ export function matchView(state: TournamentState, derived: DerivedMatch, now: Ti
     elapsedMs,
     expectedMs: expected,
     overdue,
-    result:
-      result && winner !== null
-        ? {
-            winner,
-            gamesWon: result.kind === 'games' ? gamesWon(result.games) : [...result.games],
-            games: result.kind === 'games' ? result.games.map(([a, b]) => [a, b]) : null,
-          }
-        : null,
+    result: result && winner !== null ? resultView(result) : null,
     readySince: status === 'ready' ? derived.waitingSince : null,
     busyWith: derived.busyWith.map((b) => ({ player: b.player, match: b.match.id, competition: b.competition.id, table: tableNumber(b.match.table) })),
     decidedByBye: derived.decidedByBye,

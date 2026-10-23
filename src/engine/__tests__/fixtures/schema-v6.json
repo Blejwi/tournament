@@ -1,9 +1,9 @@
 {
   "schemaVersion": 6,
   "tournament": {
-    "id": "autumn-open",
-    "name": "Autumn Open",
-    "date": "2026-10-03",
+    "id": "winter-cup",
+    "name": "Winter Cup",
+    "date": "2026-12-12",
     "venue": "",
     "tables": [{ "id": "table-1", "number": 1, "name": "", "active": true }],
     "players": [
@@ -53,7 +53,7 @@
         ]
       }
     ],
-    "expectedDurations": { "2": 15, "3": 30, "4": 35 },
+    "expectedDurations": { "2": 15, "3": 25, "4": 35 },
     "nextId": 10
   },
   "log": []

@@ -17,11 +17,13 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0021](0021-classification-panel.md) | Classification panel | started 2026-10-23 |
+| [#0020](0020-full-player-names-on-canvas.md) | Full player names on the canvas | started 2026-10-23 |
+| [#0019](0019-register-players-per-competition.md) | Register players per competition | started 2026-10-23 |
 | [#0015](0015-corrections.md) | Corrections | started 2026-10-23 |
 | [#0014](0014-special-results-and-withdrawal.md) | Walkover, retirement, disqualification and withdrawal | started 2026-10-23 |
 | [#0010](0010-direct-double-elimination.md) | Direct double elimination | started 2026-10-23 |
 | [#0008](0008-draw-editing-before-confirm.md) | Draw editing before confirm | started 2026-10-23 |
-| [#0016](0016-change-log-and-stats-drawer.md) | Change log and stats drawer | started 2026-10-23 |
 
 ## ⛔ Blocked
 
@@ -36,6 +38,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0016](0016-change-log-and-stats-drawer.md) | Change log and stats drawer | 93f921a..7c947bf |
 | [#0007](0007-direct-single-elimination.md) | Direct single elimination | 29ed2cf..d2f489a |
 | [#0005](0005-tables-panel-overdue-and-idle.md) | Tables panel, overdue and idle | 5ba4faf..817b486 |
 | [#0004](0004-ittf-tiebreaks-and-group-detail.md) | ITTF tiebreaks and group detail | a9bcfc4, 12b8ba8 |
@@ -70,4 +73,9 @@ graph LR
   T7 --> T14[0014 Special results]
   T7 --> T15[0015 Corrections]
   T5 --> T16[0016 Log & stats]
+  T19[0019 Players per competition]
+  T20[0020 Full names]
+  T21[0021 Classification panel]
+  T10 -.feeds places.-> T21
+  T12 -.feeds places.-> T21
 ```

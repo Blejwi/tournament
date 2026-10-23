@@ -215,4 +215,42 @@ export interface TournamentState {
   expectedDurations: ExpectedDurations;
   /** Counter for engine-made ids (tables, players, ...), so ids are never reused. */
   nextId: number;
+  /**
+   * The change log, oldest first: one entry per logged action, written by the command itself.
+   * Read-only for the operator; the tournament file keeps it in its top-level `log` section.
+   */
+  log: LogEntry[];
 }
+
+/**
+ * The match a change-log entry is about, as it was when the entry was written. Slots re-resolve
+ * after a correction (ADR 0003), so the log keeps its own copy of who played.
+ */
+export interface LoggedMatch {
+  competition: CompetitionId;
+  stage: StageId;
+  match: MatchId;
+  /** The players in slot A and slot B at that moment; empty for a slot that wasn't decided. */
+  players: [PlayerId[], PlayerId[]];
+}
+
+/** A table as it was when the entry was written (tables can be renumbered or removed later). */
+export interface LoggedTable {
+  table: TableId;
+  number: number;
+}
+
+/**
+ * One change-log entry: a timestamped record of an operator action, with enough detail to settle
+ * a dispute (e.g. the old and new score). Data only, no display text. Adding an entry type:
+ * see "How to add a change-log entry" in CLAUDE.md.
+ */
+export type LogEntry =
+  /** A match was called to a table (`assignMatch`). */
+  | { type: 'matchAssigned'; at: Timestamp; match: LoggedMatch; table: LoggedTable }
+  /** A match was taken off its table (`unassignMatch`). */
+  | { type: 'matchUnassigned'; at: Timestamp; match: LoggedMatch; table: LoggedTable }
+  /** A score was entered (`recordResult`); `table` is where it was played, if it was called. */
+  | { type: 'resultRecorded'; at: Timestamp; match: LoggedMatch; result: MatchResult; table: LoggedTable | null };
+
+export type LogEntryType = LogEntry['type'];

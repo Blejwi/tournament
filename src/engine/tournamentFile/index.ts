@@ -8,7 +8,8 @@ export const CURRENT_SCHEMA_VERSION = Math.max(...Object.keys(migrations).map(Nu
 
 /** Turns a tournament into the text of a single JSON file: `schemaVersion`, the tournament state and the change log. */
 export function exportTournament(state: TournamentState): string {
-  const file: TournamentFile = { schemaVersion: CURRENT_SCHEMA_VERSION, tournament: state, log: [] };
+  const { log, ...tournament } = state;
+  const file: TournamentFile = { schemaVersion: CURRENT_SCHEMA_VERSION, tournament, log };
   return JSON.stringify(file, null, 2);
 }
 
@@ -47,7 +48,7 @@ export function importTournament(input: ImportTournamentInput): Result<Tournamen
     const path = parsed.error.issues[0]?.path.map(String).join('.') ?? '';
     return fail({ code: 'importInvalidData', path });
   }
-  return ok({ ...parsed.data.tournament, id: input.id });
+  return ok({ ...parsed.data.tournament, id: input.id, log: parsed.data.log });
 }
 
 function isRawFile(json: unknown): json is RawFile {
