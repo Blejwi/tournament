@@ -28,6 +28,7 @@ import schemaV7 from './fixtures/schema-v7.json?raw';
 import schemaV8 from './fixtures/schema-v8.json?raw';
 import schemaV9 from './fixtures/schema-v9.json?raw';
 import schemaV10 from './fixtures/schema-v10.json?raw';
+import schemaV11 from './fixtures/schema-v11.json?raw';
 
 function setUpTournament(): TournamentState {
   let state = newTournament();
@@ -220,7 +221,56 @@ describe('importing a file with an older schema version', () => {
     const file = JSON.parse(exportTournament(imported));
 
     expect(file.tournament.competitions[0].stages[0].carryOver).toBe(true);
-    expect(file.schemaVersion).toBe(11);
+    expect(file.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
+  });
+
+  it('migrates a version 11 file (play-offs down to single places in one block) to one play-off per level, with the same results and places', () => {
+    const imported = unwrap(importTournament({ id: 'restored', file: schemaV11 }));
+    const view = getStage(imported, 'stage-34', 0);
+    if (view?.type !== 'singleElimination') throw new Error('expected a single elimination stage');
+
+    // 9–16 was played to the end; 5–8 was switched off again, so its levels count only once it is on.
+    expect(view.playOffs.map((p) => [`${p.range.from}–${p.range.to}`, p.enabled, p.created])).toEqual([
+      ['5–8', false, true],
+      ['9–16', true, true],
+      ['9–12', true, true],
+      ['9–10', true, true],
+      ['11–12', true, true],
+      ['13–16', true, true],
+      ['13–14', true, true],
+      ['15–16', true, true],
+    ]);
+    const blocks = view.sections.filter((s) => s.playOff).map((s) => [`${s.playOff!.from}–${s.playOff!.to}`, s.rounds.map((r) => r.matches.length)]);
+    expect(blocks).toEqual(
+      expect.arrayContaining([
+        ['9–16', [4]],
+        ['9–12', [2]],
+        ['13–16', [2]],
+        ['9–10', [1]],
+        ['15–16', [1]],
+        ['5–8', [2]],
+        ['5–6', [1]],
+      ]),
+    );
+    expect(getFinalPlaces(imported, 'competition-17')!.rows.map((r) => `${r.place.from === r.place.to ? r.place.from : `${r.place.from}–${r.place.to}`} ${r.entry.players[0].lastName}`)).toEqual([
+      '1 P1',
+      '2 P2',
+      '3–4 P4',
+      '3–4 P3',
+      '5–8 P8',
+      '5–8 P5',
+      '5–8 P6',
+      '5–8 P7',
+      '9 P11',
+      '10 P12',
+      '11 P9',
+      '12 P10',
+      '13 P15',
+      '14 P16',
+      '15 P13',
+      '16 P14',
+    ]);
+    expect(view.sections.flatMap((s) => s.rounds.flatMap((r) => r.matches)).filter((m) => m.location.kind === 'bracket' && m.location.section === 'playOff' && m.status === 'finished')).toHaveLength(12);
   });
 
   it('migrates a version 7 file (before double elimination and withdrawals) with every entry still in its competition', () => {

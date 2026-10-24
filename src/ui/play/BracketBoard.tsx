@@ -38,7 +38,11 @@ export function BracketBoard(props: {
         ))}
       </svg>
       {layout.labels.map((label, i) => (
-        <div key={`label-${i}`} className="absolute flex items-baseline gap-2 whitespace-nowrap" style={{ left: label.x, top: label.y }}>
+        <div
+          key={`label-${i}`}
+          className={cn('absolute flex items-baseline gap-x-2 whitespace-nowrap', label.compact && 'flex-wrap')}
+          style={{ left: label.x, top: label.y, width: label.compact ? CARD_W : undefined }}
+        >
           <span
             className={cn(
               'font-bold tracking-wide uppercase',
@@ -48,7 +52,7 @@ export function BracketBoard(props: {
           >
             {label.title}
           </span>
-          {label.subtitle && <span className="text-xs text-slate-400">{label.subtitle}</span>}
+          {label.subtitle && !label.compact && <span className="text-xs text-slate-400">{label.subtitle}</span>}
           {label.playOff && (
             <Switch
               checked={label.playOff.enabled}
@@ -57,6 +61,7 @@ export function BracketBoard(props: {
               className="h-4 w-7 self-center"
             />
           )}
+          {label.subtitle && label.compact && <span className="basis-full truncate text-xs leading-5 text-slate-400">{label.subtitle}</span>}
         </div>
       ))}
       {layout.cards.map(({ match, x, y }) => (

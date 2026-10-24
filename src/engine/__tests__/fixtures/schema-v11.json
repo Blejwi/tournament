@@ -1,0 +1,2296 @@
+{
+  "schemaVersion": 11,
+  "tournament": {
+    "id": "spring",
+    "name": "Spring Open",
+    "date": "2026-05-01",
+    "venue": "City Hall",
+    "tables": [],
+    "players": [
+      {
+        "id": "player-1",
+        "firstName": "Player",
+        "lastName": "P1",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-2",
+        "firstName": "Player",
+        "lastName": "P2",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-3",
+        "firstName": "Player",
+        "lastName": "P3",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-4",
+        "firstName": "Player",
+        "lastName": "P4",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-5",
+        "firstName": "Player",
+        "lastName": "P5",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-6",
+        "firstName": "Player",
+        "lastName": "P6",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-7",
+        "firstName": "Player",
+        "lastName": "P7",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-8",
+        "firstName": "Player",
+        "lastName": "P8",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-9",
+        "firstName": "Player",
+        "lastName": "P9",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-10",
+        "firstName": "Player",
+        "lastName": "P10",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-11",
+        "firstName": "Player",
+        "lastName": "P11",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-12",
+        "firstName": "Player",
+        "lastName": "P12",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-13",
+        "firstName": "Player",
+        "lastName": "P13",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-14",
+        "firstName": "Player",
+        "lastName": "P14",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-15",
+        "firstName": "Player",
+        "lastName": "P15",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      },
+      {
+        "id": "player-16",
+        "firstName": "Player",
+        "lastName": "P16",
+        "club": "",
+        "rating": null,
+        "birthYear": null
+      }
+    ],
+    "competitions": [
+      {
+        "id": "competition-17",
+        "name": "Open",
+        "gamesToWin": 3,
+        "entries": [
+          {
+            "id": "entry-18",
+            "players": [
+              "player-1"
+            ],
+            "seed": 1,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-19",
+            "players": [
+              "player-10"
+            ],
+            "seed": 10,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-20",
+            "players": [
+              "player-11"
+            ],
+            "seed": 11,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-21",
+            "players": [
+              "player-12"
+            ],
+            "seed": 12,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-22",
+            "players": [
+              "player-13"
+            ],
+            "seed": 13,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-23",
+            "players": [
+              "player-14"
+            ],
+            "seed": 14,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-24",
+            "players": [
+              "player-15"
+            ],
+            "seed": 15,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-25",
+            "players": [
+              "player-16"
+            ],
+            "seed": 16,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-26",
+            "players": [
+              "player-2"
+            ],
+            "seed": 2,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-27",
+            "players": [
+              "player-3"
+            ],
+            "seed": 3,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-28",
+            "players": [
+              "player-4"
+            ],
+            "seed": 4,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-29",
+            "players": [
+              "player-5"
+            ],
+            "seed": 5,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-30",
+            "players": [
+              "player-6"
+            ],
+            "seed": 6,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-31",
+            "players": [
+              "player-7"
+            ],
+            "seed": 7,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-32",
+            "players": [
+              "player-8"
+            ],
+            "seed": 8,
+            "withdrawnAt": null
+          },
+          {
+            "id": "entry-33",
+            "players": [
+              "player-9"
+            ],
+            "seed": 9,
+            "withdrawnAt": null
+          }
+        ],
+        "stages": [
+          {
+            "id": "stage-34",
+            "type": "singleElimination",
+            "thirdPlace": false,
+            "drawState": "confirmed",
+            "matches": [
+              {
+                "id": "match-35",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-18"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-25"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-36",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-33"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-32"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-37",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 3,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-29"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-21"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-38",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 4,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-22"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-28"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-39",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 5,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-27"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-23"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-40",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 6,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-20"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-30"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-41",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 7,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-31"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-19"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-42",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 1,
+                "order": 8,
+                "slots": [
+                  {
+                    "kind": "entry",
+                    "entry": "entry-24"
+                  },
+                  {
+                    "kind": "entry",
+                    "entry": "entry-26"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 9,
+                    "to": 16
+                  }
+                }
+              },
+              {
+                "id": "match-43",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 2,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-35",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-36",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 5,
+                    "to": 8
+                  }
+                }
+              },
+              {
+                "id": "match-44",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 2,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-37",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-38",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 5,
+                    "to": 8
+                  }
+                }
+              },
+              {
+                "id": "match-45",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 2,
+                "order": 3,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-39",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-40",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 5,
+                    "to": 8
+                  }
+                }
+              },
+              {
+                "id": "match-46",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 2,
+                "order": 4,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-41",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-42",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 5,
+                    "to": 8
+                  }
+                }
+              },
+              {
+                "id": "match-47",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 3,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-43",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-44",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 3,
+                    "to": 4
+                  }
+                }
+              },
+              {
+                "id": "match-48",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 3,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-45",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-46",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": null,
+                  "loser": {
+                    "from": 3,
+                    "to": 4
+                  }
+                }
+              },
+              {
+                "id": "match-49",
+                "location": {
+                  "kind": "bracket",
+                  "section": "main"
+                },
+                "round": 4,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-47",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-48",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": {
+                    "from": 1,
+                    "to": 1
+                  },
+                  "loser": {
+                    "from": 2,
+                    "to": 2
+                  }
+                }
+              },
+              {
+                "id": "match-50",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 1,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-35",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-36",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-51",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 1,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-37",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-38",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-52",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 1,
+                "order": 3,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-39",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-40",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-53",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 1,
+                "order": 4,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-41",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-42",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-54",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 2,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-50",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-51",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-55",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 2,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-52",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-53",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-58",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 2,
+                "order": 3,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-50",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-51",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-59",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 2,
+                "order": 4,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-52",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-53",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-56",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 3,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-54",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-55",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": {
+                    "from": 9,
+                    "to": 9
+                  },
+                  "loser": {
+                    "from": 10,
+                    "to": 10
+                  }
+                },
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-57",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 3,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-54",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-55",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": {
+                    "from": 11,
+                    "to": 11
+                  },
+                  "loser": {
+                    "from": 12,
+                    "to": 12
+                  }
+                },
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-60",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 3,
+                "order": 3,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-58",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-59",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": {
+                    "from": 13,
+                    "to": 13
+                  },
+                  "loser": {
+                    "from": 14,
+                    "to": 14
+                  }
+                },
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-61",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 3,
+                "order": 4,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-58",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-59",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": {
+                    "from": 15,
+                    "to": 15
+                  },
+                  "loser": {
+                    "from": 16,
+                    "to": 16
+                  }
+                },
+                "playOff": {
+                  "from": 9,
+                  "to": 16
+                }
+              },
+              {
+                "id": "match-62",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 1,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-43",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-44",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 5,
+                  "to": 8
+                }
+              },
+              {
+                "id": "match-63",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 1,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-45",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-46",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "playOff": {
+                  "from": 5,
+                  "to": 8
+                }
+              },
+              {
+                "id": "match-64",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 2,
+                "order": 1,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-62",
+                    "take": "winner"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-63",
+                    "take": "winner"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    1,
+                    3
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": {
+                    "from": 5,
+                    "to": 5
+                  },
+                  "loser": {
+                    "from": 6,
+                    "to": 6
+                  }
+                },
+                "playOff": {
+                  "from": 5,
+                  "to": 8
+                }
+              },
+              {
+                "id": "match-65",
+                "location": {
+                  "kind": "bracket",
+                  "section": "playOff"
+                },
+                "round": 2,
+                "order": 2,
+                "slots": [
+                  {
+                    "kind": "matchResult",
+                    "match": "match-62",
+                    "take": "loser"
+                  },
+                  {
+                    "kind": "matchResult",
+                    "match": "match-63",
+                    "take": "loser"
+                  }
+                ],
+                "table": null,
+                "assignedAt": null,
+                "result": {
+                  "kind": "gamesOnly",
+                  "games": [
+                    3,
+                    1
+                  ]
+                },
+                "finishedAt": 1000,
+                "places": {
+                  "winner": {
+                    "from": 7,
+                    "to": 7
+                  },
+                  "loser": {
+                    "from": 8,
+                    "to": 8
+                  }
+                },
+                "playOff": {
+                  "from": 5,
+                  "to": 8
+                }
+              }
+            ],
+            "playOffs": [
+              {
+                "range": {
+                  "from": 9,
+                  "to": 16
+                },
+                "enabled": true
+              },
+              {
+                "range": {
+                  "from": 5,
+                  "to": 8
+                },
+                "enabled": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "expectedDurations": {
+      "2": 15,
+      "3": 25,
+      "4": 35
+    },
+    "nextId": 66
+  },
+  "log": [
+    {
+      "type": "playOffSet",
+      "at": 500,
+      "competition": "competition-17",
+      "stage": "stage-34",
+      "range": {
+        "from": 9,
+        "to": 16
+      },
+      "enabled": true
+    },
+    {
+      "type": "playOffSet",
+      "at": 600,
+      "competition": "competition-17",
+      "stage": "stage-34",
+      "range": {
+        "from": 5,
+        "to": 8
+      },
+      "enabled": true
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-35",
+        "players": [
+          [
+            "player-1"
+          ],
+          [
+            "player-16"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-36",
+        "players": [
+          [
+            "player-9"
+          ],
+          [
+            "player-8"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-37",
+        "players": [
+          [
+            "player-5"
+          ],
+          [
+            "player-12"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-38",
+        "players": [
+          [
+            "player-13"
+          ],
+          [
+            "player-4"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-39",
+        "players": [
+          [
+            "player-3"
+          ],
+          [
+            "player-14"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-40",
+        "players": [
+          [
+            "player-11"
+          ],
+          [
+            "player-6"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-41",
+        "players": [
+          [
+            "player-7"
+          ],
+          [
+            "player-10"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-42",
+        "players": [
+          [
+            "player-15"
+          ],
+          [
+            "player-2"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-43",
+        "players": [
+          [
+            "player-1"
+          ],
+          [
+            "player-8"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-44",
+        "players": [
+          [
+            "player-5"
+          ],
+          [
+            "player-4"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-45",
+        "players": [
+          [
+            "player-3"
+          ],
+          [
+            "player-6"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-46",
+        "players": [
+          [
+            "player-7"
+          ],
+          [
+            "player-2"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-47",
+        "players": [
+          [
+            "player-1"
+          ],
+          [
+            "player-4"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-48",
+        "players": [
+          [
+            "player-3"
+          ],
+          [
+            "player-2"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-49",
+        "players": [
+          [
+            "player-1"
+          ],
+          [
+            "player-2"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-50",
+        "players": [
+          [
+            "player-16"
+          ],
+          [
+            "player-9"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-51",
+        "players": [
+          [
+            "player-12"
+          ],
+          [
+            "player-13"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-52",
+        "players": [
+          [
+            "player-14"
+          ],
+          [
+            "player-11"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-53",
+        "players": [
+          [
+            "player-10"
+          ],
+          [
+            "player-15"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-54",
+        "players": [
+          [
+            "player-9"
+          ],
+          [
+            "player-12"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-55",
+        "players": [
+          [
+            "player-11"
+          ],
+          [
+            "player-10"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-58",
+        "players": [
+          [
+            "player-16"
+          ],
+          [
+            "player-13"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-59",
+        "players": [
+          [
+            "player-14"
+          ],
+          [
+            "player-15"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-56",
+        "players": [
+          [
+            "player-12"
+          ],
+          [
+            "player-11"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-57",
+        "players": [
+          [
+            "player-9"
+          ],
+          [
+            "player-10"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-60",
+        "players": [
+          [
+            "player-16"
+          ],
+          [
+            "player-15"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-61",
+        "players": [
+          [
+            "player-13"
+          ],
+          [
+            "player-14"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-62",
+        "players": [
+          [
+            "player-8"
+          ],
+          [
+            "player-5"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-63",
+        "players": [
+          [
+            "player-6"
+          ],
+          [
+            "player-7"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-64",
+        "players": [
+          [
+            "player-5"
+          ],
+          [
+            "player-6"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          1,
+          3
+        ]
+      }
+    },
+    {
+      "type": "resultRecorded",
+      "at": 1000,
+      "match": {
+        "competition": "competition-17",
+        "stage": "stage-34",
+        "match": "match-65",
+        "players": [
+          [
+            "player-8"
+          ],
+          [
+            "player-7"
+          ]
+        ]
+      },
+      "table": null,
+      "result": {
+        "kind": "gamesOnly",
+        "games": [
+          3,
+          1
+        ]
+      }
+    },
+    {
+      "type": "playOffSet",
+      "at": 700,
+      "competition": "competition-17",
+      "stage": "stage-34",
+      "range": {
+        "from": 5,
+        "to": 8
+      },
+      "enabled": false
+    }
+  ]
+}

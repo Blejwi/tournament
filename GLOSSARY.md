@@ -121,7 +121,7 @@ A set of final places shared by entries knocked out at the same point, such as 5
 _Avoid_: Tied place, bucket
 
 **Place play-off**:
-An optional mini-bracket that splits a place range into single places; the operator turns it on or off per range.
+An optional round that splits a place range in two: its winners share the top half and its losers the bottom half (single places once two entries are left). Each half can have a place play-off of its own; the operator turns each one on or off per range.
 _Avoid_: Classification, consolation bracket, plate
 
 **Slot**:

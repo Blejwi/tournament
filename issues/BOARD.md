@@ -28,6 +28,8 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0024](0024-play-offs-split-one-level-at-a-time.md) | Place play-offs split one level at a time | uncommitted |
+| [#0023](0023-mirrored-play-off-layout.md) | Mirrored play-off layout on the canvas | uncommitted |
 | [#0013](0013-groups-to-groups-with-carry-over.md) | Groups → groups with carry-over | ..9accc57 |
 | [#0011](0011-groups-to-double-elimination.md) | Groups → double elimination | 56965c8 |
 | [#0009](0009-groups-to-single-elimination.md) | Groups → single elimination | ..edec94a |

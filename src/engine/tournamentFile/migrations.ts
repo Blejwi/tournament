@@ -22,6 +22,9 @@
  * - 10: every single and double elimination stage gets `playOffs` (the place play-offs switched on,
  *   none so far) and bracket matches may be in section `playOff` (#0012).
  * - 11: adds a groups stage's `carryOver` (groups → groups, #0013); true for every older groups stage.
+ * - 12: a place play-off is one round, and its halves are play-offs of their own (#0024). Older
+ *   play-offs went down to single places in one block: each later round's matches move to the
+ *   play-off of the half they split (switched on), so results and places stay the same.
  */
 
 /** A document parsed from JSON whose shape isn't trusted yet. */
@@ -93,5 +96,44 @@ export const migrations: Record<number, Migration> = {
         }))
       : tournament?.competitions;
     return { ...file, schemaVersion: 11, tournament: { ...tournament, competitions } };
+  },
+  11: (file) => {
+    type Range = { from: number; to: number };
+    type RawMatch = { round: number; order: number; playOff?: Range; places?: unknown };
+    type RawStage = { type?: unknown; matches?: RawMatch[]; playOffs?: { range: Range; enabled: boolean }[] };
+    // In the old block for a range of n entries, round r held 2^(r-1) groups of n / 2^r matches,
+    // best half first; group g split the g-th part of the range (n / 2^(r-1) entries).
+    const split = (stage: RawStage): RawStage => {
+      if (!Array.isArray(stage.matches) || !Array.isArray(stage.playOffs)) return stage;
+      const playOffs = [...stage.playOffs];
+      const matches = stage.matches.map((match) => {
+        if (!match?.playOff) return match;
+        const { from, to } = match.playOff;
+        const perGroup = (to - from + 1) / 2 ** match.round;
+        const entries = perGroup * 2;
+        const group = Math.floor((match.order - 1) / perGroup);
+        const range = { from: from + group * entries, to: from + group * entries + entries - 1 };
+        if (!playOffs.some((p) => p.range.from === range.from && p.range.to === range.to)) playOffs.push({ range, enabled: true });
+        const half = entries / 2;
+        const places =
+          entries === 2
+            ? { winner: { from: range.from, to: range.from }, loser: { from: range.to, to: range.to } }
+            : { winner: { from: range.from, to: range.from + half - 1 }, loser: { from: range.from + half, to: range.to } };
+        return { ...match, round: 1, order: match.order - group * perGroup, playOff: range, places };
+      });
+      return { ...stage, matches, playOffs };
+    };
+    const tournament = file.tournament as { competitions?: unknown };
+    const competitions = Array.isArray(tournament?.competitions)
+      ? tournament.competitions.map((competition: { stages?: unknown }) => ({
+          ...competition,
+          stages: Array.isArray(competition?.stages)
+            ? competition.stages.map((stage: RawStage) =>
+                stage?.type === 'singleElimination' || stage?.type === 'doubleElimination' ? split(stage) : stage,
+              )
+            : competition?.stages,
+        }))
+      : tournament?.competitions;
+    return { ...file, schemaVersion: 12, tournament: { ...tournament, competitions } };
   },
 };

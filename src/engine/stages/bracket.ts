@@ -198,7 +198,8 @@ export interface SharedPlaceRange {
 
 /**
  * The shared place ranges of a bracket stage, from its matches' `places` (the ranges place
- * play-offs can split), best range first. Single places (from === to) are left out.
+ * play-offs can split), best range first (a range before the ranges inside it). Single places
+ * (from === to) are left out.
  */
 export function sharedPlaceRanges(stage: Stage): SharedPlaceRange[] {
   const ranges = new Map<string, SharedPlaceRange>();
@@ -212,7 +213,7 @@ export function sharedPlaceRanges(stage: Stage): SharedPlaceRange[] {
       ranges.set(key, shared);
     }
   }
-  return [...ranges.values()].sort((a, b) => a.range.from - b.range.from);
+  return [...ranges.values()].sort((a, b) => a.range.from - b.range.from || b.range.to - a.range.to);
 }
 
 export function newBracketMatch(

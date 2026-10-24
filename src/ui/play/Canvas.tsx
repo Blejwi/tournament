@@ -21,6 +21,8 @@ export function Canvas(props: {
   className?: string;
   /** Replaces the default usage hint in the corner. */
   hint?: string;
+  /** Extra view controls, drawn before the zoom buttons. */
+  tools?: ReactNode;
 }) {
   const { t } = useTranslation();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -147,26 +149,29 @@ export function Canvas(props: {
         <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-md bg-white/80 px-2 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
           {props.hint ?? t('play.hint')}
         </div>
-        <div data-nopan className="absolute right-3 bottom-3 z-10 flex items-center rounded-lg bg-white text-sm shadow ring-1 ring-slate-200">
-          <button type="button" className="size-8 rounded-l-lg hover:bg-slate-100" aria-label={t('play.zoomOut')} title={t('play.zoomOut')} onClick={() => zoomAround(0.8)}>
-            <Minus className="mx-auto size-4" />
-          </button>
-          <button
-            type="button"
-            className="h-8 w-12 text-xs tabular-nums hover:bg-slate-100"
-            title={t('play.resetZoom')}
-            aria-label={t('play.resetZoom')}
-            onClick={() => zoomAround(1 / view.k)}
-          >
-            {Math.round(view.k * 100)}%
-          </button>
-          <button type="button" className="size-8 hover:bg-slate-100" aria-label={t('play.zoomIn')} title={t('play.zoomIn')} onClick={() => zoomAround(1.25)}>
-            <Plus className="mx-auto size-4" />
-          </button>
-          <button type="button" className="flex h-8 items-center gap-1 rounded-r-lg border-l border-slate-200 px-3 text-xs font-semibold hover:bg-slate-100" onClick={fit}>
-            <Maximize className="size-3.5" aria-hidden />
-            {t('play.fit')}
-          </button>
+        <div data-nopan className="absolute right-3 bottom-3 z-10 flex items-center gap-2">
+          {props.tools}
+          <div className="flex items-center rounded-lg bg-white text-sm shadow ring-1 ring-slate-200">
+            <button type="button" className="size-8 rounded-l-lg hover:bg-slate-100" aria-label={t('play.zoomOut')} title={t('play.zoomOut')} onClick={() => zoomAround(0.8)}>
+              <Minus className="mx-auto size-4" />
+            </button>
+            <button
+              type="button"
+              className="h-8 w-12 text-xs tabular-nums hover:bg-slate-100"
+              title={t('play.resetZoom')}
+              aria-label={t('play.resetZoom')}
+              onClick={() => zoomAround(1 / view.k)}
+            >
+              {Math.round(view.k * 100)}%
+            </button>
+            <button type="button" className="size-8 hover:bg-slate-100" aria-label={t('play.zoomIn')} title={t('play.zoomIn')} onClick={() => zoomAround(1.25)}>
+              <Plus className="mx-auto size-4" />
+            </button>
+            <button type="button" className="flex h-8 items-center gap-1 rounded-r-lg border-l border-slate-200 px-3 text-xs font-semibold hover:bg-slate-100" onClick={fit}>
+              <Maximize className="size-3.5" aria-hidden />
+              {t('play.fit')}
+            </button>
+          </div>
         </div>
         {props.overlay?.(view)}
       </div>

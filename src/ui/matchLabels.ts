@@ -36,7 +36,8 @@ export function matchTitle(t: TFunction, match: Pick<MatchView, 'location' | 'ro
   if (location.section === 'thirdPlace') return t('bracket.thirdPlace');
   if (location.section === 'secondFinal') return t('bracket.secondFinal');
   if (location.section === 'playOff') {
-    return t('bracket.playOffMatch', { range: formatPlace(location.playOff ?? { from: 0, to: 0 }), round: match.round, order: match.order });
+    const range = formatPlace(location.playOff ?? { from: 0, to: 0 });
+    return location.roundMatches === 1 ? t('bracket.sections.playOff', { range }) : t('bracket.playOffMatch', { range, order: match.order });
   }
   const code = matchCode(t, location, match.round, match.order);
   if (location.section === 'winners') {
@@ -54,8 +55,11 @@ export function matchCode(t: TFunction, location: MatchLocationView, round: numb
       return t('bracket.short.thirdPlace');
     case 'secondFinal':
       return t('bracket.short.secondFinal');
-    case 'playOff':
-      return t('bracket.short.playOff', { from: location.playOff?.from ?? 0, round, order });
+    case 'playOff': {
+      // Several play-offs can start at the same place (9–16, 9–12, 9–10), so the code names the range.
+      const range = formatPlace(location.playOff ?? { from: 0, to: 0 });
+      return location.roundMatches === 1 ? t('bracket.short.playOffSingle', { range }) : t('bracket.short.playOff', { range, order });
+    }
     case 'winners':
       return round === 1 ? t('bracket.short.winnersFirst', { number: order }) : letterName(doubleEliminationNumber(location, round, order));
     case 'losers':

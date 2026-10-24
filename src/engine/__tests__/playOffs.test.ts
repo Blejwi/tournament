@@ -18,6 +18,16 @@ const allMatches = (state: TournamentState, stage: string, now = 0) =>
 const setPlayOff = (stage: string, from: number, to: number, enabled: boolean, at = 0) =>
   ({ type: 'setPlayOff', stage, range: rng(from, to), enabled, at }) as const;
 
+/** Switches on the play-off for a range and every level below it, down to single places (parents first). */
+const splitFully = (stage: string, from: number, to: number, at = 0): ReturnType<typeof setPlayOff>[] =>
+  to - from < 1
+    ? []
+    : to - from === 1
+      ? [setPlayOff(stage, from, to, true, at)]
+      : [setPlayOff(stage, from, to, true, at), ...splitFully(stage, from, (from + to - 1) / 2, at), ...splitFully(stage, (from + to + 1) / 2, to, at)];
+
+const playOffMatchesOf = (state: TournamentState, stage: string) => allMatches(state, stage).filter(isPlayOff);
+
 /** The play-off block of a range: its matches round by round. */
 function playOffRounds(state: TournamentState, stage: string, from: number, to: number): MatchView[][] {
   const section = bracketOf(state, stage).sections.find((s) => s.playOff?.from === from && s.playOff.to === to);
@@ -98,21 +108,39 @@ describe('place play-offs: structure and pairing in a 16-entry double eliminatio
     expect(describe_(on, stage, 7, 8)).toEqual([['L LR3.1 v L LR3.2 → winner 7, loser 8']]);
   });
 
-  it('9–12: the 1st LR2 loser v the 2nd, the 3rd v the 4th; winners play for 9/10, losers for 11/12', () => {
+  it('9–12: one split, the 1st LR2 loser v the 2nd, the 3rd v the 4th; winners share 9–10, losers 11–12', () => {
     const { state, stage } = setup();
     const on = run(state, setPlayOff(stage, 9, 12, true));
     expect(describe_(on, stage, 9, 12)).toEqual([
-      ['L LR2.1 v L LR2.2', 'L LR2.3 v L LR2.4'],
-      ['W PO1.1 v W PO1.2 → winner 9, loser 10', 'L PO1.1 v L PO1.2 → winner 11, loser 12'],
+      ['L LR2.1 v L LR2.2 → winner 9–10, loser 11–12', 'L LR2.3 v L LR2.4 → winner 9–10, loser 11–12'],
     ]);
+  });
+
+  it('the halves of 9–12 get play-offs of their own: the winners play for 9/10, the losers for 11/12', () => {
+    const { state, stage } = setup();
+    const on = run(state, ...splitFully(stage, 9, 12));
+    expect(describe_(on, stage, 9, 10)).toEqual([['W PO1.1 v W PO1.2 → winner 9, loser 10']]);
+    expect(describe_(on, stage, 11, 12)).toEqual([['L PO1.1 v L PO1.2 → winner 11, loser 12']]);
   });
 
   it('13–16: the LR1 losers in the same way', () => {
     const { state, stage } = setup();
     const on = run(state, setPlayOff(stage, 13, 16, true));
     expect(describe_(on, stage, 13, 16)).toEqual([
-      ['L LR1.1 v L LR1.2', 'L LR1.3 v L LR1.4'],
-      ['W PO1.1 v W PO1.2 → winner 13, loser 14', 'L PO1.1 v L PO1.2 → winner 15, loser 16'],
+      ['L LR1.1 v L LR1.2 → winner 13–14, loser 15–16', 'L LR1.3 v L LR1.4 → winner 13–14, loser 15–16'],
+    ]);
+  });
+
+  it('offers the halves of a play-off once it is on, right after it', () => {
+    const { state, stage } = setup();
+    const on = run(state, setPlayOff(stage, 9, 12, true));
+    expect(bracketOf(on, stage).playOffs.map((p) => [range(p.range), p.parent && range(p.parent)])).toEqual([
+      ['5–6', null],
+      ['7–8', null],
+      ['9–12', null],
+      ['9–10', '9–12'],
+      ['11–12', '9–12'],
+      ['13–16', null],
     ]);
   });
 
@@ -132,19 +160,28 @@ describe('place play-offs: structure and pairing in a 16-entry double eliminatio
 describe('place play-offs: structure and pairing in an 8-entry single elimination', () => {
   it('5–8: the quarter-final losers by neighbouring matches, then 5/6 and 7/8', () => {
     const { state, stage } = drawnBracket(8, { seeds: allSeeded(8) });
-    const on = run(state, setPlayOff(stage, 5, 8, true));
-    expect(describe_(on, stage, 5, 8)).toEqual([
-      ['L R1.1 v L R1.2', 'L R1.3 v L R1.4'],
-      ['W PO1.1 v W PO1.2 → winner 5, loser 6', 'L PO1.1 v L PO1.2 → winner 7, loser 8'],
-    ]);
+    const on = run(state, ...splitFully(stage, 5, 8));
+    expect(describe_(on, stage, 5, 8)).toEqual([['L R1.1 v L R1.2 → winner 5–6, loser 7–8', 'L R1.3 v L R1.4 → winner 5–6, loser 7–8']]);
+    expect(describe_(on, stage, 5, 6)).toEqual([['W PO1.1 v W PO1.2 → winner 5, loser 6']]);
+    expect(describe_(on, stage, 7, 8)).toEqual([['L PO1.1 v L PO1.2 → winner 7, loser 8']]);
   });
 
-  it('9–16 in 16 entries is a bracket of its own: 12 matches, down to single places', () => {
+  it('9–16 in 16 entries splits one level at a time: 4 matches, then 2 per half, then 1 per pair', () => {
     const { state, stage } = drawnBracket(16, { seeds: allSeeded(16) });
     const on = run(state, setPlayOff(stage, 9, 16, true));
-    const rounds = playOffRounds(on, stage, 9, 16);
-    expect(rounds.map((r) => r.length)).toEqual([4, 4, 4]);
-    const decided = rounds.flat().flatMap((m) => [m.places?.winner, m.places?.loser]).filter((p): p is PlaceRange => !!p).map((p) => p.from);
+    expect(playOffRounds(on, stage, 9, 16).map((r) => r.length)).toEqual([4]);
+    expect(bracketOf(on, stage).playOffs.map((p) => range(p.range))).toEqual(['5–8', '9–16', '9–12', '13–16']);
+
+    const deeper = run(on, setPlayOff(stage, 9, 12, true));
+    expect(playOffRounds(deeper, stage, 9, 12).map((r) => r.length)).toEqual([2]);
+    expect(bracketOf(deeper, stage).playOffs.map((p) => range(p.range))).toEqual(['5–8', '9–16', '9–12', '9–10', '11–12', '13–16']);
+
+    const full = run(state, ...splitFully(stage, 9, 16));
+    const decided = playOffMatchesOf(full, stage)
+      .flatMap((m) => [m.places?.winner, m.places?.loser])
+      .filter((p): p is PlaceRange => !!p && p.from === p.to)
+      .map((p) => p.from);
+    expect(playOffMatchesOf(full, stage)).toHaveLength(12);
     expect(decided.sort((a, b) => a - b)).toEqual([9, 10, 11, 12, 13, 14, 15, 16]);
   });
 });
@@ -153,7 +190,7 @@ describe('place play-offs: switching on and off', () => {
   it('turning on makes the matches appear as pending, then ready as their players become known', () => {
     const { state, stage } = drawnBracket(8, { seeds: allSeeded(8) });
     const on = run(state, setPlayOff(stage, 5, 8, true));
-    expect(playOffRounds(on, stage, 5, 8).flat().map((m) => m.status)).toEqual(['pending', 'pending', 'pending', 'pending']);
+    expect(playOffRounds(on, stage, 5, 8).flat().map((m) => m.status)).toEqual(['pending', 'pending']);
 
     const [qf1, qf2] = allMatches(on, stage).filter((m) => m.location.kind === 'bracket' && m.location.section === 'main' && m.round === 1);
     const played = run(on, { type: 'recordResult', match: qf1.id, result: quick(0), at: 0 }, { type: 'recordResult', match: qf2.id, result: quick(0), at: 0 });
@@ -168,24 +205,30 @@ describe('place play-offs: switching on and off', () => {
     const { state, stage } = drawnBracket(8, { seeds: allSeeded(8) });
     expect(allMatches(state, stage).some(isPlayOff)).toBe(false);
     const on = run(state, setPlayOff(stage, 5, 8, true));
-    expect(bracketOf(on, stage).playOffs).toEqual([{ range: rng(5, 8), enabled: true, created: true }]);
+    expect(bracketOf(on, stage).playOffs).toEqual([
+      { range: rng(5, 8), parent: null, enabled: true, created: true },
+      { range: rng(5, 6), parent: rng(5, 8), enabled: false, created: false },
+      { range: rng(7, 8), parent: rng(5, 8), enabled: false, created: false },
+    ]);
   });
 
   it('turning off shows the matches as disabled; turning on again brings them back with their finished results', () => {
     const { state, stage } = drawnBracket(8, { seeds: allSeeded(8) });
     const main = playOut(state, stage);
-    const on = run(main, setPlayOff(stage, 5, 8, true));
+    const on = run(main, ...splitFully(stage, 5, 8));
     const played = playOut(on, stage);
-    const results = (s: TournamentState) => playOffRounds(s, stage, 5, 8).flat().map((m) => m.result?.gamesWon);
+    const results = (s: TournamentState) => playOffMatchesOf(s, stage).map((m) => m.result?.gamesWon);
     expect(results(played).every(Boolean)).toBe(true);
 
+    // Switching the top level off disables every level below it.
     const off = run(played, setPlayOff(stage, 5, 8, false));
-    expect(playOffRounds(off, stage, 5, 8).flat().map((m) => m.status)).toEqual(['disabled', 'disabled', 'disabled', 'disabled']);
+    expect(playOffMatchesOf(off, stage).map((m) => m.status)).toEqual(['disabled', 'disabled', 'disabled', 'disabled']);
     expect(results(off)).toEqual(results(played));
-    expect(bracketOf(off, stage).playOffs).toEqual([{ range: rng(5, 8), enabled: false, created: true }]);
+    expect(bracketOf(off, stage).playOffs).toEqual([{ range: rng(5, 8), parent: null, enabled: false, created: true }]);
 
+    // On again: the levels below come back as they were.
     const again = run(off, setPlayOff(stage, 5, 8, true));
-    expect(playOffRounds(again, stage, 5, 8).flat().map((m) => m.status)).toEqual(['finished', 'finished', 'finished', 'finished']);
+    expect(playOffMatchesOf(again, stage).map((m) => m.status)).toEqual(['finished', 'finished', 'finished', 'finished']);
     expect(results(again)).toEqual(results(played));
     expect(allMatches(again, stage).length).toBe(allMatches(played, stage).length); // no matches were made twice
   });
@@ -216,12 +259,29 @@ describe('place play-offs: switching on and off', () => {
     }
   });
 
+  it('cannot be switched off while a match of a level below it is on a table', () => {
+    const { state, stage } = drawnBracket(8, { seeds: allSeeded(8), tables: 1 });
+    const played = run(playOut(run(state, setPlayOff(stage, 5, 8, true)), stage), setPlayOff(stage, 5, 6, true));
+    const [match] = playOffRounds(played, stage, 5, 6)[0];
+    expect(match.status).toBe('ready');
+    const called = run(played, { type: 'assignMatch', match: match.id, table: tableId(played, 1), at: 0 });
+    expect(errorOf(execute(called, setPlayOff(stage, 5, 8, false)))).toEqual({ code: 'playOffInProgress' });
+  });
+
+  it('a level below a switched-off play-off is not offered and cannot be switched', () => {
+    const { state, stage } = drawnBracket(8, { seeds: allSeeded(8) });
+    expect(errorOf(execute(state, setPlayOff(stage, 5, 6, true)))).toEqual({ code: 'playOffNotFound', from: 5, to: 6 });
+    const off = run(state, ...splitFully(stage, 5, 8), setPlayOff(stage, 5, 8, false));
+    expect(bracketOf(off, stage).playOffs.map((p) => range(p.range))).toEqual(['5–8']);
+    expect(errorOf(execute(off, setPlayOff(stage, 7, 8, false)))).toEqual({ code: 'playOffNotFound', from: 7, to: 8 });
+  });
+
   it('is cleared when the stage is drawn again', () => {
     const { state, stage, competition } = drawnBracket(8, { seeds: allSeeded(8), confirm: false });
     const on = run(state, setPlayOff(stage, 5, 8, true));
     const redrawn = run(on, { type: 'generateDraw', stage, randomSeed: 7 });
     expect(allMatches(redrawn, stage).some(isPlayOff)).toBe(false);
-    expect(bracketOf(redrawn, stage).playOffs).toEqual([{ range: rng(5, 8), enabled: false, created: false }]);
+    expect(bracketOf(redrawn, stage).playOffs).toEqual([{ range: rng(5, 8), parent: null, enabled: false, created: false }]);
     expect(competition).toBeDefined();
   });
 });
@@ -229,7 +289,7 @@ describe('place play-offs: switching on and off', () => {
 describe('place play-offs: final places', () => {
   it('a played play-off decides every place in its range; a range left alone stays shared', () => {
     const { state, competition, stage } = drawnDoubleElimination(16, { seeds: allSeeded(16) });
-    const played = playOut(run(state, setPlayOff(stage, 9, 12, true)), stage);
+    const played = playOut(run(state, ...splitFully(stage, 9, 12)), stage);
     expect(places(played, competition)).toEqual([
       '1 P1',
       '2 P2',
@@ -251,9 +311,16 @@ describe('place play-offs: final places', () => {
     expect(getFinalPlaces(played, competition)!.complete).toBe(true);
   });
 
+  it('a level left off keeps its half shared: 9–12 and 9–10 on, 11–12 off', () => {
+    const { state, competition, stage } = drawnDoubleElimination(16, { seeds: allSeeded(16) });
+    const played = playOut(run(state, setPlayOff(stage, 9, 12, true), setPlayOff(stage, 9, 10, true)), stage);
+    expect(places(played, competition).slice(8, 12)).toEqual(['9 P9', '10 P10', '11–12 P12', '11–12 P11']);
+    expect(getFinalPlaces(played, competition)!.complete).toBe(true);
+  });
+
   it('follows the results of the play-off, not the seeds', () => {
     const { state, competition, stage } = drawnBracket(8, { seeds: allSeeded(8) });
-    const on = run(playOut(state, stage), setPlayOff(stage, 5, 8, true));
+    const on = run(playOut(state, stage), ...splitFully(stage, 5, 8));
     // The QF losers are P5 P6 P7 P8 in draw order P8, P5, P6/P7...: let the worse seed win every play-off match.
     const played = playOut(on, stage, isPlayOff);
     const rows = places(played, competition);
@@ -262,7 +329,7 @@ describe('place play-offs: final places', () => {
 
   it('while a switched-on play-off is unplayed, its places are open rather than shared', () => {
     const { state, competition, stage } = drawnBracket(8, { seeds: allSeeded(8) });
-    const on = run(playOut(state, stage), setPlayOff(stage, 5, 8, true));
+    const on = run(playOut(state, stage), ...splitFully(stage, 5, 8));
     const view = getFinalPlaces(on, competition)!;
     expect(view.rows.map((r) => range(r.place))).toEqual(['1', '2', '3–4', '3–4']);
     expect(view.open.map((o) => [range(o.place), o.count])).toEqual([
@@ -276,14 +343,14 @@ describe('place play-offs: final places', () => {
 
   it('switching it off again leaves the places shared', () => {
     const { state, competition, stage } = drawnBracket(8, { seeds: allSeeded(8) });
-    const played = playOut(run(playOut(state, stage), setPlayOff(stage, 5, 8, true)), stage);
+    const played = playOut(run(playOut(state, stage), ...splitFully(stage, 5, 8)), stage);
     const off = run(played, setPlayOff(stage, 5, 8, false));
     expect(places(off, competition).slice(4)).toEqual(['5–8 P8', '5–8 P5', '5–8 P6', '5–8 P7']);
   });
 
   it('with BYEs the play-off only places the entries that are there: 12 in 16 → 9th to 12th', () => {
     const { state, competition, stage } = drawnBracket(12, { seeds: allSeeded(12) });
-    const played = playOut(run(state, setPlayOff(stage, 9, 16, true)), stage);
+    const played = playOut(run(state, ...splitFully(stage, 9, 16)), stage);
     expect(places(played, competition).slice(8)).toEqual(['9 P9', '10 P10', '11 P11', '12 P12']);
     expect(getFinalPlaces(played, competition)!.complete).toBe(true);
   });
@@ -313,7 +380,7 @@ describe('place play-offs: waiting list and counts', () => {
     const progress = (s: TournamentState) => getStats(s, 0).progress.total;
     const before = [getWaitingList(state, 0).length, getMatchCounts(state, 0)[0].ready, progress(state)];
     const on = run(state, setPlayOff(stage, 13, 16, true));
-    expect(progress(on)).toBe(before[2] + 4);
+    expect(progress(on)).toBe(before[2] + 2);
     const off = run(on, setPlayOff(stage, 13, 16, false));
     expect([getWaitingList(off, 0).length, getMatchCounts(off, 0)[0].ready, progress(off)]).toEqual(before);
     expect(competition).toBeDefined();

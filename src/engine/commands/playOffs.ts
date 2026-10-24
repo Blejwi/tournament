@@ -2,14 +2,15 @@ import { idSource } from '../ids';
 import { findStage, replaceStage } from '../locate';
 import { appendLog } from '../log';
 import { fail, ok, type Result } from '../result';
-import { buildPlayOff, findPlayOff, playOffMatches, playOffRanges, sameRange } from '../stages/playOffs';
+import { buildPlayOff, findPlayOff, playOffRanges, sameRange, withinRange } from '../stages/playOffs';
 import type { PlaceRange, StageId, Timestamp, TournamentState } from '../types';
 
 export type PlayOffCommand =
   /**
    * Switches the place play-off for a shared place range on or off (any time after the draw). The
    * first time it is switched on its matches are created; switched off they stay, disabled, with
-   * any finished results, and switching on again brings them back.
+   * any finished results, and switching on again brings them back. The play-offs below it (for its
+   * halves) count only while it is on, but keep their own switches.
    */
   { type: 'setPlayOff'; stage: StageId; range: PlaceRange; enabled: boolean; at: Timestamp };
 
@@ -27,7 +28,9 @@ export function setPlayOff(state: TournamentState, cmd: Extract<PlayOffCommand, 
 
   let next: TournamentState;
   if (existing) {
-    if (!cmd.enabled && playOffMatches(stage, range).some((m) => m.table !== null && !m.result)) return fail({ code: 'playOffInProgress' });
+    // Switching off also stops the play-offs below it, so none of their matches may be on a table.
+    const below = stage.matches.filter((m) => m.playOff && withinRange(m.playOff, range));
+    if (!cmd.enabled && below.some((m) => m.table !== null && !m.result)) return fail({ code: 'playOffInProgress' });
     const playOffs = stage.playOffs.map((p) => (p === existing ? { ...p, enabled: cmd.enabled } : p));
     next = replaceStage(state, competition, { ...stage, playOffs });
   } else {

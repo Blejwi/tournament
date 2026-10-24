@@ -15,6 +15,7 @@ import {
   type MatchId,
   type MatchView,
   type BracketStageView,
+  type PlaceRange,
   type StageView,
 } from '@/engine';
 import { DrawEditor, DrawGroupBox, DrawMatchCard } from '@/ui/play/DrawEditing';
@@ -34,6 +35,7 @@ import { StatsDrawer } from '@/ui/play/StatsDrawer';
 import { TablesFullScreen, TablesPanel } from '@/ui/play/TablesPanel';
 import { WaitingList, type WaitingListScope } from '@/ui/play/WaitingList';
 import { useNow } from '@/ui/useNow';
+import { usePlayOffLayout, type PlayOffLayout } from '@/ui/usePlayOffLayout';
 
 const POPOVER_WIDTH = 350;
 
@@ -197,6 +199,7 @@ function CompetitionCanvas(props: {
   const editingLater = stages.slice(1).find((s) => s.drawState === 'drawn');
   const [detailGroup, setDetailGroup] = useState<GroupId | null>(null);
   const detailStage = stages.find((s) => s.type === 'groups' && s.groups.some((g) => g.id === detailGroup));
+  const [playOffLayout, setPlayOffLayout] = usePlayOffLayout();
   if (!competition) return null;
 
   if (stage?.drawState === 'drawn') return <DrawEditCanvas stage={stage} later={stages.slice(1)} fitKey={competition.id} />;
@@ -222,6 +225,19 @@ function CompetitionCanvas(props: {
         className="flex-1"
         fitKey={competition.id}
         onBackgroundClick={() => props.onSelect(null)}
+        tools={
+          stages.some((s) => s.type === 'doubleElimination' || (s.type !== 'groups' && s.playOffs.length > 0)) && (
+            <button
+              type="button"
+              className="h-8 rounded-lg bg-white px-3 text-xs font-semibold shadow ring-1 ring-slate-200 hover:bg-slate-100"
+              title={t('play.playOffLayout.hint')}
+              aria-pressed={playOffLayout === 'left'}
+              onClick={() => setPlayOffLayout(playOffLayout === 'left' ? 'below' : 'left')}
+            >
+              {t(playOffLayout === 'left' ? 'play.playOffLayout.left' : 'play.playOffLayout.below')}
+            </button>
+          )
+        }
         overlay={(view) => {
           if (!props.selection || !props.selected) return null;
           const { rect } = props.selection;
@@ -297,6 +313,7 @@ function CompetitionCanvas(props: {
  */
 function DrawEditCanvas({ stage, later, fitKey }: { stage: StageView; later: StageView[]; fitKey: string }) {
   const { t } = useTranslation();
+  const [playOffLayout] = usePlayOffLayout();
   const bracket = stage.type !== 'groups';
   return (
     <DrawEditor stage={stage.id} bracket={bracket}>
@@ -310,7 +327,7 @@ function DrawEditCanvas({ stage, later, fitKey }: { stage: StageView; later: Sta
             </div>
           ) : (
             <BracketBoard
-              sections={bracketLayoutSections(t, stage)}
+              sections={bracketLayoutSections(t, stage, playOffLayout)}
               selectedMatch={null}
               onSelectMatch={() => {}}
               renderCard={(match) =>
@@ -326,7 +343,7 @@ function DrawEditCanvas({ stage, later, fitKey }: { stage: StageView; later: Sta
                 ))}
               </div>
             ) : (
-              <BracketBoard key={s.id} sections={bracketLayoutSections(t, s)} selectedMatch={null} onSelectMatch={() => {}} />
+              <BracketBoard key={s.id} sections={bracketLayoutSections(t, s, playOffLayout)} selectedMatch={null} onSelectMatch={() => {}} />
             ),
           )}
         </div>
@@ -372,7 +389,8 @@ function BracketOnCanvas(props: {
   const { stage } = props;
   const canvas = useFocusPending(props, stage.sections.flatMap((s) => s.rounds.flatMap((r) => r.matches.map((m) => m.id))).join());
 
-  const sections = bracketLayoutSections(t, stage);
+  const [playOffLayout] = usePlayOffLayout();
+  const sections = bracketLayoutSections(t, stage, playOffLayout);
   const dispatch = useApp((s) => s.dispatch);
 
   return (
@@ -426,30 +444,56 @@ function GroupBoxOnCanvas(props: {
 }
 
 /** The labelled sections of a bracket stage, as the layout wants them. */
-function bracketLayoutSections(t: TFunction, stage: BracketStageView): LayoutSection[] {
-  return [...bracketMainSections(t, stage), ...playOffSections(t, stage)];
+function bracketLayoutSections(t: TFunction, stage: BracketStageView, layout: PlayOffLayout): LayoutSection[] {
+  return [...bracketMainSections(t, stage, layout), ...playOffSections(t, stage, layout)];
 }
 
-/** One block per place play-off the stage can have: its matches once created, otherwise just the title and switch. */
-function playOffSections(t: TFunction, stage: BracketStageView): LayoutSection[] {
+/**
+ * One block per place play-off the stage can have: its matches once created, otherwise just the
+ * title and switch. A play-off and the play-offs of its halves form a tree: the winners' half to
+ * the right, the losers' half to the left (or under the winners' with the `below` layout); deeper
+ * halves keep to their side.
+ */
+function playOffSections(t: TFunction, stage: BracketStageView, layout: PlayOffLayout): LayoutSection[] {
+  const keyOf = (r: PlaceRange) => `playOff-${r.from}-${r.to}`;
+  type Side = 'top' | 'left' | 'right';
+  const placed = new Map<string, { tree: string; column: number; side: Side }>();
   return stage.playOffs.map((playOff) => {
+    const key = keyOf(playOff.range);
+    const parent = playOff.parent ? placed.get(keyOf(playOff.parent)) : undefined;
+    const winnersHalf = playOff.parent?.from === playOff.range.from;
+    const side: Side = !parent ? 'top' : parent.side !== 'top' ? parent.side : layout === 'left' && !winnersHalf ? 'left' : 'right';
+    const at = { tree: parent?.tree ?? key, column: parent ? parent.column + (side === 'left' ? -1 : 1) : 0, side };
+    placed.set(key, at);
+
     const range = formatPlace(playOff.range);
     const created = stage.sections.find((s) => s.playOff?.from === playOff.range.from && s.playOff.to === playOff.range.to);
+    const { from, to } = playOff.range;
+    const half = (to - from + 1) / 2;
+    const halves = { winners: formatPlace({ from, to: from + half - 1 }), losers: formatPlace({ from: from + half, to }) };
     return {
-      key: `playOff-${playOff.range.from}-${playOff.range.to}`,
+      key,
       title: t('bracket.sections.playOff', { range }),
-      subtitle: t(playOff.enabled ? 'bracket.sectionHints.playOffOn' : 'bracket.sectionHints.playOffOff', { range }),
+      subtitle: playOff.enabled
+        ? t(half === 1 ? 'bracket.sectionHints.playOffOnPair' : 'bracket.sectionHints.playOffOn', halves)
+        : t('bracket.sectionHints.playOffOff', { range }),
       rounds: created?.rounds.map((r) => r.matches) ?? [],
       playOff,
+      tree: { key: at.tree, column: at.column, parent: playOff.parent ? keyOf(playOff.parent) : undefined },
     };
   });
 }
 
-/** The format's own sections (not the play-offs). */
-function bracketMainSections(t: TFunction, stage: BracketStageView): LayoutSection[] {
+/**
+ * The format's own sections (not the play-offs). In double elimination the `left` layout mirrors
+ * the losers bracket: it runs leftwards from beside the winners bracket, the 2nd final left of its final.
+ */
+function bracketMainSections(t: TFunction, stage: BracketStageView, layout: PlayOffLayout): LayoutSection[] {
   const sections = stage.sections.filter((s) => s.section !== 'playOff');
   if (stage.type === 'doubleElimination') {
-    const losersRounds = stage.sections.find((x) => x.section === 'losers')?.rounds.length ?? 0;
+    const losers = stage.sections.find((x) => x.section === 'losers');
+    const losersRounds = losers?.rounds.length ?? 0;
+    const mirrored = layout === 'left' && losersRounds > 0;
     return sections.map((section): LayoutSection => {
       const base = { key: section.section, rounds: section.rounds.map((r) => r.matches) };
       switch (section.section) {
@@ -466,13 +510,16 @@ function bracketMainSections(t: TFunction, stage: BracketStageView): LayoutSecti
             title: t('bracket.sections.losers'),
             subtitle: t('bracket.sectionHints.losers'),
             roundTitles: section.rounds.map((r) => doubleEliminationRoundTitle(t, 'losers', r.round, section.rounds.length)),
+            ...(mirrored ? { column: -1, flow: 'left' as const, beside: 'winners', linkFrom: 'winners' } : {}),
           };
         default:
           return {
             ...base,
             title: t('bracket.sections.secondFinal'),
             subtitle: t('bracket.sectionHints.secondFinal'),
-            column: Math.max(0, losersRounds - 1),
+            ...(mirrored
+              ? { column: -losersRounds - 1, level: losers?.rounds.at(-1)?.matches[0]?.id }
+              : { column: Math.max(0, losersRounds - 1) }),
           };
       }
     });

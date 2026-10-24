@@ -1,4 +1,4 @@
-import { playOffRanges, findPlayOff } from '../stages/playOffs';
+import { findPlayOff, parentPlayOff, playOffRanges } from '../stages/playOffs';
 import type {
   BracketSection,
   CompetitionId,
@@ -28,17 +28,23 @@ export interface BracketSectionView {
 /** A place play-off a bracket stage can have (#0012): one per shared place range, e.g. 9–12. */
 export interface PlayOffView {
   range: PlaceRange;
+  /** The play-off whose halves include this range (9–12 for 9–10); null for a range of the main draw. */
+  parent: PlaceRange | null;
   /** Switched on right now; a switched-off play-off that has matches shows them as disabled. */
   enabled: boolean;
   /** Its matches exist (it was switched on at least once), so it has a `playOff` section. */
   created: boolean;
 }
 
-/** The place play-offs a bracket stage can have, best range first; none before the draw. */
+/**
+ * The place play-offs a bracket stage can have right now, best range first (a play-off before its
+ * halves); none before the draw. The halves of a play-off are listed while it is on.
+ */
 export function playOffViews(stage: Stage): PlayOffView[] {
   return playOffRanges(stage).map((range) => {
     const playOff = findPlayOff(stage, range);
-    return { range: { ...range }, enabled: playOff?.enabled ?? false, created: playOff !== undefined };
+    const parent = parentPlayOff(stage, range);
+    return { range: { ...range }, parent: parent ? { ...parent } : null, enabled: playOff?.enabled ?? false, created: playOff !== undefined };
   });
 }
 
