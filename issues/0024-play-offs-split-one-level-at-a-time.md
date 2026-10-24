@@ -37,4 +37,4 @@ None
 
 ## Resolution
 
-Not committed yet. Every play-off is now one round, and its halves are offered as play-offs of their own while it is on. `isPlayOffOn` (on, and so is every play-off above it) decides whether matches count and places split. Switching a play-off off is refused while a match at any level below it is on a table. Short codes name the range (`B9–12·1`, `B9–10`). Schema v12: migration 11 regroups old full-depth play-offs into one play-off per level, all switched on. Fixture `schema-v11.json` checks the matches, results and final places. The glossary entry is updated.
+Done in 4bc4e88. Every play-off is now one round, and its halves are offered as play-offs of their own while it is on. `isPlayOffOn` (on, and so is every play-off above it) decides whether matches count and places split. Switching a play-off off is refused while a match at any level below it is on a table. Short codes name the range (`B9–12·1`, `B9–10`). Schema v12: migration 11 regroups old full-depth play-offs into one play-off per level, all switched on. Fixture `schema-v11.json` checks the matches, results and final places. The glossary entry is updated.
