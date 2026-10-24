@@ -102,7 +102,7 @@ export function Canvas(props: {
           ref={viewportRef}
           role="region"
           aria-label={t('play.canvas')}
-          className="absolute inset-0 touch-none bg-slate-100"
+          className="absolute inset-0 touch-none bg-slate-100 select-none"
           style={{
             cursor: dragging ? 'grabbing' : 'grab',
             backgroundImage: 'radial-gradient(#c5cfdb 1px, transparent 1px)',
@@ -111,6 +111,7 @@ export function Canvas(props: {
           }}
           onPointerDown={(e) => {
             if (e.button !== 0 || (e.target as Element).closest('[data-nopan], button, input, select, a')) return;
+            window.getSelection()?.removeAllRanges();
             drag.current = { startX: e.clientX, startY: e.clientY, x: view.x, y: view.y, moved: false };
             e.currentTarget.setPointerCapture(e.pointerId);
           }}
