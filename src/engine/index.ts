@@ -38,6 +38,7 @@ export type {
 export { createTournament, type CreateTournamentInput } from './tournament';
 export { execute, type Command, type CommandType } from './commands';
 export type { DrawPosition } from './stages';
+export { DIRECT_BRACKET_SIZES } from './stages/bracket';
 export { letterName } from './letters';
 
 export { DEFAULT_EXPECTED_DURATIONS, type OverdueLevel } from './overdue';

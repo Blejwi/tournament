@@ -1,8 +1,9 @@
 import type { IdSource } from '../ids';
-import { ok, type Result } from '../result';
+import { fail, ok, type Result } from '../result';
 import type { DoubleEliminationStage, Match, SlotSource } from '../types';
 import {
   directBracketSize,
+  isAllowedBracketSize,
   knockoutTree,
   loserOf,
   moveFirstRoundPosition,
@@ -15,6 +16,9 @@ import {
 } from './bracket';
 import { placeGroupAdvancers } from './advancerPlacement';
 import type { StageHandler } from './handler';
+
+/** The smallest double elimination: a winners bracket of 4 (2 rounds) and one losers round. */
+const MIN_SIZE = 4;
 
 /** A double elimination fed by groups has at least 8 advancers (4 groups): a 4-entry one isn't defined. */
 const MIN_ADVANCER_DOUBLE_ELIMINATION_ENTRIES = 8;
@@ -40,11 +44,19 @@ const MIN_ADVANCER_DOUBLE_ELIMINATION_ENTRIES = 8;
 export const doubleEliminationHandler: StageHandler<DoubleEliminationStage> = {
   allowsGamesOnly: true, // nothing in a knockout depends on point ratios
 
-  validateConfig: () => ok(undefined),
+  validateConfig: ({ bracketSize }) =>
+    bracketSize === undefined || isAllowedBracketSize(bracketSize, MIN_SIZE) ? ok(undefined) : fail({ code: 'unsupportedStageChain' }),
 
-  create: (id) => ({ id, type: 'doubleElimination', drawState: 'notDrawn', matches: [], playOffs: [] }),
+  create: (id, { bracketSize }) => ({
+    id,
+    type: 'doubleElimination',
+    ...(bracketSize !== undefined && { bracketSize }),
+    drawState: 'notDrawn',
+    matches: [],
+    playOffs: [],
+  }),
 
-  config: () => ({ type: 'doubleElimination' }),
+  config: (stage) => ({ type: 'doubleElimination', ...(stage.bracketSize !== undefined && { bracketSize: stage.bracketSize }) }),
 
   draw(stage, ctx) {
     // Fed by groups: the advancers are placed by origin (as in #0009); otherwise by seed.
@@ -54,7 +66,7 @@ export const doubleEliminationHandler: StageHandler<DoubleEliminationStage> = {
       if (!placed.ok) return placed;
       positions = placed.value;
     } else {
-      const size = directBracketSize(ctx.entrants.length);
+      const size = directBracketSize(ctx.entrants.length, MIN_SIZE, stage.bracketSize);
       if (!size.ok) return size;
       positions = placeBySeedPositions(numberEntrants(ctx.entrants, size.value, ctx.random));
     }

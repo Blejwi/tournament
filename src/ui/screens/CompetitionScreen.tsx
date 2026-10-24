@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, LogOut, Pencil, Shuffle, UserMinus, UserPlus } from 'lucide-react';
 import {
+  DIRECT_BRACKET_SIZES,
   getCompetition,
   getPlayers,
   getStage,
@@ -265,6 +266,11 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
   const [value, setValue] = useState(String(current.by === 'count' ? current.groups : current.size));
   const bracketStage = [stage, second, third].find((s) => s?.type === 'singleElimination');
   const [thirdPlace, setThirdPlace] = useState(bracketStage?.type === 'singleElimination' && bracketStage.thirdPlace);
+  const directBracket = [stage, second, third].find((s) => s?.type === 'singleElimination' || s?.type === 'doubleElimination');
+  const [bracketSizeText, setBracketSizeText] = useState(
+    directBracket && 'bracketSize' in directBracket && directBracket.bracketSize ? String(directBracket.bracketSize) : '',
+  );
+  const bracketSize = bracketSizeText === '' ? undefined : Number(bracketSizeText);
   const [error, setError] = useState<EngineError | null>(null);
   const [saved, setSaved] = useState(false);
 
@@ -292,8 +298,8 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
           : format === 'groupsDoubleElimination'
             ? [{ type: 'groups', grouping }, { type: 'doubleElimination' }]
             : format === 'doubleElimination'
-            ? [{ type: 'doubleElimination' }]
-            : [{ type: 'singleElimination', thirdPlace }];
+            ? [{ type: 'doubleElimination', bracketSize }]
+            : [{ type: 'singleElimination', thirdPlace, bracketSize }];
     const failure = dispatch({ type: 'configureStages', competition: competition.id, stages });
     setError(failure);
     setSaved(!failure);
@@ -373,6 +379,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
             ) : format === 'doubleElimination' ? (
               <>
                 <legend className="sr-only">{t('competition.formatDoubleElimination')}</legend>
+                <BracketSizeSelect value={bracketSizeText} onChange={setBracketSizeText} min={4} />
                 <span className="text-muted-foreground text-xs">{t('competition.doubleEliminationHint')}</span>
               </>
             ) : (
@@ -382,6 +389,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
                   <input type="checkbox" checked={thirdPlace} onChange={(e) => setThirdPlace(e.target.checked)} />
                   {t('competition.thirdPlace')}
                 </label>
+                <BracketSizeSelect value={bracketSizeText} onChange={setBracketSizeText} min={thirdPlace ? 4 : 2} />
                 <span className="text-muted-foreground text-xs">{t('competition.bracketHint')}</span>
               </>
             )}
@@ -392,6 +400,23 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+function BracketSizeSelect({ value, onChange, min }: { value: string; onChange: (value: string) => void; min: number }) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex items-center gap-2 text-sm">
+      {t('competition.bracketSize')}
+      <select className="border-input bg-background h-9 rounded-md border px-2" value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{t('competition.bracketSizeAuto')}</option>
+        {DIRECT_BRACKET_SIZES.filter((size) => size >= min).map((size) => (
+          <option key={size} value={size}>
+            {size}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

@@ -26,6 +26,8 @@ export type EngineError =
   | { code: 'stageNotDrawn' }
   | { code: 'stageConfirmed' }
   | { code: 'notEnoughEntries'; needed: number }
+  /** The chosen bracket size is smaller than the number of entries. */
+  | { code: 'bracketTooSmall'; size: number; entries: number }
   /** The earlier stage hands on fewer advancers than this stage needs. */
   | { code: 'notEnoughAdvancers'; needed: number }
   /** A stage fed by an earlier one can be confirmed only when the earlier stage is complete (every advancer known). */

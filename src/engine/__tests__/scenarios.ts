@@ -57,13 +57,13 @@ export function drawnGroups(
 /** Configures a single elimination stage, draws it with `randomSeed` and (by default) confirms it. */
 export function drawnBracket(
   count: number,
-  options: Parameters<typeof competitionWith>[1] & { randomSeed?: number; confirm?: boolean; thirdPlace?: boolean } = {},
+  options: Parameters<typeof competitionWith>[1] & { randomSeed?: number; confirm?: boolean; thirdPlace?: boolean; bracketSize?: number } = {},
 ) {
   const setup = competitionWith(count, options);
   let state = run(setup.state, {
     type: 'configureStages',
     competition: setup.competition,
-    stages: [{ type: 'singleElimination', thirdPlace: options.thirdPlace ?? false }],
+    stages: [{ type: 'singleElimination', thirdPlace: options.thirdPlace ?? false, bracketSize: options.bracketSize }],
   });
   const stage = getCompetition(state, setup.competition)!.stages[0].id;
   state = run(state, { type: 'generateDraw', stage, randomSeed: options.randomSeed ?? 42 });
@@ -74,10 +74,14 @@ export function drawnBracket(
 /** Configures a double elimination stage, draws it with `randomSeed` and (by default) confirms it. */
 export function drawnDoubleElimination(
   count: number,
-  options: Parameters<typeof competitionWith>[1] & { randomSeed?: number; confirm?: boolean } = {},
+  options: Parameters<typeof competitionWith>[1] & { randomSeed?: number; confirm?: boolean; bracketSize?: number } = {},
 ) {
   const setup = competitionWith(count, options);
-  let state = run(setup.state, { type: 'configureStages', competition: setup.competition, stages: [{ type: 'doubleElimination' }] });
+  let state = run(setup.state, {
+    type: 'configureStages',
+    competition: setup.competition,
+    stages: [{ type: 'doubleElimination', bracketSize: options.bracketSize }],
+  });
   const stage = getCompetition(state, setup.competition)!.stages[0].id;
   state = run(state, { type: 'generateDraw', stage, randomSeed: options.randomSeed ?? 42 });
   if (options.confirm ?? true) state = run(state, { type: 'confirmStage', stage });

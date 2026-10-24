@@ -10,10 +10,15 @@ import type { DrawEntrant, DrawPosition } from './handler';
  * knockout tree whose slots point to "winner of match X" (ADR 0003).
  */
 
-/** Bracket sizes allowed for a direct bracket (spec: 8, 16, 32 or 64). */
-export const DIRECT_BRACKET_SIZES = [8, 16, 32, 64] as const;
-export const MIN_DIRECT_BRACKET_ENTRIES = DIRECT_BRACKET_SIZES[0];
+/** Bracket sizes allowed for a direct bracket: 2 (a lone final) up to 64. */
+export const DIRECT_BRACKET_SIZES = [2, 4, 8, 16, 32, 64] as const;
+/** A bracket needs two entrants to play a match. */
+export const MIN_DIRECT_BRACKET_ENTRIES = 2;
 export const MAX_BRACKET_ENTRIES = DIRECT_BRACKET_SIZES[DIRECT_BRACKET_SIZES.length - 1];
+
+/** Whether `size` may be picked as the bracket size, given the stage's smallest workable bracket. */
+export const isAllowedBracketSize = (size: unknown, min: number): boolean =>
+  typeof size === 'number' && DIRECT_BRACKET_SIZES.some((s) => s === size && s >= min);
 
 /** A single place or a range of places. */
 export const placeRange = (from: number, to = from): PlaceRange => ({ from, to });
@@ -22,11 +27,16 @@ export const placeRange = (from: number, to = from): PlaceRange => ({ from, to }
 export const winnerOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'winner' });
 export const loserOf = (match: Match): SlotSource => ({ kind: 'matchResult', match: match.id, take: 'loser' });
 
-/** The size of a direct bracket (8, 16, 32 or 64) for `count` entrants, or why there can't be one. */
-export function directBracketSize(count: number): Result<number> {
+/**
+ * The size of a direct bracket for `count` entrants, or why there can't be one. Without a
+ * `requested` size it is the smallest power of two that holds them (at least `min`); the operator
+ * may ask for a larger one (7 players in 16), the rest are BYEs.
+ */
+export function directBracketSize(count: number, min: number, requested?: number): Result<number> {
   if (count < MIN_DIRECT_BRACKET_ENTRIES) return fail({ code: 'notEnoughEntries', needed: MIN_DIRECT_BRACKET_ENTRIES });
   if (count > MAX_BRACKET_ENTRIES) return fail({ code: 'tooManyEntries', max: MAX_BRACKET_ENTRIES });
-  return ok(bracketSize(count));
+  if (requested !== undefined && requested < count) return fail({ code: 'bracketTooSmall', size: requested, entries: count });
+  return ok(requested ?? Math.max(min, bracketSize(count)));
 }
 
 /** The smallest power of two that holds `count` entries (at least 2). */

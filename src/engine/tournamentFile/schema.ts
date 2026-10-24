@@ -148,6 +148,7 @@ const singleEliminationStageSchema = z.object({
   type: z.literal('singleElimination'),
   drawState: z.enum(['notDrawn', 'drawn', 'confirmed']),
   thirdPlace: z.boolean(),
+  bracketSize: z.number().int().optional(),
   playOffs: z.array(playOffSchema),
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<SingleEliminationStage>;
@@ -156,6 +157,7 @@ const doubleEliminationStageSchema = z.object({
   id,
   type: z.literal('doubleElimination'),
   drawState: z.enum(['notDrawn', 'drawn', 'confirmed']),
+  bracketSize: z.number().int().optional(),
   playOffs: z.array(playOffSchema),
   matches: uniqueArray(matchSchema, ['id']),
 }) satisfies z.ZodType<DoubleEliminationStage>;

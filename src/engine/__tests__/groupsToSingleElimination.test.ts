@@ -121,13 +121,6 @@ describe('groups → single elimination: the draw', () => {
     expect(view.sections[0].rounds.map((r) => r.matches.length)).toEqual([2, 1]);
   });
 
-  it('still rejects a direct bracket under 8 entries', () => {
-    const direct = competitionWith(6);
-    const state = run(direct.state, { type: 'configureStages', competition: direct.competition, stages: [{ type: 'singleElimination', thirdPlace: false }] });
-    const stage = getCompetition(state, direct.competition)!.stages[0].id;
-    expect(errorOf(execute(state, { type: 'generateDraw', stage, randomSeed: 1 }))).toEqual({ code: 'notEnoughEntries', needed: 8 });
-  });
-
   it('rejects a bracket followed by a stage', () => {
     const { state, competition } = competitionWith(8);
     const error = errorOf(

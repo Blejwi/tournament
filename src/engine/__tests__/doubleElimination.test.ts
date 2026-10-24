@@ -166,9 +166,17 @@ describe('double elimination: structure for 8, 32 and 64', () => {
     expect([8, 9, 16, 17, 33, 64].map(size)).toEqual([8, 16, 16, 32, 64, 64]);
   });
 
-  it('needs at least 8 and at most 64 entries', () => {
+  it('runs 7 entries in a bracket of 8 (1 BYE) or 16, and 2 entries in a bracket of 4', () => {
+    const size = (count: number, bracketSize?: number) => {
+      const { state, stage } = drawnDoubleElimination(count, { bracketSize });
+      return bracketOf(state, stage).size;
+    };
+    expect([size(7), size(7, 16), size(2), size(3)]).toEqual([8, 16, 4, 4]);
+  });
+
+  it('needs at least 2 and at most 64 entries', () => {
     for (const [count, error] of [
-      [7, { code: 'notEnoughEntries', needed: 8 }],
+      [1, { code: 'notEnoughEntries', needed: 2 }],
       [65, { code: 'tooManyEntries', max: 64 }],
     ] as const) {
       const { state, competition } = competitionWith(count);

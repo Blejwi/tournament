@@ -71,9 +71,37 @@ describe('single elimination: bracket size and BYEs', () => {
     expect([8, 9, 16, 17, 33, 64].map(size)).toEqual([8, 16, 16, 32, 64, 64]);
   });
 
-  it('needs at least 8 and at most 64 entries', () => {
+  it('runs with as few as 2 entries, in the smallest bracket that holds them', () => {
+    const size = (count: number) => bracketOf(drawnBracket(count).state, drawnBracket(count).stage).size;
+    expect([2, 3, 4, 5, 7].map(size)).toEqual([2, 4, 4, 8, 8]);
+    expect(bracketOf(drawnBracket(3, { thirdPlace: true }).state, drawnBracket(3, { thirdPlace: true }).stage).size).toBe(4);
+    expect(bracketOf(drawnBracket(2, { thirdPlace: true }).state, drawnBracket(2, { thirdPlace: true }).stage).size).toBe(4);
+  });
+
+  it('lets the operator pick a larger bracket: 7 entries in 8 (1 BYE) or in 16', () => {
+    for (const bracketSize of [8, 16]) {
+      const { state, stage } = drawnBracket(7, { bracketSize });
+      const bracket = bracketOf(state, stage);
+      expect(bracket.size).toBe(bracketSize);
+      const firstRound = roundsOf(state, stage)[0];
+      const slots = firstRound.flatMap((m) => [slotLabel(m, 0), slotLabel(m, 1)]);
+      expect(slots.filter((s) => s === 'BYE')).toHaveLength(bracketSize - 7);
+    }
+  });
+
+  it('refuses a bracket smaller than the entries or a size that is not a power of two', () => {
+    const { state, competition } = competitionWith(7);
+    expect(errorOf(execute(state, { type: 'configureStages', competition, stages: [{ type: 'singleElimination', thirdPlace: false, bracketSize: 12 }] }))).toEqual({
+      code: 'unsupportedStageChain',
+    });
+    const configured = run(state, { type: 'configureStages', competition, stages: [{ type: 'singleElimination', thirdPlace: false, bracketSize: 4 }] });
+    const stage = getCompetition(configured, competition)!.stages[0].id;
+    expect(errorOf(execute(configured, { type: 'generateDraw', stage, randomSeed: 1 }))).toEqual({ code: 'bracketTooSmall', size: 4, entries: 7 });
+  });
+
+  it('needs at least 2 and at most 64 entries', () => {
     for (const [count, error] of [
-      [7, { code: 'notEnoughEntries', needed: 8 }],
+      [1, { code: 'notEnoughEntries', needed: 2 }],
       [65, { code: 'tooManyEntries', max: 64 }],
     ] as const) {
       const { state, competition } = competitionWith(count);

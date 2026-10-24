@@ -203,6 +203,8 @@ export interface SingleEliminationStage extends StageBase {
   type: 'singleElimination';
   /** Whether the semi-final losers play a 3rd-place match (otherwise they share 3–4). */
   thirdPlace: boolean;
+  /** The bracket size picked by the operator for a direct bracket (default: the smallest that fits). */
+  bracketSize?: number;
   /** The place play-offs switched on so far (see `PlayOff`). */
   playOffs: PlayOff[];
 }
@@ -215,6 +217,8 @@ export interface SingleEliminationStage extends StageBase {
  */
 export interface DoubleEliminationStage extends StageBase {
   type: 'doubleElimination';
+  /** The bracket size picked by the operator for a direct bracket (default: the smallest that fits). */
+  bracketSize?: number;
   /** The place play-offs switched on so far (see `PlayOff`). */
   playOffs: PlayOff[];
 }
@@ -230,8 +234,8 @@ export type StageType = Stage['type'];
 export type StageConfig =
   /** `carryOver` defaults to true; see `GroupsStage.carryOver`. */
   | { type: 'groups'; grouping: Grouping; carryOver?: boolean }
-  | { type: 'singleElimination'; thirdPlace: boolean }
-  | { type: 'doubleElimination' };
+  | { type: 'singleElimination'; thirdPlace: boolean; bracketSize?: number }
+  | { type: 'doubleElimination'; bracketSize?: number };
 
 export interface Competition {
   id: CompetitionId;

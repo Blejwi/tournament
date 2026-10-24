@@ -3,6 +3,7 @@ import type { Match, MatchPlaces, SingleEliminationStage, SlotSource } from '../
 import { placeGroupAdvancers } from './advancerPlacement';
 import {
   directBracketSize,
+  isAllowedBracketSize,
   knockoutTree,
   moveFirstRoundPosition,
   newBracketMatch,
@@ -16,14 +17,32 @@ import type { StageHandler } from './handler';
 const withMatches = (stage: SingleEliminationStage, matches: Result<Match[]>): Result<SingleEliminationStage> =>
   matches.ok ? ok({ ...stage, matches: matches.value }) : matches;
 
+/** A 3rd-place match needs semi-finals, so a bracket with one starts at 4. */
+const minSize = (thirdPlace: boolean) => (thirdPlace ? 4 : 2);
+
 export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
   allowsGamesOnly: true, // nothing in a knockout depends on point ratios
 
-  validateConfig: ({ thirdPlace }) => (typeof thirdPlace === 'boolean' ? ok(undefined) : fail({ code: 'unsupportedStageChain' })),
+  validateConfig: ({ thirdPlace, bracketSize }) =>
+    typeof thirdPlace === 'boolean' && (bracketSize === undefined || isAllowedBracketSize(bracketSize, minSize(thirdPlace)))
+      ? ok(undefined)
+      : fail({ code: 'unsupportedStageChain' }),
 
-  create: (id, { thirdPlace }) => ({ id, type: 'singleElimination', thirdPlace, drawState: 'notDrawn', matches: [], playOffs: [] }),
+  create: (id, { thirdPlace, bracketSize }) => ({
+    id,
+    type: 'singleElimination',
+    thirdPlace,
+    ...(bracketSize !== undefined && { bracketSize }),
+    drawState: 'notDrawn',
+    matches: [],
+    playOffs: [],
+  }),
 
-  config: (stage) => ({ type: 'singleElimination', thirdPlace: stage.thirdPlace }),
+  config: (stage) => ({
+    type: 'singleElimination',
+    thirdPlace: stage.thirdPlace,
+    ...(stage.bracketSize !== undefined && { bracketSize: stage.bracketSize }),
+  }),
 
   draw(stage, ctx) {
     // Fed by an earlier stage: the advancers are placed by origin; a direct bracket places entries by seed.
@@ -34,7 +53,7 @@ export const singleEliminationHandler: StageHandler<SingleEliminationStage> = {
       if (!placed.ok) return placed;
       positions = placed.value;
     } else {
-      const checked = directBracketSize(ctx.entrants.length);
+      const checked = directBracketSize(ctx.entrants.length, minSize(stage.thirdPlace), stage.bracketSize);
       if (!checked.ok) return checked;
       positions = placeBySeedPositions(numberEntrants(ctx.entrants, checked.value, ctx.random));
     }
