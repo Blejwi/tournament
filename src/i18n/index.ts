@@ -12,9 +12,9 @@ const LANGUAGE_KEY = 'tm:language';
 function savedLanguage(): Language {
   try {
     const saved = localStorage.getItem(LANGUAGE_KEY);
-    return (LANGUAGES as readonly string[]).includes(saved ?? '') ? (saved as Language) : 'en';
+    return (LANGUAGES as readonly string[]).includes(saved ?? '') ? (saved as Language) : 'pl';
   } catch {
-    return 'en';
+    return 'pl';
   }
 }
 
