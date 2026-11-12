@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, X } from 'lucide-react';
 import { getFinalPlaces, type CompetitionId, type FinalPlaceView, type PlaceRange } from '@/engine';
 import { useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
@@ -40,12 +40,16 @@ interface Block {
 }
 
 /** The final places of the competition on the canvas, live: individual places and shared place ranges. */
-export function PlacesPanel(props: { competition: CompetitionId }) {
+export function PlacesPanel(props: {
+  competition: CompetitionId;
+  /** Shown as a sheet over the canvas (on a phone): full width, a close button instead of collapsing. */
+  onClose?: () => void;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useRemembered();
   const places = useQuery((s) => getFinalPlaces(s, props.competition), [props.competition]);
 
-  if (!open) {
+  if (!open && !props.onClose) {
     return (
       <button
         type="button"
@@ -72,17 +76,17 @@ export function PlacesPanel(props: { competition: CompetitionId }) {
   const ordered = [...blocks.values()].sort((a, b) => a.place.from - b.place.from);
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-l bg-white" aria-label={t('places.heading')}>
+    <aside className={cn('flex flex-col bg-white', props.onClose ? 'min-h-0 flex-1' : 'w-64 shrink-0 border-l')} aria-label={t('places.heading')}>
       <div className="flex h-10 items-center gap-2 border-b px-3">
         <span className="font-semibold">{t('places.heading')}</span>
         <button
           type="button"
-          onClick={() => setOpen(false)}
-          title={t('places.collapse')}
-          aria-label={t('places.collapse')}
+          onClick={props.onClose ?? (() => setOpen(false))}
+          title={t(props.onClose ? 'common.close' : 'places.collapse')}
+          aria-label={t(props.onClose ? 'common.close' : 'places.collapse')}
           className="ml-auto rounded p-1 text-slate-600 hover:bg-slate-100"
         >
-          <ChevronsRight className="size-4" />
+          {props.onClose ? <X className="size-4" /> : <ChevronsRight className="size-4" />}
         </button>
       </div>
       <div className="flex-1 overflow-auto">

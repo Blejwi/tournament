@@ -52,7 +52,7 @@ export function StatsDrawer(props: { now: number; onFocus: Focus }) {
 
   return (
     <section className="shrink-0 border-t bg-white text-xs" aria-label={t('statsDrawer.heading')}>
-      <div className="flex h-8 items-center gap-4 px-3">
+      <div className="flex h-8 items-center gap-3 overflow-hidden px-3 whitespace-nowrap md:gap-4">
         <button
           type="button"
           onClick={() => setOpen(!open)}
@@ -64,7 +64,7 @@ export function StatsDrawer(props: { now: number; onFocus: Focus }) {
           {t('statsDrawer.heading')}
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-32">
+          <div className="w-12 md:w-32">
             <Bar {...progress} />
           </div>
           <span className="tabular-nums">{t('statsDrawer.progress', { ...progress, percent: percent(progress.done, progress.total) })}</span>
@@ -73,19 +73,19 @@ export function StatsDrawer(props: { now: number; onFocus: Focus }) {
           stats.competitions
             .filter((c) => c.durations.averageMs !== null)
             .map((c) => (
-              <span key={c.competition} className="text-slate-500">
+              <span key={c.competition} className="text-slate-500 max-md:hidden">
                 {t('statsDrawer.competitionAverage', { name: c.name, duration: formatDuration(t, c.durations.averageMs!) })}
               </span>
             ))}
-        <span className="text-slate-500" title={t('statsDrawer.timeLeftTitle')}>
+        <span className="min-w-0 truncate text-slate-500" title={t('statsDrawer.timeLeftTitle')}>
           {timeLeft}
         </span>
-        <span className="ml-auto max-w-[40%] truncate text-slate-400">
+        <span className="ml-auto max-w-[40%] truncate text-slate-400 max-md:hidden">
           {last ? t('statsDrawer.lastChange', { time: time(last.at), text: entryText(t, last) }) : t('statsDrawer.noChanges')}
         </span>
       </div>
       {open && (
-        <div className="grid h-56 grid-cols-3 gap-6 border-t border-slate-100 px-4 py-3">
+        <div className="grid max-h-[50dvh] gap-4 overflow-auto border-t border-slate-100 px-4 py-3 md:h-56 md:max-h-none md:grid-cols-3 md:gap-6 md:overflow-visible">
           <div className="overflow-auto">
             <div className={heading}>{t('statsDrawer.progressHeading')}</div>
             {stats.competitions.map((c) => (

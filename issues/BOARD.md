@@ -18,6 +18,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0025](0025-play-screen-on-a-phone.md) | Play screen usable on a phone | |
 
 ## ⛔ Blocked
 

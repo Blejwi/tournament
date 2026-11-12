@@ -17,9 +17,9 @@ export function DownloadBackupButton() {
   const { t } = useTranslation();
   const download = useDownloadBackup();
   return (
-    <Button variant="outline" size="sm" onClick={download}>
+    <Button variant="outline" size="sm" onClick={download} title={t('backup.download')}>
       <Download />
-      {t('backup.download')}
+      <span className="max-sm:sr-only">{t('backup.download')}</span>
     </Button>
   );
 }

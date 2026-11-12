@@ -38,7 +38,7 @@ export function CompetitionScreen() {
   const locked = stage?.drawState === 'confirmed';
 
   return (
-    <section className="grid gap-6">
+    <section className="grid grid-cols-1 gap-6">
       <div className="grid gap-1">
         <Link to=".." relative="path" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
           <ArrowLeft className="size-4" aria-hidden />
@@ -81,7 +81,7 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
         {competition.entries.length === 0 ? (
           <p className="text-muted-foreground text-sm">{t('competition.noEntries')}</p>
         ) : (
-          <ul className="grid gap-1">
+          <ul className="grid grid-cols-1 gap-1">
             {competition.entries.map((entry) => (
               <li key={entry.id} className="flex items-center gap-2">
                 <SeedInput key={`${entry.id}:${entry.seed}`} competition={competition.id} entry={entry} disabled={locked} onError={setError} />
@@ -106,9 +106,9 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
                 ) : locked ? (
                   <ConfirmDialog
                     trigger={
-                      <Button variant="ghost" size="sm" className="text-red-600">
+                      <Button variant="ghost" size="sm" className="text-red-600" title={t('competition.withdraw')}>
                         <LogOut />
-                        {t('competition.withdraw')}
+                        <span className="max-sm:sr-only">{t('competition.withdraw')}</span>
                       </Button>
                     }
                     title={t('competition.withdrawTitle', { name: entryName(entry) })}
@@ -312,7 +312,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} noValidate className="grid gap-3">
-          <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
+          <fieldset disabled={locked} className="flex min-w-0 flex-wrap items-center gap-4">
             <legend className="sr-only">{t('competition.formatHeading')}</legend>
             {(['groups', 'groupsGroups', 'groupsGroupsSingleElimination', 'groupsSingleElimination', 'groupsDoubleElimination', 'singleElimination', 'doubleElimination'] as const).map((option) => (
               <label key={option} className="flex items-center gap-2 text-sm font-medium">
@@ -321,7 +321,7 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
               </label>
             ))}
           </fieldset>
-          <fieldset disabled={locked} className="flex flex-wrap items-center gap-4">
+          <fieldset disabled={locked} className="flex min-w-0 flex-wrap items-center gap-4">
             {format === 'groups' || format === 'groupsSingleElimination' || format === 'groupsDoubleElimination' || format === 'groupsGroups' || format === 'groupsGroupsSingleElimination' ? (
               <>
                 <legend className="sr-only">{t('competition.splitBy')}</legend>
@@ -406,9 +406,9 @@ function FormatCard({ competition, stage, locked }: { competition: CompetitionVi
 function BracketSizeSelect({ value, onChange, min }: { value: string; onChange: (value: string) => void; min: number }) {
   const { t } = useTranslation();
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex max-w-full min-w-0 items-center gap-2 text-sm">
       {t('competition.bracketSize')}
-      <select className="border-input bg-background h-9 rounded-md border px-2" value={value} onChange={(e) => onChange(e.target.value)}>
+      <select className="border-input bg-background h-9 min-w-0 flex-1 rounded-md border px-2" value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">{t('competition.bracketSizeAuto')}</option>
         {DIRECT_BRACKET_SIZES.filter((size) => size >= min).map((size) => (
           <option key={size} value={size}>

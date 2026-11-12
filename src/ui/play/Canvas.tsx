@@ -2,11 +2,24 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { useTranslation } from 'react-i18next';
 import { Maximize, Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useIsTouch } from '@/ui/useMediaQuery';
 import { CanvasContext, type CanvasApi, type View } from './canvasContext';
 
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 2.5;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+interface PinchGeometry {
+  /** Midpoint of the two fingers, in client coordinates. */
+  cx: number;
+  cy: number;
+  distance: number;
+}
+
+const pinchGeometry = (pointers: Map<number, { x: number; y: number }>): PinchGeometry => {
+  const [a, b] = [...pointers.values()];
+  return { cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, distance: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)) };
+};
 
 /**
  * A pan/zoom surface: drag the background to pan, wheel (or the buttons, or + / - / F keys) to zoom.
@@ -21,6 +34,10 @@ export function Canvas(props: {
   className?: string;
   /** Replaces the default usage hint in the corner. */
   hint?: string;
+  /** Replaces the default hint on a touch screen. */
+  touchHint?: string;
+  /** Room kept free for the match popover when revealing a card: to the right of it, or below it (a bottom sheet). */
+  popoverRoom?: 'right' | 'below';
   /** Extra view controls, drawn before the zoom buttons. */
   tools?: ReactNode;
 }) {
@@ -30,6 +47,11 @@ export function Canvas(props: {
   const drag = useRef<{ startX: number; startY: number; x: number; y: number; moved: boolean } | null>(null);
   const [view, setView] = useState<View>({ x: 0, y: 0, k: 1 });
   const [dragging, setDragging] = useState(false);
+  const touch = useIsTouch();
+  // On a small touch screen the hint covers cards: it goes once the canvas is first touched.
+  const [touched, setTouched] = useState(false);
+  /** Touch points on the canvas, and the last two-finger geometry while pinching. */
+  const pinch = useRef<{ pointers: Map<number, { x: number; y: number }>; last: PinchGeometry | null }>({ pointers: new Map(), last: null });
 
   const zoomAround = useCallback((factor: number, cx?: number, cy?: number) => {
     const vp = viewportRef.current;
@@ -89,9 +111,16 @@ export function Canvas(props: {
       if (!vp) return;
       setView((v) => {
         const [sx, sy] = [v.x + rect.x * v.k, v.y + rect.y * v.k];
-        const visible = sx >= 8 && sy >= 8 && sx + rect.w * v.k + 360 <= vp.clientWidth && sy + rect.h * v.k <= vp.clientHeight - 8;
+        const [w, h] = [rect.w * v.k, rect.h * v.k];
+        if (props.popoverRoom === 'below') {
+          // The popover is a bottom sheet over the lower part: keep the card in the top quarter.
+          const visible = sx >= 8 && sy >= 8 && sx + w <= vp.clientWidth - 8 && sy + h <= vp.clientHeight * 0.3;
+          if (visible) return v;
+          return { ...v, x: Math.max(8, (vp.clientWidth - w) / 2) - rect.x * v.k, y: 16 - rect.y * v.k };
+        }
+        const visible = sx >= 8 && sy >= 8 && sx + w + 360 <= vp.clientWidth && sy + h <= vp.clientHeight - 8;
         if (visible) return v;
-        return { ...v, x: Math.max(16, (vp.clientWidth - rect.w * v.k - 360) / 2) - rect.x * v.k, y: vp.clientHeight / 4 - rect.y * v.k };
+        return { ...v, x: Math.max(16, (vp.clientWidth - w - 360) / 2) - rect.x * v.k, y: vp.clientHeight / 4 - rect.y * v.k };
       });
     },
   };
@@ -112,12 +141,41 @@ export function Canvas(props: {
             backgroundPosition: `${view.x}px ${view.y}px`,
           }}
           onPointerDown={(e) => {
+            const p = pinch.current;
+            if (e.pointerType === 'touch') setTouched(true);
+            if (e.pointerType === 'touch' && !(e.target as Element).closest('[data-nopan]')) {
+              p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+              if (p.pointers.size === 2) {
+                // A second finger (also over a card): switch from panning to pinching.
+                p.last = pinchGeometry(p.pointers);
+                drag.current = null;
+                setDragging(true);
+                for (const id of p.pointers.keys()) if (!e.currentTarget.hasPointerCapture(id)) e.currentTarget.setPointerCapture(id);
+                return;
+              }
+            }
             if (e.button !== 0 || (e.target as Element).closest('[data-nopan], button, input, select, a')) return;
             window.getSelection()?.removeAllRanges();
             drag.current = { startX: e.clientX, startY: e.clientY, x: view.x, y: view.y, moved: false };
             e.currentTarget.setPointerCapture(e.pointerId);
           }}
           onPointerMove={(e) => {
+            const p = pinch.current;
+            if (p.pointers.has(e.pointerId)) p.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            if (p.last && p.pointers.size === 2) {
+              const next = pinchGeometry(p.pointers);
+              const r = e.currentTarget.getBoundingClientRect();
+              const [cx, cy] = [next.cx - r.left, next.cy - r.top];
+              const [lx, ly] = [p.last.cx - r.left, p.last.cy - r.top];
+              const factor = next.distance / p.last.distance;
+              setView((v) => {
+                const k = clamp(v.k * factor, MIN_ZOOM, MAX_ZOOM);
+                // Keep the world point under the previous midpoint under the new midpoint.
+                return { k, x: cx - ((lx - v.x) * k) / v.k, y: cy - ((ly - v.y) * k) / v.k };
+              });
+              p.last = next;
+              return;
+            }
             const d = drag.current;
             if (!d) return;
             const [dx, dy] = [e.clientX - d.startX, e.clientY - d.startY];
@@ -127,13 +185,25 @@ export function Canvas(props: {
             }
             if (d.moved) setView((v) => ({ ...v, x: d.x + dx, y: d.y + dy }));
           }}
-          onPointerUp={() => {
+          onPointerUp={(e) => {
+            const p = pinch.current;
+            p.pointers.delete(e.pointerId);
+            if (p.last) {
+              // Ending a pinch never counts as a click; a finger left on the canvas does nothing until lifted.
+              if (p.pointers.size === 0) {
+                p.last = null;
+                setDragging(false);
+              }
+              return;
+            }
             const d = drag.current;
             drag.current = null;
             setDragging(false);
             if (d && !d.moved) props.onBackgroundClick?.();
           }}
-          onPointerCancel={() => {
+          onPointerCancel={(e) => {
+            pinch.current.pointers.delete(e.pointerId);
+            if (pinch.current.pointers.size === 0) pinch.current.last = null;
             drag.current = null;
             setDragging(false);
           }}
@@ -146,9 +216,11 @@ export function Canvas(props: {
             {props.children}
           </div>
         </div>
-        <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-md bg-white/80 px-2 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
-          {props.hint ?? t('play.hint')}
-        </div>
+        {!(touch && touched) && (
+          <div className="pointer-events-none absolute top-3 left-3 z-10 rounded-md bg-white/80 px-2 py-1 text-xs text-slate-500 ring-1 ring-slate-200 max-md:right-3">
+            {(touch ? props.touchHint : props.hint) ?? t(touch ? 'play.touchHint' : 'play.hint')}
+          </div>
+        )}
         <div data-nopan className="absolute right-3 bottom-3 z-10 flex items-center gap-2">
           {props.tools}
           <div className="flex items-center rounded-lg bg-white text-sm shadow ring-1 ring-slate-200">

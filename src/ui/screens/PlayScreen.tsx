@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, Navigate, NavLink, useNavigate, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -34,10 +34,14 @@ import { PlacesPanel } from '@/ui/play/PlacesPanel';
 import { StatsDrawer } from '@/ui/play/StatsDrawer';
 import { TablesFullScreen, TablesPanel } from '@/ui/play/TablesPanel';
 import { WaitingList, type WaitingListScope } from '@/ui/play/WaitingList';
+import { useIsPhone } from '@/ui/useMediaQuery';
 import { useNow } from '@/ui/useNow';
 import { usePlayOffLayout, type PlayOffLayout } from '@/ui/usePlayOffLayout';
 
 const POPOVER_WIDTH = 350;
+
+/** On a phone the side panels open one at a time, as a sheet over the canvas. */
+type Sheet = 'tables' | 'waitingList' | 'places';
 
 interface Selection {
   match: MatchId;
@@ -45,7 +49,10 @@ interface Selection {
   rect: WorldRect;
 }
 
-/** The main screen: a pan/zoom canvas of one competition, the tables on the left and the waiting list on the right. */
+/**
+ * The main screen: a pan/zoom canvas of one competition, the tables on the left and the waiting list on the right.
+ * On a phone the canvas takes the whole width and the panels open as sheets from a bar at the bottom.
+ */
 export function PlayScreen() {
   const { t } = useTranslation();
   const { tournamentId, competitionId } = useParams();
@@ -62,12 +69,15 @@ export function PlayScreen() {
   const overdue = useQuery((s) => getOverdueMatches(s, now), [now]) ?? [];
   const [tablesFull, setTablesFull] = useState(false);
   const [alarmIndex, setAlarmIndex] = useState(0);
+  const phone = useIsPhone();
+  const [sheet, setSheet] = useState<Sheet | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       setSelection(null);
       setTablesFull(false);
+      setSheet(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -89,6 +99,7 @@ export function PlayScreen() {
 
   /** Shows a match on the canvas (switching competition if needed) and opens its popover. */
   const select = (match: Pick<MatchView, 'id' | 'competition'>) => {
+    setSheet(null);
     if (match.competition !== competitionId) {
       setSelection(null);
       navigate(`${base}/play/${match.competition}`);
@@ -96,9 +107,21 @@ export function PlayScreen() {
     setPendingFocus(match.id);
   };
 
+  const waitingList = (onClose?: () => void) => (
+    <WaitingList
+      now={now}
+      competition={competitionId}
+      scope={scope}
+      onScopeChange={setScope}
+      selectedMatch={selection?.match ?? null}
+      onSelect={select}
+      onClose={onClose}
+    />
+  );
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <nav className="flex gap-0.5 border-b bg-white px-2">
+      <nav className="flex gap-0.5 overflow-x-auto overflow-y-hidden border-b bg-white px-2">
         {competitions.map((c) => (
           <NavLink
             key={c.id}
@@ -106,7 +129,7 @@ export function PlayScreen() {
             onClick={() => setSelection(null)}
             className={({ isActive }) =>
               cn(
-                '-mb-px flex items-center gap-2 border-b-[3px] px-4 py-2 text-sm font-semibold',
+                '-mb-px flex shrink-0 items-center gap-2 border-b-[3px] px-4 py-2 text-sm font-semibold whitespace-nowrap',
                 isActive ? 'border-indigo-600 bg-slate-50' : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800',
               )
             }
@@ -115,7 +138,7 @@ export function PlayScreen() {
             <TabCounts counts={counts.find((x) => x.competition === c.id)} />
           </NavLink>
         ))}
-        <div className="ml-auto flex items-center gap-2 py-1">
+        <div className="ml-auto flex shrink-0 items-center gap-2 py-1">
           {overdue.length > 0 && (
             <button
               type="button"
@@ -137,7 +160,7 @@ export function PlayScreen() {
         </div>
       </nav>
       <div className="flex min-h-0 flex-1">
-        {tableOverview && <TablesPanel overview={tableOverview} onFocus={select} onFullScreen={() => setTablesFull(true)} />}
+        {!phone && tableOverview && <TablesPanel overview={tableOverview} onFocus={select} onFullScreen={() => setTablesFull(true)} />}
         <div className="relative flex min-w-0 flex-1">
           <CompetitionCanvas
             competitionId={competitionId}
@@ -147,23 +170,72 @@ export function PlayScreen() {
             onSelect={setSelection}
             pendingFocus={pendingFocus}
             onFocused={() => setPendingFocus(null)}
+            phone={phone}
           />
           {tablesFull && tableOverview && (
             <TablesFullScreen overview={tableOverview} onFocus={select} onClose={() => setTablesFull(false)} />
           )}
+          {phone && sheet && (
+            <div className="absolute inset-0 z-30 flex flex-col bg-white">
+              {sheet === 'tables' && tableOverview && (
+                <TablesPanel overview={tableOverview} onFocus={select} onFullScreen={() => {}} onClose={() => setSheet(null)} />
+              )}
+              {sheet === 'waitingList' && waitingList(() => setSheet(null))}
+              {sheet === 'places' && <PlacesPanel competition={competitionId} onClose={() => setSheet(null)} />}
+            </div>
+          )}
         </div>
-        <WaitingList
-          now={now}
-          competition={competitionId}
-          scope={scope}
-          onScopeChange={setScope}
-          selectedMatch={selection?.match ?? null}
-          onSelect={select}
-        />
-        <PlacesPanel competition={competitionId} />
+        {!phone && waitingList()}
+        {!phone && <PlacesPanel competition={competitionId} />}
       </div>
+      {phone && (
+        <PanelBar
+          sheet={sheet}
+          onSheet={(next) => {
+            setSelection(null);
+            setSheet(next === sheet ? null : next);
+          }}
+          ready={counts.reduce((sum, c) => sum + c.ready, 0)}
+          overdue={tableOverview?.overdueCount ?? 0}
+          idle={tableOverview?.idleCount ?? 0}
+        />
+      )}
       <StatsDrawer now={now} onFocus={select} />
     </div>
+  );
+}
+
+/** On a phone: the buttons that open the tables, the waiting list and the final places as sheets. */
+function PanelBar(props: { sheet: Sheet | null; onSheet: (sheet: Sheet) => void; ready: number; overdue: number; idle: number }) {
+  const { t } = useTranslation();
+  const badge = 'rounded-full px-1.5 text-[10px] font-bold';
+  const item = (sheet: Sheet, label: string, badges: ReactNode) => (
+    <button
+      type="button"
+      aria-pressed={props.sheet === sheet}
+      onClick={() => props.onSheet(sheet)}
+      className={cn(
+        'flex min-w-0 flex-1 items-center justify-center gap-1.5 px-2 py-2.5 text-xs font-semibold',
+        props.sheet === sheet ? 'bg-slate-900 text-white' : 'text-slate-700 active:bg-slate-100',
+      )}
+    >
+      <span className="truncate">{label}</span>
+      {badges}
+    </button>
+  );
+  return (
+    <nav aria-label={t('play.panels')} className="flex shrink-0 divide-x border-t bg-white">
+      {item(
+        'tables',
+        t('tablesPanel.heading'),
+        <>
+          {props.overdue > 0 && <span className={cn(badge, 'overdue-alarm bg-red-600 text-white')}>{props.overdue}</span>}
+          {props.idle > 0 && <span className={cn(badge, 'bg-amber-400 text-white')}>{props.idle}</span>}
+        </>,
+      )}
+      {item('waitingList', t('play.waitingList'), props.ready > 0 && <span className={cn(badge, 'bg-indigo-600 text-white')}>{props.ready}</span>)}
+      {item('places', t('places.heading'), null)}
+    </nav>
   );
 }
 
@@ -189,6 +261,8 @@ function CompetitionCanvas(props: {
   onSelect: (selection: Selection | null) => void;
   pendingFocus: MatchId | null;
   onFocused: () => void;
+  /** The popover opens as a bottom sheet. */
+  phone: boolean;
 }) {
   const { t } = useTranslation();
   const competition = useQuery((s) => getCompetition(s, props.competitionId), [props.competitionId]);
@@ -224,6 +298,7 @@ function CompetitionCanvas(props: {
       <Canvas
         className="flex-1"
         fitKey={competition.id}
+        popoverRoom={props.phone ? 'below' : 'right'}
         onBackgroundClick={() => props.onSelect(null)}
         tools={
           stages.some((s) => s.type === 'doubleElimination' || (s.type !== 'groups' && s.playOffs.length > 0)) && (
@@ -240,6 +315,16 @@ function CompetitionCanvas(props: {
         }
         overlay={(view) => {
           if (!props.selection || !props.selected) return null;
+          if (props.phone) {
+            return (
+              <MatchPopover
+                key={props.selected.id}
+                match={props.selected}
+                style={{ left: 8, right: 8, bottom: 8, width: 'auto', maxHeight: '70%' }}
+                onClose={() => props.onSelect(null)}
+              />
+            );
+          }
           const { rect } = props.selection;
           const left = view.x + (rect.x + rect.w) * view.k + 10;
           const top = Math.max(8, view.y + rect.y * view.k - 10);
@@ -317,7 +402,7 @@ function DrawEditCanvas({ stage, later, fitKey }: { stage: StageView; later: Sta
   const bracket = stage.type !== 'groups';
   return (
     <DrawEditor stage={stage.id} bracket={bracket}>
-      <Canvas className="flex-1" fitKey={`${fitKey}:edit`} hint={t('drawEdit.canvasHint')}>
+      <Canvas className="flex-1" fitKey={`${fitKey}:edit`} hint={t('drawEdit.canvasHint')} touchHint={t('drawEdit.canvasTouchHint')}>
         <div className="flex items-start gap-20 p-8">
           {stage.type === 'groups' ? (
             <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupColumns(stage.groups.length)}, auto)` }}>

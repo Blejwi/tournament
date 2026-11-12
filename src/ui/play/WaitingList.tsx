@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronsLeft, ChevronsRight, Pause } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Pause, X } from 'lucide-react';
 import { getCompetitions, getFreeTables, getWaitingList, type CompetitionId, type MatchId, type MatchView } from '@/engine';
 import { useApp, useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,8 @@ export function WaitingList(props: {
   onScopeChange: (scope: WaitingListScope) => void;
   onSelect: (match: MatchView) => void;
   selectedMatch: MatchId | null;
+  /** Shown as a sheet over the canvas (on a phone): full width, a close button instead of collapsing. */
+  onClose?: () => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(true);
@@ -34,7 +36,7 @@ export function WaitingList(props: {
   const current = competitions.find((c) => c.id === props.competition);
   const competitionName = (id: string) => (multiple && props.scope === 'all' ? competitions.find((c) => c.id === id)?.name : null);
 
-  if (!open) {
+  if (!open && !props.onClose) {
     return (
       <button
         type="button"
@@ -115,7 +117,7 @@ export function WaitingList(props: {
   );
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l bg-white" aria-label={t('play.waitingList')}>
+    <aside className={cn('flex flex-col bg-white', props.onClose ? 'min-h-0 flex-1' : 'w-80 shrink-0 border-l')} aria-label={t('play.waitingList')}>
       <div className="flex h-10 items-center gap-2 border-b px-3">
         <span className="font-semibold">{t('play.waitingList')}</span>
         <span className="text-xs text-slate-500">{t('play.readyCount', { count: ready.length })}</span>
@@ -127,12 +129,12 @@ export function WaitingList(props: {
         )}
         <button
           type="button"
-          onClick={() => setOpen(false)}
-          title={t('play.collapse')}
-          aria-label={t('play.collapse')}
+          onClick={props.onClose ?? (() => setOpen(false))}
+          title={t(props.onClose ? 'common.close' : 'play.collapse')}
+          aria-label={t(props.onClose ? 'common.close' : 'play.collapse')}
           className={cn('rounded p-1 text-slate-600 hover:bg-slate-100', !(multiple && current) && 'ml-auto')}
         >
-          <ChevronsRight className="size-4" />
+          {props.onClose ? <X className="size-4" /> : <ChevronsRight className="size-4" />}
         </button>
       </div>
       <div className="flex-1 overflow-auto">

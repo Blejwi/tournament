@@ -34,7 +34,13 @@ function useIdleText() {
  * The left panel: every table with its status, current match and timer, or how long it has been idle.
  * Collapsed, it shows badges with the overdue and idle counts. A free table offers the ready matches to call.
  */
-export function TablesPanel(props: { overview: TableOverview; onFocus: (match: MatchView) => void; onFullScreen: () => void }) {
+export function TablesPanel(props: {
+  overview: TableOverview;
+  onFocus: (match: MatchView) => void;
+  onFullScreen: () => void;
+  /** Shown as a sheet over the canvas (on a phone): full width, a close button instead of collapsing. */
+  onClose?: () => void;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(true);
   const [callFor, setCallFor] = useState<string | null>(null);
@@ -43,7 +49,7 @@ export function TablesPanel(props: { overview: TableOverview; onFocus: (match: M
   const playing = tables.filter((r) => r.status === 'playing' || r.status === 'overdue').length;
   const free = tables.filter((r) => r.status === 'free').length;
 
-  if (!open) {
+  if (!open && !props.onClose) {
     return (
       <button
         type="button"
@@ -77,10 +83,11 @@ export function TablesPanel(props: { overview: TableOverview; onFocus: (match: M
   }
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-r bg-white" aria-label={t('tablesPanel.heading')}>
+    <aside className={cn('flex flex-col bg-white', props.onClose ? 'min-h-0 flex-1' : 'w-72 shrink-0 border-r')} aria-label={t('tablesPanel.heading')}>
       <div className="flex h-10 items-center gap-2 border-b px-3">
         <span className="font-semibold">{t('tablesPanel.heading')}</span>
         <span className="truncate text-xs text-slate-500">{t('tablesPanel.summary', { playing, free })}</span>
+        {!props.onClose && (
         <button
           type="button"
           onClick={props.onFullScreen}
@@ -90,14 +97,15 @@ export function TablesPanel(props: { overview: TableOverview; onFocus: (match: M
         >
           <Maximize2 className="size-4" />
         </button>
+        )}
         <button
           type="button"
-          onClick={() => setOpen(false)}
-          title={t('play.collapse')}
-          aria-label={t('play.collapse')}
-          className="rounded p-1 text-slate-600 hover:bg-slate-100"
+          onClick={props.onClose ?? (() => setOpen(false))}
+          title={t(props.onClose ? 'common.close' : 'play.collapse')}
+          aria-label={t(props.onClose ? 'common.close' : 'play.collapse')}
+          className={cn('rounded p-1 text-slate-600 hover:bg-slate-100', props.onClose && 'ml-auto')}
         >
-          <ChevronsLeft className="size-4" />
+          {props.onClose ? <X className="size-4" /> : <ChevronsLeft className="size-4" />}
         </button>
       </div>
       {tables.length === 0 ? (

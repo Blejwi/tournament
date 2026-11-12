@@ -51,7 +51,7 @@ export function TournamentLayout() {
           <BackLink />
           <div className="leading-tight">
             <h1 className="font-semibold">{tournament.name}</h1>
-            <p className="text-muted-foreground text-xs">{dateLine}</p>
+            <p className="text-muted-foreground text-xs max-sm:hidden">{dateLine}</p>
           </div>
           {nav}
           <div className="ml-auto py-1">
@@ -65,7 +65,7 @@ export function TournamentLayout() {
   }
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-6 p-4 md:p-8">
+    <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 p-4 md:p-8">
       <div className="grid gap-2">
         <BackLink />
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -98,7 +98,7 @@ function TournamentNav() {
           to={tab.to}
           className={({ isActive }) =>
             cn(
-              '-mb-px border-b-2 px-4 py-2 text-sm font-medium',
+              '-mb-px shrink-0 border-b-2 px-3 py-2 text-sm font-medium sm:px-4',
               isActive ? 'border-primary text-foreground' : 'text-muted-foreground hover:text-foreground border-transparent',
             )
           }
@@ -115,7 +115,7 @@ function BackLink() {
   return (
     <Link to="/" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
       <ArrowLeft className="size-4" aria-hidden />
-      {t('tournaments.backToList')}
+      <span className="max-sm:sr-only">{t('tournaments.backToList')}</span>
     </Link>
   );
 }
