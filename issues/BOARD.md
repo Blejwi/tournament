@@ -17,7 +17,6 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
-| [#0022](0022-play-screen-ui-fixes-from-smoke-test.md) | Play screen UI fixes from the browser smoke test | started |
 
 ## ⛔ Blocked
 
@@ -28,6 +27,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0022](0022-play-screen-ui-fixes-from-smoke-test.md) | Play screen UI fixes from the browser smoke test | d4f7498 |
 | [#0025](0025-play-screen-on-a-phone.md) | Play screen usable on a phone | a3213b0 |
 | [#0024](0024-play-offs-split-one-level-at-a-time.md) | Place play-offs split one level at a time | 4bc4e88 |
 | [#0023](0023-mirrored-play-off-layout.md) | Mirrored play-off layout on the canvas | 4bc4e88 |

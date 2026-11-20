@@ -1,7 +1,7 @@
 ---
 id: 22
 title: Play screen UI fixes from the browser smoke test
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-10-24
 ---
@@ -30,3 +30,13 @@ Fix three problems found when the merged `integration/v1` was tried in a browser
 ## Blocked by
 
 None (can start immediately)
+
+## Resolution
+
+Done in d4f7498.
+
+1. **Popover**: `MatchPopover` (floating mode) renders in a portal on `document.body` at `z-50`, positioned next to the card and clamped to the window on all sides (max height = window height minus margins, scrolls inside). On a phone it stays the bottom sheet.
+2. **Banner**: a later stage's draw-editing banner is only shown once the stage before it is complete (so it can actually be confirmed), and is titled "Editing the next stage's draw". While the groups are in play there is no banner. Drag-and-drop on the bracket still works.
+3. **Fit**: zoom is no longer floored at 60%; it goes down to the canvas minimum (20%) to show everything, capped at 100%. +/- stay with the operator.
+
+Checked in the browser at 1280×800: 24 players, 4 groups → bracket, 8 tables (Fit shows groups and bracket; popover from a Group D card sits above the waiting list, fully visible; no banner) and a 16-entry double elimination (Fit shows the whole canvas; popover for M8 fully visible). Not separately checked: 1440×900, and the banner appearing once all groups are complete (logic only).
