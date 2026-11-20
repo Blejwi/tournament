@@ -1,7 +1,7 @@
 ---
 id: 27
 title: Print / save as PDF: final results, groups and brackets
-status: open
+status: done
 labels: [ready-for-agent]
 created: 2026-11-20
 ---
@@ -93,3 +93,24 @@ Once every competition in the tournament is finished, the operator can open a pr
 ## Blocked by
 
 None (can start immediately)
+
+## Resolution
+
+Done in 499947d (engine query) and 09f2cf7 (print route, button, components, CSS, EN and PL keys).
+
+**Built**
+- `getTournamentProgress(state)` (`queries/progress.ts`): per competition with entries, `finished` (= `getFinalPlaces(...).complete`), and `finished` for the whole tournament. Tested first in `__tests__/tournamentProgress.test.ts`.
+- Route `/tournaments/:id/print` (`src/ui/print/PrintScreen.tsx`), outside the operator layout, reading the tournament like the display screen. Early on, it shows the "not finished" message naming the competitions in play instead of the printout. A "Print" button calls `window.print()`.
+- `PrintButton` on the play screen and competitions screen: disabled with a hint (tooltip, screen-reader text, visible on the competitions screen) until the tournament is finished.
+- Cross table, standings and tiebreak trace moved from `GroupDetail` to `play/GroupTables.tsx` (shared; cross table has a `print` mode). `MatchCard` and `BracketBoard` have a print mode (14 px names, no status, timers, hover text or dimmed play-offs; result badges and BYE kept).
+- Print CSS (`print/print.css`): named `@page` portrait and landscape A4, a new page per sheet, page numbers in the margin boxes, color kept.
+- Bracket pages (`printPlan.ts`): scaled to the page when that keeps text at about 8 pt (scale at least 0.76), otherwise top half, bottom half and "semi-finals and final", or groups of rounds ("rounds 1–3") when only too wide. Double elimination prints winners bracket, losers bracket and 2nd final as separate blocks, each play-off tree its own block; a stage with no matches is skipped.
+
+**Checked in the browser** (Edge 158, seeded from engine helpers: groups → single elimination with place play-offs 5–8, 5–6, 7–8; 16-entry double elimination; 32-entry single elimination with 3rd-place match; a 2-group groups-only competition): printed to PDF headless and rendered the pages with pdf.js. 16 A4 pages, portrait results and landscape brackets, page numbers "n / 16", each competition on a new page, no screen-only parts. The 32-entry bracket split into top half, bottom half and semi-finals/final pages with names at about 8 pt; the 16-entry double elimination winners bracket fits one page and its losers bracket splits in two. The button is disabled with its hint on an unfinished tournament (play and competitions screens, PL) and enabled on the finished one; the print route shows the not-finished message early. The PDF and a page screenshot are in the session notes folder.
+
+**Found while checking**: the browser shrinks the whole printout to fit any content wider than the page, even when it is clipped by `overflow: hidden` or CSS containment. So a split bracket renders only its own part (`BracketBoard`'s `crop`) instead of clipping the full layout.
+
+**Not verified / deferred**
+- The browser's own print dialog (Ctrl+P preview and the printer list) was not driven, only headless "print to PDF" with the same engine. Other browsers were not tried.
+- 64-entry brackets: a half is still too tall for the page, so it prints below the readable minimum (about 6 pt) rather than splitting into quarters. Not asked for in the spec's browser check (32 entries); a follow-up if 64-entry events print.
+- A wide losers bracket splits by columns of rounds without repeating the last column, so lines between the page parts are not continued.

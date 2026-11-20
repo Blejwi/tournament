@@ -12,7 +12,6 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Blocked by |
 |---|---|---|
-| [#0027](0027-print-results-and-brackets.md) | Print / save as PDF: final results, groups and brackets | none |
 
 ## 🔵 In progress
 
@@ -28,6 +27,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0027](0027-print-results-and-brackets.md) | Print / save as PDF: final results, groups and brackets | 499947d, 09f2cf7 |
 | [#0026](0026-read-only-display-screen.md) | Read-only display screen for players (second tab) | 659d3d4 |
 | [#0022](0022-play-screen-ui-fixes-from-smoke-test.md) | Play screen UI fixes from the browser smoke test | d4f7498 |
 | [#0025](0025-play-screen-on-a-phone.md) | Play screen usable on a phone | a3213b0 |
