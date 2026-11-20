@@ -328,6 +328,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
   },
   drawEdit: {
     title: 'Edycja losowania',
+    titleNextStage: 'Edycja losowania następnego etapu',
     hintGroups: 'Przeciągnij zawodnika na innego, aby ich zamienić, albo na pole upuszczania grupy, aby go tam przenieść. Możesz też kliknąć zawodnika, a potem cel.',
     hintBracket: 'Przeciągnij zawodnika na inne miejsce, aby ich zamienić, albo na wolny los, aby go tam przenieść. Możesz też kliknąć zawodnika, a potem cel.',
     canvasHint: 'Przeciągnij zawodnika, aby zamienić lub przenieść · przeciągnij tło, aby przesunąć · kółko, aby powiększyć · F, aby dopasować',

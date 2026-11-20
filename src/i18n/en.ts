@@ -328,6 +328,7 @@ export const en = {
   },
   drawEdit: {
     title: 'Editing the draw',
+    titleNextStage: 'Editing the next stage’s draw',
     hintGroups: 'Drag a player onto another to swap them, or onto a group’s drop area to move them there. Or click a player, then the target.',
     hintBracket: 'Drag a player onto another position to swap them, or onto a BYE to move them there. Or click a player, then the target.',
     canvasHint: 'Drag a player to swap or move · drag the background to pan · wheel to zoom · F to fit',

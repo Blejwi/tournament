@@ -12,12 +12,12 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Blocked by |
 |---|---|---|
-| [#0022](0022-play-screen-ui-fixes-from-smoke-test.md) | Play screen UI fixes from the browser smoke test | none |
 
 ## 🔵 In progress
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0022](0022-play-screen-ui-fixes-from-smoke-test.md) | Play screen UI fixes from the browser smoke test | started |
 
 ## ⛔ Blocked
 

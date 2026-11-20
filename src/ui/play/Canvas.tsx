@@ -69,8 +69,8 @@ export function Canvas(props: {
     const world = worldRef.current;
     if (!vp || !world) return;
     const [ww, wh] = [world.offsetWidth, world.offsetHeight];
-    // Never below 60% on fit, so cards stay legible; pan for the rest.
-    const k = clamp(Math.min((vp.clientWidth - 48) / ww, (vp.clientHeight - 48) / wh, 1), 0.6, 1);
+    // Show the whole content; the operator zooms in with +/- if it is small.
+    const k = clamp(Math.min((vp.clientWidth - 48) / ww, (vp.clientHeight - 48) / wh, 1), MIN_ZOOM, 1);
     setView({ k, x: Math.max(16, (vp.clientWidth - ww * k) / 2), y: Math.max(16, (vp.clientHeight - wh * k) / 2) });
   }, []);
 

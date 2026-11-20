@@ -39,7 +39,15 @@ const samePosition = (a: DrawPosition, b: DrawPosition) =>
   a.kind === b.kind && a.position === b.position && (a.kind !== 'group' || (b.kind === 'group' && a.group === b.group));
 
 /** The editing toolbar over the canvas (re-draw, confirm, errors) and the drag-and-drop state. */
-export function DrawEditor(props: { stage: StageId; bracket: boolean; children: ReactNode }) {
+export function DrawEditor(props: {
+  stage: StageId;
+  bracket: boolean;
+  /** The stage is fed by one before it, so the banner says so. */
+  nextStage?: boolean;
+  /** false hides the banner (its stage can't be confirmed yet); drag-and-drop still works. */
+  toolbar?: boolean;
+  children: ReactNode;
+}) {
   const { t } = useTranslation();
   const dispatch = useApp((s) => s.dispatch);
   const [picked, setPicked] = useState<DrawPosition | null>(null);
@@ -68,8 +76,9 @@ export function DrawEditor(props: { stage: StageId; bracket: boolean; children: 
   return (
     <DrawEditContext.Provider value={api}>
       <div className="flex min-w-0 flex-1 flex-col">
+        {props.toolbar !== false && (
         <div className="flex flex-wrap items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm">
-          <span className="font-semibold text-amber-900">{t('drawEdit.title')}</span>
+          <span className="font-semibold text-amber-900">{t(props.nextStage ? 'drawEdit.titleNextStage' : 'drawEdit.title')}</span>
           <span className="text-amber-800">{t(props.bracket ? 'drawEdit.hintBracket' : 'drawEdit.hintGroups')}</span>
           <div className="ml-auto flex items-center gap-2">
             <ConfirmDialog
@@ -115,6 +124,7 @@ export function DrawEditor(props: { stage: StageId; bracket: boolean; children: 
             </div>
           )}
         </div>
+        )}
         {props.children}
       </div>
     </DrawEditContext.Provider>

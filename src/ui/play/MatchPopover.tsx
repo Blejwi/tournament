@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Pause, X } from 'lucide-react';
 import {
@@ -36,7 +37,13 @@ import { hasGames } from './specialResults';
 import { SpecialResultEntry } from './SpecialResultEntry';
 
 /** Actions for one match, one click from the draw: call to a free table, enter the score. */
-export function MatchPopover(props: { match: MatchView; style: CSSProperties; onClose: () => void }) {
+export function MatchPopover(props: {
+  match: MatchView;
+  style: CSSProperties;
+  /** Float above every panel and stay inside the window (`style` then gives left/top relative to the parent). Otherwise a sheet inside the canvas. */
+  floating?: boolean;
+  onClose: () => void;
+}) {
   const { t } = useTranslation();
   const { match, onClose } = props;
   const dispatch = useApp((s) => s.dispatch);
@@ -46,15 +53,38 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
   const [correcting, setCorrecting] = useState(false);
   const live = match.status === 'in_progress' || match.status === 'overdue';
   const canScore = match.status === 'ready' || match.status === 'busy' || live;
+  const anchor = useRef<HTMLSpanElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const [placed, setPlaced] = useState<CSSProperties | null>(null);
+  const { left, top, width } = props.style;
+  // Floating: place in window coordinates next to the card, then keep the whole box inside the window.
+  // Runs after every render (the box's height changes with its content); setPlaced bails out when nothing moved.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (!props.floating) return;
+    const parent = anchor.current?.parentElement?.getBoundingClientRect();
+    const el = box.current;
+    if (!parent || !el) return;
+    const margin = 8;
+    const maxHeight = window.innerHeight - 2 * margin;
+    const h = Math.min(el.scrollHeight, maxHeight);
+    const x = Math.max(margin, Math.min(parent.left + Number(left ?? 0), window.innerWidth - el.offsetWidth - margin));
+    const y = Math.max(margin, Math.min(parent.top + Number(top ?? 0), window.innerHeight - h - margin));
+    setPlaced((p) => (p && p.left === x && p.top === y && p.maxHeight === maxHeight ? p : { left: x, top: y, width, maxHeight }));
+  });
 
-  return (
+  const dialog = (
     <div
+      ref={box}
       data-nopan
       role="dialog"
       aria-label={matchTitle(t, match)}
-      style={props.style}
+      style={props.floating ? { ...(placed ?? { left: 0, top: 0, width }), visibility: placed ? 'visible' : 'hidden' } : props.style}
       onPointerDown={(e) => e.stopPropagation()}
-      className="absolute z-20 w-[340px] overflow-y-auto rounded-xl bg-white text-sm shadow-2xl ring-1 ring-slate-300"
+      className={cn(
+        props.floating ? 'fixed z-50' : 'absolute z-20',
+        'w-[340px] overflow-y-auto rounded-xl bg-white text-sm shadow-2xl ring-1 ring-slate-300',
+      )}
     >
       <div className="flex items-center gap-2 rounded-t-xl border-b bg-slate-50 px-3 py-2">
         <span className="font-semibold">{matchTitle(t, match)}</span>
@@ -182,6 +212,13 @@ export function MatchPopover(props: { match: MatchView; style: CSSProperties; on
         )}
       </div>
     </div>
+  );
+  if (!props.floating) return dialog;
+  return (
+    <>
+      <span ref={anchor} hidden />
+      {createPortal(dialog, document.body)}
+    </>
   );
 }
 

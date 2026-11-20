@@ -1,7 +1,7 @@
 ---
 id: 22
 title: Play screen UI fixes from the browser smoke test
-status: open
+status: in-progress
 labels: [ready-for-agent]
 created: 2026-10-24
 ---

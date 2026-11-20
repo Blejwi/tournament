@@ -271,6 +271,9 @@ function CompetitionCanvas(props: {
   const stage = stages[0];
   // The stages after the first are fed by it; one that is drawn but not confirmed can still be edited (its feeder is being played).
   const editingLater = stages.slice(1).find((s) => s.drawState === 'drawn');
+  // Its draw can only be confirmed once the stage before it is finished; until then that stage is in play and no banner is shown.
+  const feeder = editingLater ? stages[editingLater.index - 1] : undefined;
+  const feederComplete = !feeder || feeder.type !== 'groups' || feeder.groups.every((g) => g.complete);
   const [detailGroup, setDetailGroup] = useState<GroupId | null>(null);
   const detailStage = stages.find((s) => s.type === 'groups' && s.groups.some((g) => g.id === detailGroup));
   const [playOffLayout, setPlayOffLayout] = usePlayOffLayout();
@@ -332,12 +335,8 @@ function CompetitionCanvas(props: {
             <MatchPopover
               key={props.selected.id}
               match={props.selected}
-              style={{
-                left,
-                top,
-                width: POPOVER_WIDTH - 10,
-                maxHeight: `calc(100% - ${top + 8}px)`,
-              }}
+              floating
+              style={{ left, top, width: POPOVER_WIDTH - 10 }}
               onClose={() => props.onSelect(null)}
             />
           );
@@ -384,7 +383,7 @@ function CompetitionCanvas(props: {
     </>
   );
   return editingLater ? (
-    <DrawEditor stage={editingLater.id} bracket={editingLater.type !== 'groups'}>
+    <DrawEditor stage={editingLater.id} bracket={editingLater.type !== 'groups'} nextStage toolbar={feederComplete}>
       {content}
     </DrawEditor>
   ) : (
