@@ -1,7 +1,7 @@
 ---
 id: 26
 title: Read-only display screen for players (second tab)
-status: open
+status: done
 labels: [ready-for-agent]
 created: 2026-11-20
 ---
@@ -94,3 +94,23 @@ A read-only display screen, opened from the play screen in a second window and s
 - The `storage` event never fires in the window that made the change, so the operator window is unaffected. It fires once per save, and the operator store saves after every successful command, so the display updates once per operator action.
 - The operator store also writes the tournament index on each save. The display listens only to its own tournament's key.
 - Blocked by: none (can start immediately).
+
+## Resolution
+
+Done in 659d3d4.
+
+**Built**
+- Route `/tournaments/:id/display` (outside the operator layout) and a "Second screen" button on the play screen that opens it in a named popup window (reused on a second click). Hidden on a phone.
+- `TournamentStorage.subscribe(id, onChange)`, implemented in the localStorage adapter with the `storage` event. The display loads through `loadTournament` (validated and migrated) into its own state, never the operator store, and never writes. A deleted tournament shows "not found".
+- Engine query `getDisplayCycle(state, { excluded })` with tests in `displayCycle.test.ts` (tab order, unconfirmed or unconfigured left out and picked up once confirmed, excluded and unknown ids, empty cases).
+- 20 s cycle (`CYCLE_SECONDS`) in the UI with a countdown bar; the current competition stays when the list changes if it is still there. Excluded ids are kept under `tm:display:<id>`; a missing or corrupt value means nothing excluded. Settings and the full-screen toggle show on mouse move and hide after 3 s.
+- Tables strip, the next 5 ready matches, and the competition content (stages stacked, `GroupBox` / `BracketBoard` / `MatchCard` in read-only mode) fitted to the space by `FitToScreen`. `useQuery` can take its state from `TournamentStateContext`, so the play components work without the operator store.
+- EN and PL keys. The play-off layout choice now follows `storage` events, so the display picks up the operator's choice.
+- Moved `bracketLayoutSections`, `groupColumns` and `tableTone` out of the screen files into `play/bracketSections.ts` and `play/tableTone.ts` so both screens share them.
+
+**Checked in the browser** (operator tab and display tab on the dev server, seed from the engine test helpers, 3 competitions: groups → bracket, a bracket, and an unconfirmed groups stage). Each operator action showed on the display within about a second without reloading it: calling a match, recording a result, correcting a result (the card flipped), and confirming a draw (the competition joined the cycle). The unconfirmed competition was left out until then. A competition taken out of the cycle stayed out after reloading the display. Layout checked at 1920×1080 and 1280×800 (screenshots taken during the session). `npm test`, `npm run build` and `npm run lint` are green (lint only reports the `.vite` cache, which isn't ours). The operator actions were driven through the store's `dispatch` from the page console, not by clicking the UI, because clicks in the background tab didn't register.
+
+**Deferred**
+- The PWA build offline was not tried (`npm run build` passes; the route is a plain client route, so the existing SPA fallback should cover it).
+- The "Second screen" button's popup was not clicked in the browser pane (popups open as separate windows there); the display route itself was opened by URL.
+- The full-screen toggle was not exercised (the pane doesn't grant fullscreen), and the cycle timing was only observed in the running screen, not tested.
