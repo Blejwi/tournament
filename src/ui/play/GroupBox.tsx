@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GroupView, MatchId } from '@/engine';
 import { cn } from '@/lib/utils';
@@ -10,9 +11,10 @@ import { hasGames, specialKind } from './specialResults';
 export function GroupBox(props: {
   group: GroupView;
   selectedMatch: MatchId | null;
-  onSelectMatch: (id: MatchId, el: HTMLElement) => void;
+  /** Without `onSelectMatch` and `onOpenDetail` the box is read-only (the display screen). */
+  onSelectMatch?: (id: MatchId, el: HTMLElement) => void;
   /** Opens the group detail (standings, cross table, tiebreak). */
-  onOpenDetail: () => void;
+  onOpenDetail?: () => void;
 }) {
   const { t } = useTranslation();
   const { group } = props;
@@ -21,12 +23,10 @@ export function GroupBox(props: {
 
   return (
     <div className="w-[628px] rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-      <button
-        type="button"
-        className="mb-2 flex w-full items-center gap-2 rounded text-left hover:bg-slate-50"
-        aria-label={t('groups.openDetail', { name: group.name })}
-        title={t('groups.openDetail', { name: group.name })}
-        onClick={props.onOpenDetail}
+      <Header
+        className="mb-2 flex w-full items-center gap-2 rounded text-left"
+        onOpenDetail={props.onOpenDetail}
+        label={t('groups.openDetail', { name: group.name })}
       >
         <span className="flex size-6 items-center justify-center rounded bg-indigo-600 font-bold text-white">{group.name}</span>
         <span className="font-semibold">{t('groups.group', { name: group.name })}</span>
@@ -37,7 +37,7 @@ export function GroupBox(props: {
           ) : (
             <span className="text-xs font-semibold text-emerald-600">✓ {t('groups.final')}</span>
           ))}
-      </button>
+      </Header>
       <table className="mb-2 w-full table-fixed text-xs">
         <thead>
           <tr className="text-[10px] text-slate-400 uppercase">
@@ -97,10 +97,20 @@ export function GroupBox(props: {
             key={match.id}
             match={match}
             selected={props.selectedMatch === match.id}
-            onSelect={(el) => props.onSelectMatch(match.id, el)}
+            onSelect={props.onSelectMatch && ((el) => props.onSelectMatch!(match.id, el))}
           />
         ))}
       </div>
     </div>
+  );
+}
+
+/** The group's title row: a button that opens the detail, or plain text when the box is read-only. */
+function Header(props: { className: string; onOpenDetail?: () => void; label: string; children: ReactNode }) {
+  if (!props.onOpenDetail) return <div className={props.className}>{props.children}</div>;
+  return (
+    <button type="button" className={cn(props.className, 'hover:bg-slate-50')} aria-label={props.label} title={props.label} onClick={props.onOpenDetail}>
+      {props.children}
+    </button>
   );
 }

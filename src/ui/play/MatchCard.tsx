@@ -24,19 +24,22 @@ const STATUS_STYLE: Record<MatchStatus, string> = {
 /** Past 150% of the expected duration: visually stronger than amber overdue. */
 const RED_OVERDUE_STYLE = 'border-2 border-red-500 bg-red-50 overdue-alarm';
 
-export function MatchCard(props: { match: MatchView; selected: boolean; onSelect: (el: HTMLElement) => void }) {
+/** A match on the canvas. Without `onSelect` it is a plain, non-interactive card (the display screen). */
+export function MatchCard(props: { match: MatchView; selected: boolean; onSelect?: (el: HTMLElement) => void }) {
   const { t } = useTranslation();
   const { match } = props;
   const competitions = useQuery(getCompetitions) ?? [];
   const busy = match.status === 'busy' ? busyLines(t, match, competitions).join(' ') : undefined;
+  const Frame = props.onSelect ? 'button' : 'div';
   return (
-    <button
-      type="button"
+    <Frame
+      type={props.onSelect ? 'button' : undefined}
       data-match-id={match.id}
       title={busy}
-      onClick={(e) => props.onSelect(e.currentTarget)}
+      onClick={props.onSelect ? (e) => props.onSelect!(e.currentTarget) : undefined}
       className={cn(
-        'relative block h-16 w-[292px] overflow-hidden rounded-md text-left text-slate-900 select-none hover:shadow-md',
+        'relative block h-16 w-[292px] overflow-hidden rounded-md text-left text-slate-900 select-none',
+        props.onSelect && 'hover:shadow-md',
         match.overdue === 'red' ? RED_OVERDUE_STYLE : STATUS_STYLE[match.status],
         props.selected && 'outline-2 outline-offset-2 outline-slate-900',
       )}
@@ -77,7 +80,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
         {t(`match.status.${match.status}`)}
         {busy && ` ${busy}`}
       </span>
-    </button>
+    </Frame>
   );
 }
 

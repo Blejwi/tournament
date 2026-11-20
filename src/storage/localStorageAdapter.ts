@@ -53,5 +53,14 @@ export function createLocalStorageAdapter(store: Storage = window.localStorage):
       store.removeItem(tournamentKey(id));
       writeIndex(readIndex().filter((row) => row.id !== id));
     },
+
+    subscribe(id, onChange) {
+      // The browser fires `storage` only in the other windows of the same origin; `key` is null when storage is cleared.
+      const listener = (e: StorageEvent) => {
+        if (e.storageArea === store && (e.key === null || e.key === tournamentKey(id))) onChange();
+      };
+      window.addEventListener('storage', listener);
+      return () => window.removeEventListener('storage', listener);
+    },
   };
 }

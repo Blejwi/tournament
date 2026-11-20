@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronsLeft, ChevronsRight, Maximize2, X } from 'lucide-react';
-import { getWaitingList, type MatchView, type TableOverview, type TableOverviewRow, type TableStatus } from '@/engine';
+import { getWaitingList, type MatchView, type TableOverview, type TableOverviewRow } from '@/engine';
 import { useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { cn } from '@/lib/utils';
@@ -9,20 +9,10 @@ import { Button } from '@/ui/components/ui/button';
 import { entryName, formatClock } from '@/ui/format';
 import { matchTitle } from '@/ui/matchLabels';
 import { overdueText } from './overdueStyle';
+import { tableTone } from './tableTone';
 
 /** How many ready matches a free table offers to call. */
 const CALL_CHOICES = 5;
-
-/** The table number tile, coloured by status (red overdue pulses; an idle table while matches wait glows amber). */
-function tableTone(row: TableOverviewRow): string {
-  const tones: Record<TableStatus, string> = {
-    playing: 'bg-sky-600 text-white',
-    overdue: row.match?.overdue === 'red' ? 'bg-red-600 text-white overdue-alarm' : 'bg-amber-500 text-white',
-    free: row.idleAlert ? 'bg-amber-400 text-white idle-alarm' : 'bg-emerald-500 text-white',
-    inactive: 'bg-slate-200 text-slate-400',
-  };
-  return tones[row.status];
-}
 
 function useIdleText() {
   const { t } = useTranslation();

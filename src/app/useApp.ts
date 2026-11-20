@@ -1,11 +1,18 @@
-import { useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { useStore } from 'zustand';
 import type { TournamentState } from '@/engine';
 import { createLocalStorageAdapter } from '@/storage/localStorageAdapter';
 import { createAppStore, type AppState } from './store';
 
 /** The app's single store, saving to the browser's localStorage. */
-export const appStore = createAppStore(createLocalStorageAdapter(), () => crypto.randomUUID());
+export const appStorage = createLocalStorageAdapter();
+export const appStore = createAppStore(appStorage, () => crypto.randomUUID());
+
+/**
+ * Gives `useQuery` a fixed tournament state instead of the operator store's: the read-only display
+ * provides its own, so the play screen's components can be reused there without the store.
+ */
+export const TournamentStateContext = createContext<TournamentState | null>(null);
 
 /** React hook: select a slice of the app state. */
 export function useApp<T>(selector: (state: AppState) => T): T {
@@ -19,7 +26,9 @@ export function useApp<T>(selector: (state: AppState) => T): T {
  * which makes Zustand re-render forever.
  */
 export function useQuery<T>(query: (state: TournamentState) => T, deps: readonly unknown[] = []): T | null {
-  const current = useApp((s) => s.current);
+  const provided = useContext(TournamentStateContext);
+  const stored = useApp((s) => s.current);
+  const current = provided ?? stored;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- queries are pure; state + deps are the inputs
   return useMemo(() => (current ? query(current) : null), [current, ...deps]);
 }

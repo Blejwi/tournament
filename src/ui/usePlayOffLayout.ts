@@ -31,6 +31,15 @@ function write(layout: PlayOffLayout) {
 
 let current = read();
 
+// Another window changed the choice (the operator's, while a display is open): follow it.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key !== KEY && e.key !== null) return;
+    current = read();
+    listeners.forEach((l) => l());
+  });
+}
+
 export function usePlayOffLayout(): [PlayOffLayout, (layout: PlayOffLayout) => void] {
   const layout = useSyncExternalStore(
     (listener) => {

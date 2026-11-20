@@ -18,4 +18,9 @@ export interface TournamentStorage {
   /** Saves the tournament document and updates its row in the index. */
   saveTournament(state: TournamentState): void;
   deleteTournament(id: TournamentId): void;
+  /**
+   * Calls `onChange` when another window saves or deletes this tournament (never for this window's own saves).
+   * Returns the function that stops listening. Lets a read-only display follow the operator's window.
+   */
+  subscribe(id: TournamentId, onChange: () => void): () => void;
 }

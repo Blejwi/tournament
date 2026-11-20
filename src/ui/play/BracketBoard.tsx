@@ -15,7 +15,8 @@ import { MatchCard } from './MatchCard';
 export function BracketBoard(props: {
   sections: LayoutSection[];
   selectedMatch: MatchId | null;
-  onSelectMatch: (id: MatchId, el: HTMLElement) => void;
+  /** Omitted on the read-only display screen: the cards are not clickable. */
+  onSelectMatch?: (id: MatchId, el: HTMLElement) => void;
   /** Draws a card differently (e.g. draw editing); falls back to the match card when it returns null. */
   renderCard?: (match: MatchView) => ReactNode | null;
   /** Switches a place play-off on or off (its block shows a switch). */
@@ -53,11 +54,11 @@ export function BracketBoard(props: {
             {label.title}
           </span>
           {label.subtitle && !label.compact && <span className="text-xs text-slate-400">{label.subtitle}</span>}
-          {label.playOff && (
+          {label.playOff && props.onTogglePlayOff && (
             <Switch
               checked={label.playOff.enabled}
               aria-label={t('bracket.playOffToggle', { range: formatPlace(label.playOff.range) })}
-              onCheckedChange={(enabled) => props.onTogglePlayOff?.(label.playOff!.range, enabled)}
+              onCheckedChange={(enabled) => props.onTogglePlayOff!(label.playOff!.range, enabled)}
               className="h-4 w-7 self-center"
             />
           )}
@@ -67,7 +68,7 @@ export function BracketBoard(props: {
       {layout.cards.map(({ match, x, y }) => (
         <div key={match.id} className="absolute" style={{ left: x, top: y, width: CARD_W, height: CARD_H }}>
           {props.renderCard?.(match) ?? (
-            <MatchCard match={match} selected={props.selectedMatch === match.id} onSelect={(el) => props.onSelectMatch(match.id, el)} />
+            <MatchCard match={match} selected={props.selectedMatch === match.id} onSelect={props.onSelectMatch && ((el) => props.onSelectMatch!(match.id, el))} />
           )}
         </div>
       ))}

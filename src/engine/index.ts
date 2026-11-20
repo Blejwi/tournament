@@ -69,6 +69,8 @@ export {
   getTournament,
   getCompetitions,
   getCompetition,
+  getDisplayCycle,
+  type DisplayCycleItem,
   type PlayerView,
   type TableView,
   type TournamentView,

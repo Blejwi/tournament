@@ -70,3 +70,20 @@ function entryOrder(a: EntryView, b: EntryView): number {
   const [pa, pb] = [a.players[0], b.players[0]];
   return nameOrder.compare(pa.lastName, pb.lastName) || nameOrder.compare(pa.firstName, pb.firstName);
 }
+
+/** A competition the display screen can show. */
+export interface DisplayCycleItem {
+  id: CompetitionId;
+  name: string;
+}
+
+/**
+ * The competitions the display screen cycles through, in the order of the play screen's tabs.
+ * Leaves out the `excluded` ones (a display preference the app holds, not tournament state; ids that
+ * don't exist are ignored) and those whose first stage isn't confirmed. An empty list means "tables only".
+ */
+export function getDisplayCycle(state: TournamentState, options: { excluded: readonly CompetitionId[] }): DisplayCycleItem[] {
+  return state.competitions
+    .filter((c) => c.stages[0]?.drawState === 'confirmed' && !options.excluded.includes(c.id))
+    .map((c) => ({ id: c.id, name: c.name }));
+}
