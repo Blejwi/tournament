@@ -20,6 +20,9 @@ export function entryName(entry: EntryView | null): string | null {
   return entry.players.map((p) => playerName(p)).join(' / ');
 }
 
+/** Several entries' names, comma separated. */
+export const entryNames = (entries: EntryView[]) => entries.map((e) => entryName(e)).join(', ');
+
 /** Elapsed time as m:ss (or h:mm:ss). */
 export function formatClock(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));

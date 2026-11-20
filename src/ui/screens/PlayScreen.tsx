@@ -1,3 +1,4 @@
+import { PrintButton } from '@/ui/components/PrintButton';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, Navigate, NavLink, useHref, useNavigate, useParams } from 'react-router';
 import { MonitorUp } from 'lucide-react';
@@ -149,6 +150,7 @@ export function PlayScreen() {
               {t('play.secondScreen')}
             </button>
           )}
+          <PrintButton />
           {overdue.length > 0 && (
             <button
               type="button"

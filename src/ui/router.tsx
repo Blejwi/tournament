@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import { DisplayScreen } from '@/ui/display/DisplayScreen';
+import { PrintScreen } from '@/ui/print/PrintScreen';
 import { AppShell } from '@/ui/AppShell';
 import { CompetitionScreen } from '@/ui/screens/CompetitionScreen';
 import { CompetitionsScreen } from '@/ui/screens/CompetitionsScreen';
@@ -13,6 +14,8 @@ const fullBleed: TournamentRouteHandle = { fullBleed: true };
 export const router = createBrowserRouter([
   // The players' display: outside the operator layout (no header, tabs or panels).
   { path: 'tournaments/:tournamentId/display', element: <DisplayScreen /> },
+  // The printout of a finished tournament (#0027): also outside the operator layout.
+  { path: 'tournaments/:tournamentId/print', element: <PrintScreen /> },
   {
     element: <AppShell />,
     children: [

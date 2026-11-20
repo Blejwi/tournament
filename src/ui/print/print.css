@@ -1,0 +1,111 @@
+/*
+ * The printout (#0027). On screen the pages show as sheets of A4; in print each sheet starts a
+ * new page. Results are portrait, brackets landscape (named pages: Chromium-based browsers;
+ * elsewhere everything prints portrait). Page numbers come from the page margin boxes.
+ */
+@page portrait {
+  size: A4 portrait;
+  margin: 12mm;
+  @bottom-center {
+    content: counter(page) ' / ' counter(pages);
+    font: 9pt sans-serif;
+    color: #64748b;
+  }
+}
+
+@page landscape {
+  size: A4 landscape;
+  margin: 10mm;
+  @bottom-center {
+    content: counter(page) ' / ' counter(pages);
+    font: 9pt sans-serif;
+    color: #64748b;
+  }
+}
+
+.print-portrait {
+  page: portrait;
+}
+
+.print-landscape {
+  page: landscape;
+}
+
+.print-h3 {
+  border-bottom: 2px solid #0f172a;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.print-header {
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #94a3b8;
+  padding-bottom: 0.25rem;
+}
+
+.print-avoid-break {
+  break-inside: avoid;
+}
+
+/* Sheets on screen. */
+.print-sheet {
+  margin: 1rem auto;
+  background: white;
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+  box-sizing: border-box;
+}
+
+.print-sheet.print-portrait {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 12mm;
+}
+
+.print-sheet.print-landscape {
+  width: 297mm;
+  height: 210mm;
+  padding: 10mm;
+  overflow: hidden;
+}
+
+@media print {
+  html,
+  body,
+  .print-root {
+    background: white !important;
+  }
+
+  .print-root {
+    min-height: 0 !important;
+  }
+
+  .print-root * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-sheet {
+    margin: 0;
+    box-shadow: none;
+    width: auto !important;
+    padding: 0 !important;
+    break-before: page;
+  }
+
+  .print-root > .print-sheet:first-of-type {
+    break-before: auto;
+  }
+
+  .print-sheet.print-portrait {
+    min-height: 0;
+  }
+
+  /* One landscape sheet is exactly one page: the content area of A4 landscape. */
+  .print-sheet.print-landscape {
+    height: 190mm !important;
+    break-after: avoid;
+  }
+}

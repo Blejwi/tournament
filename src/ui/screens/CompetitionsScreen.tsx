@@ -6,6 +6,7 @@ import { useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { Button } from '@/ui/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/components/ui/table';
+import { PrintButton } from '@/ui/components/PrintButton';
 import { FormError, FormField } from '@/ui/components/FormField';
 import { GamesToWinSelect } from '@/ui/components/GamesToWinSelect';
 import { errorField } from '@/ui/formErrors';
@@ -23,6 +24,7 @@ export function CompetitionsScreen() {
     <section className="grid gap-4">
       <h2 className="sr-only">{t('competitions.heading')}</h2>
       <AddCompetitionForm />
+      <PrintButton showHint className="px-4 py-1.5 text-sm" />
       {competitions.length === 0 ? (
         <p className="text-muted-foreground">{t('competitions.empty')}</p>
       ) : (

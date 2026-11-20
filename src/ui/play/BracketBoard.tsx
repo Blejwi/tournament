@@ -21,12 +21,25 @@ export function BracketBoard(props: {
   renderCard?: (match: MatchView) => ReactNode | null;
   /** Switches a place play-off on or off (its block shows a switch). */
   onTogglePlayOff?: (range: PlaceRange, enabled: boolean) => void;
+  /** Draws it for paper (#0027): print cards, no section titles (the page caption carries them) and no dimmed play-offs. */
+  print?: boolean;
+  /**
+   * Draws only this rectangle of the layout (printing a part of a big bracket). Nothing outside it is rendered:
+   * the browser would otherwise shrink the whole printout to fit content that is merely clipped.
+   */
+  crop?: { x: number; y: number; w: number; h: number };
 }) {
   const { t } = useTranslation();
   const layout = layoutBracket(props.sections);
+  const { crop } = props;
+  const inCrop = (x: number, y: number, w: number, h: number) => !crop || (x < crop.x + crop.w && x + w > crop.x && y < crop.y + crop.h && y + h > crop.y);
+  const [dx, dy] = crop ? [crop.x, crop.y] : [0, 0];
+  const [width, height] = crop ? [crop.w, crop.h] : [layout.width, layout.height];
+  const labels = (props.print ? layout.labels.filter((l) => l.kind === 'round' || l.compact) : layout.labels).filter((l) => inCrop(l.x, l.y, l.compact ? CARD_W : 120, 20));
+  const cards = layout.cards.filter((c) => inCrop(c.x, c.y, CARD_W, CARD_H));
   return (
-    <div className="relative" style={{ width: layout.width, height: layout.height }}>
-      <svg className="pointer-events-none absolute inset-0" width={layout.width} height={layout.height} aria-hidden>
+    <div className="relative" style={{ width, height }}>
+      <svg className="pointer-events-none absolute inset-0" width={width} height={height} viewBox={`${dx} ${dy} ${width} ${height}`} aria-hidden>
         {layout.connectors.map((c) => (
           <path
             key={`${c.from}-${c.to}-${c.side}`}
@@ -38,17 +51,17 @@ export function BracketBoard(props: {
           />
         ))}
       </svg>
-      {layout.labels.map((label, i) => (
+      {labels.map((label, i) => (
         <div
           key={`label-${i}`}
           className={cn('absolute flex items-baseline gap-x-2 whitespace-nowrap', label.compact && 'flex-wrap')}
-          style={{ left: label.x, top: label.y, width: label.compact ? CARD_W : undefined }}
+          style={{ left: label.x - dx, top: label.y - dy, width: label.compact ? CARD_W : undefined }}
         >
           <span
             className={cn(
               'font-bold tracking-wide uppercase',
-              label.playOff && !label.playOff.enabled && 'opacity-40',
-              label.kind === 'section' ? 'text-sm text-indigo-700' : 'text-[10px] text-slate-500',
+              !props.print && label.playOff && !label.playOff.enabled && 'opacity-40',
+              label.kind === 'section' ? 'text-sm text-indigo-700' : props.print ? 'text-[12px] text-slate-600' : 'text-[10px] text-slate-500',
             )}
           >
             {label.title}
@@ -65,10 +78,10 @@ export function BracketBoard(props: {
           {label.subtitle && label.compact && <span className="basis-full truncate text-xs leading-5 text-slate-400">{label.subtitle}</span>}
         </div>
       ))}
-      {layout.cards.map(({ match, x, y }) => (
-        <div key={match.id} className="absolute" style={{ left: x, top: y, width: CARD_W, height: CARD_H }}>
+      {cards.map(({ match, x, y }) => (
+        <div key={match.id} className="absolute" style={{ left: x - dx, top: y - dy, width: CARD_W, height: CARD_H }}>
           {props.renderCard?.(match) ?? (
-            <MatchCard match={match} selected={props.selectedMatch === match.id} onSelect={props.onSelectMatch && ((el) => props.onSelectMatch!(match.id, el))} />
+            <MatchCard match={match} selected={props.selectedMatch === match.id} print={props.print} onSelect={props.onSelectMatch && ((el) => props.onSelectMatch!(match.id, el))} />
           )}
         </div>
       ))}

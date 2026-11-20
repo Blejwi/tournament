@@ -24,12 +24,20 @@ const STATUS_STYLE: Record<MatchStatus, string> = {
 /** Past 150% of the expected duration: visually stronger than amber overdue. */
 const RED_OVERDUE_STYLE = 'border-2 border-red-500 bg-red-50 overdue-alarm';
 
-/** A match on the canvas. Without `onSelect` it is a plain, non-interactive card (the display screen). */
-export function MatchCard(props: { match: MatchView; selected: boolean; onSelect?: (el: HTMLElement) => void }) {
+/** Card frame on paper: results only, no status colours. */
+const PRINT_STYLE = 'border border-slate-400 bg-white';
+const PRINT_PENDING_STYLE = 'border border-dashed border-slate-300 bg-white text-slate-400';
+
+/**
+ * A match on the canvas. Without `onSelect` it is a plain, non-interactive card (the display screen).
+ * `print` draws it for paper (#0027): larger text, no status, timer or hover text, only the result.
+ */
+export function MatchCard(props: { match: MatchView; selected: boolean; onSelect?: (el: HTMLElement) => void; print?: boolean }) {
   const { t } = useTranslation();
   const { match } = props;
   const competitions = useQuery(getCompetitions) ?? [];
-  const busy = match.status === 'busy' ? busyLines(t, match, competitions).join(' ') : undefined;
+  const { print = false } = props;
+  const busy = !print && match.status === 'busy' ? busyLines(t, match, competitions).join(' ') : undefined;
   const Frame = props.onSelect ? 'button' : 'div';
   return (
     <Frame
@@ -40,14 +48,14 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
       className={cn(
         'relative block h-16 w-[292px] overflow-hidden rounded-md text-left text-slate-900 select-none',
         props.onSelect && 'hover:shadow-md',
-        match.overdue === 'red' ? RED_OVERDUE_STYLE : STATUS_STYLE[match.status],
+        print ? (match.result || match.decidedByBye ? PRINT_STYLE : PRINT_PENDING_STYLE) : match.overdue === 'red' ? RED_OVERDUE_STYLE : STATUS_STYLE[match.status],
         props.selected && 'outline-2 outline-offset-2 outline-slate-900',
       )}
     >
-      <span className="flex h-[18px] items-center gap-1 px-1.5 text-[10px] leading-none">
+      <span className={cn('flex h-[18px] items-center gap-1 px-1.5 leading-none', print ? 'text-[12px]' : 'text-[10px]')}>
         <b className="text-slate-700">{matchCode(t, match.location, match.round, match.order)}</b>
         <span className="ml-auto shrink-0">
-          <StatusChip match={match} />
+          {print ? match.decidedByBye && <span className="text-slate-500">{t('bracket.bye')}</span> : <StatusChip match={match} />}
         </span>
       </span>
       {([0, 1] as const).map((side) => {
@@ -57,18 +65,19 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
           <span
             key={side}
             className={cn(
-              'flex h-[21px] items-center gap-1 border-t border-black/5 px-1.5 text-[11px] leading-[10px]',
+              'flex h-[21px] items-center gap-1 border-t border-black/5 px-1.5',
+              print ? 'text-[14px] leading-[14px]' : 'text-[11px] leading-[10px]',
               won && 'font-semibold text-slate-800',
               match.result && !won && 'text-slate-400',
             )}
           >
-            <span className={cn('min-w-0 break-words', slot.placeholder && 'text-slate-400 italic')}>{slot.text}</span>
+            <span className={cn('min-w-0', print ? 'truncate' : 'break-words', slot.placeholder && 'text-slate-400 italic')}>{slot.text}</span>
             <ResultBadge match={match} side={side} />
             <span className="ml-auto font-bold tabular-nums">{hasGames(match) ? match.result!.gamesWon[side] : ''}</span>
           </span>
         );
       })}
-      {match.elapsedMs !== null && (
+      {!print && match.elapsedMs !== null && (
         <span className="absolute bottom-0 left-0 h-[3px] w-full bg-black/5">
           <span
             className={cn('block h-full', match.overdue === 'red' ? 'bg-red-500' : match.overdue ? 'bg-amber-500' : 'bg-sky-500')}
@@ -76,10 +85,12 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
           />
         </span>
       )}
-      <span className="sr-only">
-        {t(`match.status.${match.status}`)}
-        {busy && ` ${busy}`}
-      </span>
+      {!print && (
+        <span className="sr-only">
+          {t(`match.status.${match.status}`)}
+          {busy && ` ${busy}`}
+        </span>
+      )}
     </Frame>
   );
 }
