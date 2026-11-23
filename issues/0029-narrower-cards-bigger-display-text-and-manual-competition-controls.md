@@ -1,7 +1,7 @@
 ---
 id: 29
 title: Narrower cards, bigger display text, manual competition controls
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-11-23
 ---
@@ -41,13 +41,29 @@ After #0028 the display's big competitions are still small on screen, and the op
 
 ## Acceptance Criteria
 
-- [ ] Play screen cards are narrower, names stay full, long ones truncate with a `title`; the printout is unchanged.
-- [ ] Display cards are narrower than before and text is larger; effective text size (scale × font) is reported before/after at 1920×1080.
-- [ ] Display controls: previous, next, one chip per competition, ←/→; a choice restarts the 20 s countdown and the cycle continues from it.
-- [ ] EN and PL keys for the labels and aria-labels.
-- [ ] Checked at 1920×1080 and 1280×800; tests, build and lint green.
+- [x] Play screen cards are narrower, names stay full, long ones truncate with a `title`; the printout is unchanged.
+- [x] Display cards are narrower than before and text is larger; effective text size (scale × font) is reported before/after at 1920×1080.
+- [x] Display controls: previous, next, one chip per competition, ←/→; a choice restarts the 20 s countdown and the cycle continues from it.
+- [x] EN and PL keys for the labels and aria-labels.
+- [x] Checked at 1920×1080 and 1280×800; tests, build and lint green.
 
 ## Out of Scope
 
 - Short names on the play screen.
 - Paging a big competition's content.
+
+## Resolution
+
+Done in 77f3500.
+
+**Built**
+- Play screen: bracket cards 220 px (were 292) and group boxes 474 px (were 628). Full names stay; long ones are cut with an ellipsis and carry the full name in a `title`. The printout keeps `CARD_W` = 292. `MatchCard` now fills the width its parent gives it.
+- Display: cards 170 px (were 200), group boxes 388 px (were 440); card text 13 px (was 11), group text one size up, sidebar names 24 px (were 18–20), smaller on screens under 1400 px so nothing is cut at 1280. Groups that feed a bracket now sit beside it instead of above it, which is what actually raises the scale.
+- Display controls (shown on mouse move): previous/next, a chip per competition, ←/→ keys. A choice shows that competition at once and restarts the 20 s countdown (`goTo` in `useCycle`); the cycle continues from it. EN and PL keys `display.previousCompetition`, `nextCompetition`, `competitions`.
+
+**Measured** (1920×1080, the 36-player seed, "Open": 8 groups → 16-entry bracket). Content scale 0.32 (before #0028) → 0.52 (after #0028) → **0.60**. Card text on screen (font × scale): 3.6 px → 5.7 px → **7.8 px**. Sidebar names: 18–20 px → **24 px**. At 1280×800 "Open" is at scale 0.42 and the sidebar fits all 8 tables. Play screen at 1366×768: all cards 220 px, full names, nothing truncated for the seed's names.
+
+**Deferred**
+- No unit test for the cycle: ADR 0004 keeps tests to the engine, and the logic is a state update in the UI hook; checked in the browser (keys, chip click, countdown reset).
+- A very long name on the play screen was not tried (the truncation is plain CSS).
+- With many more tables than 8 the sidebar list is cut off (it doesn't scroll).

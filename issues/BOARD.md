@@ -17,7 +17,6 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
-| [#0029](0029-narrower-cards-bigger-display-text-and-manual-competition-controls.md) | Narrower cards, bigger display text, manual competition controls | Parent #0028 |
 
 ## ⛔ Blocked
 
@@ -28,6 +27,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0029](0029-narrower-cards-bigger-display-text-and-manual-competition-controls.md) | Narrower cards, bigger display text, manual competition controls | 77f3500 |
 | [#0028](0028-display-readable-for-big-competitions.md) | Display screen readable for big competitions | 1fb872b |
 | [#0027](0027-print-results-and-brackets.md) | Print / save as PDF: final results, groups and brackets | 499947d, 09f2cf7 |
 | [#0026](0026-read-only-display-screen.md) | Read-only display screen for players (second tab) | 659d3d4 |
