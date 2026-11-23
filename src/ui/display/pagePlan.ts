@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import type { BracketStageView, CompetitionId, DisplayStageFocus, FinalPlacesView, GroupId, GroupView, MatchId, MatchView, StageId, StageView } from '@/engine';
+import type { BracketStageView, CompetitionId, DisplayStageFocus, EntryView, FinalPlacesView, GroupId, GroupView, MatchId, MatchView, StageId, StageView } from '@/engine';
 import { bracketLayoutSections } from '@/ui/play/bracketSections';
 import { DISPLAY_CARD_W, layoutBracket, type LayoutSection } from '@/ui/play/bracketLayout';
 import { planBracketPages, type PagePlanOptions } from '@/ui/print/printPlan';
@@ -43,7 +43,7 @@ export type PageContent =
   /** A whole competition on one page (page splitting is off): its parts in columns, side by side. */
   | { kind: 'columns'; columns: PageContent[][] }
   /** The final places decided so far, and how many entries are still to land in each place. */
-  | { kind: 'places'; places: FinalPlacesView };
+  | { kind: 'places'; places: FinalPlacesView; entries: EntryView[] };
 
 export interface DisplayPage {
   /** Stable while the page keeps existing, so the cycle can stay on it. */
@@ -214,6 +214,7 @@ export function planCompetitionPages(
   focus: DisplayStageFocus[],
   space: PageSpace,
   places: FinalPlacesView | null,
+  entries: EntryView[],
   split = true,
   /** Leave out what is finished: groups once the next stage has started, early bracket rounds, finished blocks. */
   hideFinished = false,
@@ -221,7 +222,7 @@ export function planCompetitionPages(
   // Last page of every competition: its final places, once any place is decided.
   const placesPage: DisplayPage[] =
     places && places.rows.length > 0
-      ? [{ key: `${competition}:places`, competition, stage: stages.filter((s) => s).at(-1)?.id ?? competition, type: 'places', label: 'places', n: 1, of: 1, content: { kind: 'places', places } }]
+      ? [{ key: `${competition}:places`, competition, stage: stages.filter((s) => s).at(-1)?.id ?? competition, type: 'places', label: 'places', n: 1, of: 1, content: { kind: 'places', places, entries } }]
       : [];
   if (!split) {
     const content = arrange(wholeItems(t, stages), space);

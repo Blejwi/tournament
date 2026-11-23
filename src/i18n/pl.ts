@@ -413,7 +413,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     pages: 'Strony',
     hideFinished: 'Pomijaj to, co zakończone (grupy, wczesne rundy)',
     page: { groups: 'Grupy', bracket: 'Drabinka', all: 'Całość', places: 'Miejsca końcowe' },
-    placesMissing: 'Jeszcze do ustalenia miejsc: {{count}}',
+    status: { playing: 'Gra', done: 'Koniec', withdrew: 'Wycofał się' },
     tablesEmpty: 'Brak aktywnych stołów.',
     freeTable: 'Wolny',
   },

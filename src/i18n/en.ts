@@ -410,7 +410,7 @@ export const en = {
     pages: 'Pages',
     hideFinished: 'Leave out what is finished (groups, early rounds)',
     page: { groups: 'Groups', bracket: 'Bracket', all: 'Overview', places: 'Final places' },
-    placesMissing: '{{count}} more places still to be decided',
+    status: { playing: 'Playing', done: 'Finished', withdrew: 'Withdrew' },
     tablesEmpty: 'No active tables.',
     freeTable: 'Free',
   },

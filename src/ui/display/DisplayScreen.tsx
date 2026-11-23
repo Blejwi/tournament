@@ -15,7 +15,7 @@ import {
   getTournament,
   getWaitingList,
   type FinalPlacesView,
-  type FinalPlaceView,
+  type EntryView,
   type MatchView,
   type PlaceRange,
   type TableOverviewRow,
@@ -102,6 +102,7 @@ function Display({ state }: { state: TournamentState }) {
                 getDisplayFocus(s, c.id, now),
                 { w: size.w, h: size.h, minScale },
                 getFinalPlaces(s, c.id),
+                getCompetition(s, c.id)?.entries ?? [],
                 split.includes(c.id),
                 hideFinished.includes(c.id),
               ),
@@ -498,7 +499,7 @@ function ContentView({ content }: { content: PageContent }) {
         </div>
       );
     case 'places':
-      return <PlacesView places={content.places} />;
+      return <PlacesView places={content.places} entries={content.entries} />;
     case 'columns':
       return (
         <div className="flex items-start gap-12">
@@ -514,43 +515,70 @@ function ContentView({ content }: { content: PageContent }) {
   }
 }
 
-const medal = (from: number) => (from === 1 ? 'bg-amber-400 text-amber-950' : from === 2 ? 'bg-slate-300 text-slate-800' : from === 3 ? 'bg-orange-300 text-orange-950' : 'bg-slate-200 text-slate-700');
+const medal = (from: number) => (from === 1 ? 'bg-amber-400 text-amber-950' : from === 2 ? 'bg-slate-300 text-slate-800' : from === 3 ? 'bg-orange-300 text-orange-950' : 'bg-slate-100 text-slate-700');
 
-/** The final places of a competition: one card per place or shared range, the entries in it, and what is still to come. */
-function PlacesView({ places }: { places: FinalPlacesView }) {
+interface PlaceRow {
+  key: string;
+  place: string | null;
+  from: number;
+  entry: EntryView;
+  status: 'playing' | 'done' | 'withdrew';
+}
+
+/**
+ * The entries of a competition as a table, so everyone can see whether they are still playing: first those
+ * still in (their place isn't decided yet), then the places decided so far, best first.
+ */
+function PlacesView({ places, entries }: { places: FinalPlacesView; entries: EntryView[] }) {
   const { t } = useTranslation();
   const nameOf = useEntryName();
-  const blocks = new Map<string, { place: PlaceRange; rows: FinalPlaceView[]; missing: number }>();
-  const blockOf = (place: PlaceRange) => {
-    const key = `${place.from}-${place.to}`;
-    const block = blocks.get(key) ?? { place, rows: [], missing: 0 };
-    blocks.set(key, block);
-    return block;
-  };
-  for (const row of places.rows) blockOf(row.place).rows.push(row);
-  for (const gap of places.open) blockOf(gap.place).missing = gap.count;
-  const all = [...blocks.values()].sort((a, b) => a.place.from - b.place.from);
-  // Places nobody has reached yet are not listed one by one: a single line says how many are still open.
-  const ordered = all.filter((b) => b.rows.length > 0);
-  const undecided = all.filter((b) => b.rows.length === 0).reduce((sum, b) => sum + b.missing, 0);
   const label = (p: PlaceRange) => (p.from === p.to ? String(p.from) : `${p.from}–${p.to}`);
+  const decided = new Set(places.rows.map((r) => r.entry.id));
+  const playing: PlaceRow[] = entries
+    .filter((e) => !decided.has(e.id))
+    .map((entry) => ({ key: entry.id, place: null, from: 0, entry, status: entry.withdrawnAt !== null ? 'withdrew' : 'playing' }));
+  const done: PlaceRow[] = places.rows.map((r) => ({
+    key: r.entry.id,
+    place: label(r.place),
+    from: r.place.from,
+    entry: r.entry,
+    status: r.entry.withdrawnAt !== null ? 'withdrew' : 'done',
+  }));
+  const rows = [...playing, ...done];
+  const columns = rows.length > 24 ? 3 : rows.length > 10 ? 2 : 1;
+  const per = Math.ceil(rows.length / columns);
+  const chunks = Array.from({ length: columns }, (_, i) => rows.slice(i * per, (i + 1) * per));
+  const status = {
+    playing: 'bg-emerald-100 text-emerald-800',
+    done: 'bg-slate-100 text-slate-500',
+    withdrew: 'bg-amber-100 text-amber-800',
+  } as const;
   return (
-    <div className="w-[1100px] columns-2 gap-6 p-6">
-      {ordered.map((block) => (
-        <section key={label(block.place)} className="mb-4 flex break-inside-avoid gap-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-          <span className={cn('flex h-14 min-w-14 shrink-0 items-center justify-center rounded-lg px-2 text-3xl font-bold', medal(block.place.from))}>{label(block.place)}</span>
-          <ul className={cn('min-w-0 flex-1 gap-x-6 text-2xl font-semibold', block.rows.length > 12 ? 'columns-3' : block.rows.length > 4 ? 'columns-2' : '')}>
-            {block.rows.map((row) => (
-              <li key={row.entry.id} className="truncate leading-9">
-                {nameOf(row.entry)}
-                {block.rows.length <= 4 && row.entry.players[0]?.club && <span className="ml-2 text-base font-normal text-slate-400">{row.entry.players[0].club}</span>}
-              </li>
+    <div className="flex items-start gap-8 p-6">
+      {chunks.map((chunk, i) => (
+        <table key={i} className="w-[520px] table-fixed border-separate border-spacing-y-1.5 text-2xl">
+          <thead>
+            <tr className="text-left text-base font-semibold tracking-wide text-slate-400 uppercase">
+              <th className="w-28 px-2">{t('groups.place')}</th>
+              <th className="px-2">{t('groups.player')}</th>
+              <th className="w-36 px-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {chunk.map((row) => (
+              <tr key={row.key} className="bg-white shadow-sm">
+                <td className="rounded-l-lg p-1.5">
+                  {row.place !== null && <span className={cn('flex h-10 items-center justify-center rounded-md px-2 text-xl font-bold whitespace-nowrap', medal(row.from))}>{row.place}</span>}
+                </td>
+                <td className={cn('truncate px-2 py-1.5 font-semibold', row.status !== 'playing' && 'text-slate-600')}>{nameOf(row.entry)}</td>
+                <td className="rounded-r-lg p-1.5 text-center">
+                  <span className={cn('inline-block rounded-md px-3 py-1 text-lg font-semibold', status[row.status])}>{t(`display.status.${row.status}`)}</span>
+                </td>
+              </tr>
             ))}
-            {block.missing > 0 && <li className="leading-9 text-slate-400 italic">{t('display.placesMissing', { count: block.missing })}</li>}
-          </ul>
-        </section>
+          </tbody>
+        </table>
       ))}
-      {undecided > 0 && <p className="break-inside-avoid px-2 text-xl text-slate-500 italic">{t('display.placesMissing', { count: undecided })}</p>}
     </div>
   );
 }
