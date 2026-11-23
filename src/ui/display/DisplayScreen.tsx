@@ -17,7 +17,7 @@ import {
   type TableOverviewRow,
   type TournamentState,
 } from '@/engine';
-import { loadExcluded, loadSplit, saveExcluded, saveSplit } from '@/app/displayPrefs';
+import { loadExcluded, loadHideFinished, loadSplit, saveExcluded, saveHideFinished, saveSplit } from '@/app/displayPrefs';
 import { TournamentStateContext, useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
 import { formatClock } from '@/ui/format';
@@ -74,6 +74,7 @@ function Display({ state }: { state: TournamentState }) {
   const now = useNow();
   const [excluded, setExcluded] = useState(() => loadExcluded(state.id));
   const [split, setSplit] = useState(() => loadSplit(state.id));
+  const [hideFinished, setHideFinished] = useState(() => loadHideFinished(state.id));
   const competitions = useQuery(getCompetitions) ?? [];
   const cycle = useMemo(() => getDisplayCycle(state, { excluded }), [state, excluded]);
   const tournament = useQuery(getTournament);
@@ -97,9 +98,10 @@ function Display({ state }: { state: TournamentState }) {
                 getDisplayFocus(s, c.id, now),
                 { w: size.w, h: size.h, minScale },
                 split.includes(c.id),
+                hideFinished.includes(c.id),
               ),
             ),
-      [cycle, now, t, size.w, size.h, minScale, split],
+      [cycle, now, t, size.w, size.h, minScale, split, hideFinished],
     ) ?? [];
   const { current, index, secondsLeft, goTo } = useCycle(pages, now);
   const competitionIndex = Math.max(0, cycle.findIndex((c) => c.id === current?.competition));
@@ -110,6 +112,11 @@ function Display({ state }: { state: TournamentState }) {
     const next = split.includes(id) ? split.filter((x) => x !== id) : [...split, id];
     setSplit(next);
     saveSplit(state.id, next);
+  };
+  const toggleHideFinished = (id: string) => {
+    const next = hideFinished.includes(id) ? hideFinished.filter((x) => x !== id) : [...hideFinished, id];
+    setHideFinished(next);
+    saveHideFinished(state.id, next);
   };
   const goToCompetition = (id: string) => {
     const first = pages.findIndex((p) => p.competition === id);
@@ -134,7 +141,7 @@ function Display({ state }: { state: TournamentState }) {
           {current && <span className="truncate text-lg text-slate-400">{tournament?.name}</span>}
           <div className="ml-auto flex items-center gap-4">
             {secondsLeft !== null && <span className="text-sm text-slate-300 tabular-nums">{t('display.nextIn', { seconds: secondsLeft })}</span>}
-            <Controls visible={controls} competitions={competitions} cycle={cycle} excluded={excluded} onToggle={toggle} split={split} onToggleSplit={toggleSplit} />
+            <Controls visible={controls} competitions={competitions} cycle={cycle} excluded={excluded} onToggle={toggle} split={split} onToggleSplit={toggleSplit} hideFinished={hideFinished} onToggleHideFinished={toggleHideFinished} />
           </div>
         </header>
         {pages.length > 1 && <NavTabs pages={pages} cycle={cycle} current={current} onGoTo={goTo} onGoToCompetition={goToCompetition} />}
@@ -293,6 +300,9 @@ function Controls(props: {
   /** Competitions split into pages; the others are shown whole on one screen. */
   split: string[];
   onToggleSplit: (id: string) => void;
+  /** Competitions whose finished parts are left out (only matters for the split ones). */
+  hideFinished: string[];
+  onToggleHideFinished: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -334,6 +344,16 @@ function Controls(props: {
                   <label className="ml-7 flex items-center gap-2 rounded p-1 text-sm text-slate-600 hover:bg-slate-50">
                     <input type="checkbox" className="size-4" checked={props.split.includes(c.id)} onChange={() => props.onToggleSplit(c.id)} />
                     {t('display.splitPages')}
+                  </label>
+                  <label className={cn('ml-14 flex items-center gap-2 rounded p-1 text-sm text-slate-600 hover:bg-slate-50', !props.split.includes(c.id) && 'opacity-40')}>
+                    <input
+                      type="checkbox"
+                      className="size-4"
+                      disabled={!props.split.includes(c.id)}
+                      checked={props.hideFinished.includes(c.id)}
+                      onChange={() => props.onToggleHideFinished(c.id)}
+                    />
+                    {t('display.hideFinished')}
                   </label>
                 </li>
               );

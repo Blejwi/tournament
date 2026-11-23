@@ -94,16 +94,16 @@ function currentSections(sections: LayoutSection[], finished: boolean): LayoutSe
   return cut.map((s) => (s.below && s.column !== undefined ? { ...s, column: Math.max(0, s.column - dropped) } : s));
 }
 
-function bracketPages(t: TFunction, stage: BracketStageView, focus: DisplayStageFocus, space: PageSpace): BracketBlock[][] {
+function bracketPages(t: TFunction, stage: BracketStageView, focus: DisplayStageFocus, space: PageSpace, hideFinished: boolean): BracketBlock[][] {
   const options: PagePlanOptions = { pageW: space.w - PAGE_MARGIN, pageH: space.h - PAGE_MARGIN, minScale: space.minScale, cardW: DISPLAY_CARD_W, maxScale: MAX_SCALE };
   const blocks = blocksOf(stage, bracketLayoutSections(t, stage, 'below'))
     .map((sections) => ({ sections, layout: layoutBracket(sections, DISPLAY_CARD_W) }))
     .filter((b) => b.layout.cards.some((c) => c.match.status !== 'disabled'));
   const open = blocks.filter((b) => b.layout.cards.some((c) => isOpen(c.match)));
-  // Current blocks only; a finished bracket keeps its main block so it doesn't vanish.
-  const shown = open.length > 0 ? open : blocks.slice(0, 1);
+  // Hiding what is finished: current blocks only, a finished bracket keeps its main block so it doesn't vanish.
+  const shown = !hideFinished ? blocks : open.length > 0 ? open : blocks.slice(0, 1);
   const parts = shown.flatMap((b) => {
-    const sections = currentSections(b.sections, open.length === 0 || focus.finished);
+    const sections = hideFinished ? currentSections(b.sections, open.length === 0 || focus.finished) : b.sections;
     return planBracketPages(layoutBracket(sections, DISPLAY_CARD_W), options).map((p) => ({ sections, crop: { x: p.x, y: p.y, w: p.w, h: p.h } }));
   });
   // Parts that fit one above the other share a page (a small block after the last page of a long one).
@@ -123,9 +123,10 @@ function bracketPages(t: TFunction, stage: BracketStageView, focus: DisplayStage
   return pages.map((p) => p.parts.map(({ sections, crop }) => ({ sections, crop })));
 }
 
-function groupPages(stage: Extract<StageView, { type: 'groups' }>, focus: DisplayStageFocus, space: PageSpace) {
+function groupPages(stage: Extract<StageView, { type: 'groups' }>, focus: DisplayStageFocus, space: PageSpace, hideFinished: boolean) {
   const byId = new Map(stage.groups.map((g) => [g.id, g]));
-  const groups = focus.groups.flatMap((g) => byId.get(g.group) ?? []);
+  // The focus has left out the finished groups once the next stage has started; they are only dropped on request.
+  const groups = hideFinished ? focus.groups.flatMap((g) => byId.get(g.group) ?? []) : stage.groups;
   const matches = Object.fromEntries(focus.groups.map((g) => [g.group, g.matches]));
   const columns = Math.max(1, Math.floor((( space.w - PAGE_MARGIN) / space.minScale + GROUP_GAP) / (GROUP_BOX_W + GROUP_GAP)));
   const rows = Math.max(1, Math.floor(((space.h - PAGE_MARGIN) / space.minScale + GROUP_GAP) / (GROUP_BOX_H + GROUP_GAP)));
@@ -209,6 +210,8 @@ export function planCompetitionPages(
   focus: DisplayStageFocus[],
   space: PageSpace,
   split = true,
+  /** Leave out what is finished: groups once the next stage has started, early bracket rounds, finished blocks. */
+  hideFinished = false,
 ): DisplayPage[] {
   if (!split) {
     const content = arrange(wholeItems(t, stages), space);
@@ -219,7 +222,7 @@ export function planCompetitionPages(
     const f = focus[i];
     if (!stage || !f || stage.drawState === 'notDrawn') return [];
     const contents: PageContent[] =
-      stage.type === 'groups' ? groupPages(stage, f, space) : bracketPages(t, stage, f, space).map((blocks): PageContent => ({ kind: 'bracket', blocks }));
+      stage.type === 'groups' ? groupPages(stage, f, space, hideFinished) : bracketPages(t, stage, f, space, hideFinished).map((blocks): PageContent => ({ kind: 'bracket', blocks }));
     return contents.map((content, n) => ({
       key: `${competition}:${stage.id}:${n + 1}`,
       competition,

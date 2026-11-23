@@ -410,6 +410,7 @@ export const en = {
     competitions: 'Competitions',
     splitPages: 'Split into pages (bigger text, several screens)',
     pages: 'Pages',
+    hideFinished: 'Leave out what is finished (groups, early rounds)',
     tablesEmpty: 'No active tables.',
     freeTable: 'Free',
   },

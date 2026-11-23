@@ -413,6 +413,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     competitions: 'Konkurencje',
     splitPages: 'Dziel na strony (większy tekst, kilka ekranów)',
     pages: 'Strony',
+    hideFinished: 'Pomijaj to, co zakończone (grupy, wczesne rundy)',
     tablesEmpty: 'Brak aktywnych stołów.',
     freeTable: 'Wolny',
   },

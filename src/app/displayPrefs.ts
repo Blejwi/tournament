@@ -43,3 +43,23 @@ export function saveSplit(id: TournamentId, split: readonly CompetitionId[], sto
     // Storage full or blocked: the choice just won't survive a reload.
   }
 }
+
+const hideFinishedKey = (id: TournamentId) => `tm:display-hide-finished:${id}`;
+
+/** The competitions whose finished parts (groups, early rounds) the split display leaves out; by default everything shows. */
+export function loadHideFinished(id: TournamentId, store: Storage = window.localStorage): CompetitionId[] {
+  try {
+    const parsed: unknown = JSON.parse(store.getItem(hideFinishedKey(id)) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveHideFinished(id: TournamentId, hide: readonly CompetitionId[], store: Storage = window.localStorage): void {
+  try {
+    store.setItem(hideFinishedKey(id), JSON.stringify(hide));
+  } catch {
+    // Storage full or blocked: the choice just won't survive a reload.
+  }
+}
