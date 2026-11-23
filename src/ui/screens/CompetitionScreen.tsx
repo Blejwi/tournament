@@ -135,7 +135,7 @@ function EntriesCard({ competition, locked }: { competition: CompetitionView; lo
       </CardContent>
       {dialog === 'existing' && <ExistingPlayerDialog competition={competition} onClose={() => setDialog(null)} />}
       {dialog !== null && dialog !== 'existing' && (
-        <PlayerDialog competition={competition.id} player={dialog === 'add' ? null : dialog} onClose={() => setDialog(null)} />
+        <PlayerDialog competition={competition} player={dialog === 'add' ? null : dialog} onClose={() => setDialog(null)} />
       )}
     </Card>
   );

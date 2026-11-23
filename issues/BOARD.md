@@ -12,6 +12,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Blocked by |
 |---|---|---|
+| [#0031](0031-add-players-in-a-row.md) | Add new players one after another | |
 
 ## 🔵 In progress
 
