@@ -14,7 +14,7 @@ export const CARD_H = 64;
 /** Card width on the play screen: room for a typical full name; longer ones are cut with an ellipsis (#0029). */
 export const PLAY_CARD_W = 220;
 /** Card width on the read-only display, where names are short (#0028, #0029). */
-export const DISPLAY_CARD_W = 170;
+export const DISPLAY_CARD_W = 200;
 /** Vertical centre of slot A and slot B inside a card (below the 18px header, 21px per slot). */
 export const SLOT_Y: [number, number] = [28, 49];
 const GAP_X = 56;

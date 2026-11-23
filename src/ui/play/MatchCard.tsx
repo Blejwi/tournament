@@ -55,7 +55,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
         props.selected && 'outline-2 outline-offset-2 outline-slate-900',
       )}
     >
-      <span className={cn('flex h-[18px] items-center gap-1 px-1.5 leading-none', print ? 'text-[12px]' : display ? 'text-[11px]' : 'text-[10px]')}>
+      <span className={cn('flex h-[18px] items-center gap-1 px-1.5 leading-none', print ? 'text-[12px]' : display ? 'text-[12px]' : 'text-[10px]')}>
         <b className="text-slate-700">{matchCode(t, match.location, match.round, match.order)}</b>
         <span className="ml-auto shrink-0">
           {print ? match.decidedByBye && <span className="text-slate-500">{t('bracket.bye')}</span> : <StatusChip match={match} />}
@@ -69,7 +69,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
             key={side}
             className={cn(
               'flex h-[21px] items-center gap-1 border-t border-black/5 px-1.5',
-              print ? 'text-[14px] leading-[14px]' : display ? 'text-[13px] leading-[13px] font-medium' : 'text-[11px] leading-[10px]',
+              print ? 'text-[14px] leading-[14px]' : display ? 'text-[15px] leading-[15px] font-medium' : 'text-[11px] leading-[10px]',
               won && 'font-semibold text-slate-800',
               match.result && !won && 'text-slate-400',
             )}

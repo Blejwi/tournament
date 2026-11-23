@@ -16,6 +16,8 @@ export function GroupBox(props: {
   onSelectMatch?: (id: MatchId, el: HTMLElement) => void;
   /** Opens the group detail (standings, cross table, tiebreak). */
   onOpenDetail?: () => void;
+  /** On the display: show only these matches (the one in play and the next) instead of all of the group's. */
+  shownMatches?: MatchId[];
 }) {
   const { t } = useTranslation();
   const { group } = props;
@@ -94,7 +96,7 @@ export function GroupBox(props: {
         </ul>
       )}
       <div className="grid grid-cols-2 gap-2">
-        {group.matches.map((match) => (
+        {(props.shownMatches ? group.matches.filter((m) => props.shownMatches!.includes(m.id)) : group.matches).map((match) => (
           <MatchCard
             key={match.id}
             match={match}

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { Link, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Maximize, Minimize, Settings } from 'lucide-react';
@@ -6,13 +7,13 @@ import {
   getCompetition,
   getCompetitions,
   getDisplayCycle,
+  getDisplayFocus,
   getDisplayNames,
   getStage,
   getTableOverview,
   getTournament,
   getWaitingList,
   type MatchView,
-  type StageView,
   type TableOverviewRow,
   type TournamentState,
 } from '@/engine';
@@ -25,16 +26,15 @@ import { BracketBoard } from '@/ui/play/BracketBoard';
 import { DisplayModeContext, useEntryName } from '@/ui/play/displayMode';
 import { GroupBox } from '@/ui/play/GroupBox';
 import { overdueText } from '@/ui/play/overdueStyle';
-import { bracketLayoutSections } from '@/ui/play/bracketSections';
 import { tableTone } from '@/ui/play/tableTone';
 import { useNow } from '@/ui/useNow';
-import { usePlayOffLayout } from '@/ui/usePlayOffLayout';
 import { FitToScreen } from './FitToScreen';
+import { DISPLAY_MIN_SCALE, planCompetitionPages, type DisplayPage } from './pagePlan';
 import { useDisplayTournament } from './useDisplayTournament';
 
-/** How long one competition stays on screen before the next one. */
-export const CYCLE_SECONDS = 20;
-/** How long the sidebar shows one view (the tables, then the next matches) before the other. Faster than the competitions. */
+/** How long one page (some groups, or part of a bracket) stays on screen before the next one. */
+export const PAGE_SECONDS = 12;
+/** How long the sidebar shows one view (the tables, then the next matches) before the other. Faster than the pages. */
 export const SIDEBAR_CYCLE_SECONDS = 8;
 /** How many waiting matches the "next" list shows. */
 const NEXT_MATCHES = 5;
@@ -76,10 +76,33 @@ function Display({ state }: { state: TournamentState }) {
   const competitions = useQuery(getCompetitions) ?? [];
   const cycle = useMemo(() => getDisplayCycle(state, { excluded }), [state, excluded]);
   const tournament = useQuery(getTournament);
-  const { current, index, secondsLeft, goTo } = useCycle(cycle, now);
   const { visible: controls, bump: showControls } = useTransientVisibility();
   const names = useQuery(getDisplayNames);
   const mode = useMemo(() => ({ names: names ?? {} }), [names]);
+
+  // The pages depend on how much room the content has.
+  const [mainRef, size] = useElementSize<HTMLElement>();
+  const minScale = DISPLAY_MIN_SCALE * Math.min(1, Math.max(0.85, size.w / 1536));
+  const pages =
+    useQuery(
+      (s) =>
+        size.w === 0
+          ? []
+          : cycle.flatMap((c) =>
+              planCompetitionPages(
+                t,
+                c.id,
+                (getCompetition(s, c.id)?.stages ?? []).map((stage) => getStage(s, stage.id, now)),
+                getDisplayFocus(s, c.id, now),
+                { w: size.w, h: size.h, minScale },
+              ),
+            ),
+      [cycle, now, t, size.w, size.h, minScale],
+    ) ?? [];
+  const { current, index, secondsLeft, goTo } = useCycle(pages, now);
+  const competitionIndex = Math.max(0, cycle.findIndex((c) => c.id === current?.competition));
+  const sameCompetition = current ? pages.filter((p) => p.competition === current.competition) : [];
+  const competition = cycle[competitionIndex];
 
   const toggle = (id: string) => {
     const next = excluded.includes(id) ? excluded.filter((x) => x !== id) : [...excluded, id];
@@ -89,66 +112,96 @@ function Display({ state }: { state: TournamentState }) {
 
   return (
     <DisplayModeContext.Provider value={mode}>
-    <div className="flex h-dvh flex-col bg-slate-100 text-slate-900" onMouseMove={showControls}>
-      <header className="flex shrink-0 items-center gap-6 bg-slate-900 px-6 py-3 text-white">
-        <h1 className="min-w-0 truncate text-2xl font-bold">{current ? current.name : tournament?.name}</h1>
-        {current && <span className="truncate text-lg text-slate-400">{tournament?.name}</span>}
-        <div className="ml-auto flex items-center gap-4">
-          {secondsLeft !== null && <span className="text-sm text-slate-300 tabular-nums">{t('display.nextIn', { seconds: secondsLeft })}</span>}
-          <Controls
-            visible={controls}
-            competitions={competitions}
-            cycle={cycle}
-            index={index}
-            onGoTo={goTo}
-            excluded={excluded}
-            onToggle={toggle}
-          />
+      <div className="flex h-dvh flex-col bg-slate-100 text-slate-900" onMouseMove={showControls}>
+        <header className="flex shrink-0 items-center gap-6 bg-slate-900 px-6 py-3 text-white">
+          <h1 className="min-w-0 truncate text-2xl font-bold">
+            {current && competition ? competition.name : tournament?.name}
+            {current && sameCompetition.length > 1 && <span className="font-normal text-slate-300"> · {pageLabel(t, current)}</span>}
+          </h1>
+          {current && <span className="truncate text-lg text-slate-400">{tournament?.name}</span>}
+          <div className="ml-auto flex items-center gap-4">
+            {secondsLeft !== null && <span className="text-sm text-slate-300 tabular-nums">{t('display.nextIn', { seconds: secondsLeft })}</span>}
+            <Controls
+              visible={controls}
+              competitions={competitions}
+              cycle={cycle}
+              index={competitionIndex}
+              pageCount={pages.length}
+              onGoToCompetition={(i) => {
+                const first = pages.findIndex((p) => p.competition === cycle[i]?.id);
+                if (first !== -1) goTo(first);
+              }}
+              onStep={(delta) => goTo(index + delta)}
+              excluded={excluded}
+              onToggle={toggle}
+            />
+          </div>
+        </header>
+        {secondsLeft !== null && (
+          <div className="h-1 shrink-0 bg-slate-800">
+            <div className="h-full bg-indigo-500 transition-[width] duration-1000 ease-linear" style={{ width: `${(secondsLeft / PAGE_SECONDS) * 100}%` }} />
+          </div>
+        )}
+        <div className="flex min-h-0 flex-1">
+          <main ref={mainRef} className="flex min-w-0 flex-1 flex-col">
+            {current ? (
+              <PageView key={current.key} page={current} />
+            ) : (
+              <div className="grid flex-1 place-items-center p-10 text-center text-xl text-slate-400">{t('display.noCompetition')}</div>
+            )}
+          </main>
+          <Sidebar now={now} />
         </div>
-      </header>
-      {secondsLeft !== null && (
-        <div className="h-1 shrink-0 bg-slate-800">
-          <div className="h-full bg-indigo-500 transition-[width] duration-1000 ease-linear" style={{ width: `${(secondsLeft / CYCLE_SECONDS) * 100}%` }} />
-        </div>
-      )}
-      <div className="flex min-h-0 flex-1">
-        <main className="flex min-w-0 flex-1 flex-col">
-          {current ? (
-            <CompetitionView key={current.id} competitionId={current.id} now={now} />
-          ) : (
-            <div className="grid flex-1 place-items-center p-10 text-center text-xl text-slate-400">{t('display.noCompetition')}</div>
-          )}
-        </main>
-        <Sidebar now={now} />
       </div>
-    </div>
     </DisplayModeContext.Provider>
   );
 }
 
+/** "Drabinka 2/3", or just "Grupy" when the stage is one page. */
+function pageLabel(t: TFunction, page: DisplayPage): string {
+  const name = t(page.type === 'groups' ? 'display.pageGroups' : 'display.pageBracket');
+  return page.of > 1 ? `${name} ${page.n}/${page.of}` : name;
+}
+
+/** The size of an element's box, kept up to date as it changes. Zero until measured. */
+function useElementSize<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setSize((prev) => (prev.w === el.clientWidth && prev.h === el.clientHeight ? prev : { w: el.clientWidth, h: el.clientHeight }));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, size] as const;
+}
+
 /**
- * Which cycle item is on screen. Advances every `CYCLE_SECONDS`; when the list changes it stays on the
- * competition that is on screen if it is still in the list, otherwise it takes the one now at that place.
+ * Which page is on screen. Advances every `PAGE_SECONDS`; when the pages change it stays on the page
+ * that is on screen if it is still there, otherwise it takes the one now at that place.
  */
-function useCycle(cycle: { id: string; name: string }[], now: number) {
-  const [shown, setShown] = useState<{ id: string | null; index: number; since: number }>({ id: null, index: 0, since: now });
-  const stillThere = cycle.findIndex((c) => c.id === shown.id);
-  const index = cycle.length === 0 ? -1 : stillThere !== -1 ? stillThere : Math.min(shown.index, cycle.length - 1);
-  const due = cycle.length > 1 && now - shown.since >= CYCLE_SECONDS * 1000;
-  const target = due ? (index + 1) % cycle.length : index;
+function useCycle<P extends { key: string }>(pages: P[], now: number) {
+  const [shown, setShown] = useState<{ key: string | null; index: number; since: number }>({ key: null, index: 0, since: now });
+  const stillThere = pages.findIndex((p) => p.key === shown.key);
+  const index = pages.length === 0 ? -1 : stillThere !== -1 ? stillThere : Math.min(shown.index, pages.length - 1);
+  const due = pages.length > 1 && now - shown.since >= PAGE_SECONDS * 1000;
+  const target = due ? (index + 1) % pages.length : index;
 
-  const targetId = cycle[target]?.id ?? null;
+  const targetKey = pages[target]?.key ?? null;
   useEffect(() => {
-    if (targetId !== shown.id || target !== shown.index) setShown({ id: targetId, index: Math.max(target, 0), since: due || targetId !== shown.id ? now : shown.since });
-  }, [targetId, target, due, shown, now]);
+    if (targetKey !== shown.key || target !== shown.index) setShown({ key: targetKey, index: Math.max(target, 0), since: due || targetKey !== shown.key ? now : shown.since });
+  }, [targetKey, target, due, shown, now]);
 
-  const current = cycle[index] ?? null;
-  const secondsLeft = cycle.length > 1 ? Math.max(0, Math.ceil((CYCLE_SECONDS * 1000 - (now - shown.since)) / 1000)) : null;
-  /** Shows the competition at `to` (wrapping round) at once and restarts the countdown, so the cycle carries on from it. */
+  const current = pages[index] ?? null;
+  const secondsLeft = pages.length > 1 ? Math.max(0, Math.ceil((PAGE_SECONDS * 1000 - (now - shown.since)) / 1000)) : null;
+  /** Shows the page at `to` (wrapping round) at once and restarts the countdown, so the cycle carries on from it. */
   const goTo = (to: number) => {
-    if (cycle.length < 2) return;
-    const next = ((to % cycle.length) + cycle.length) % cycle.length;
-    setShown({ id: cycle[next].id, index: next, since: now });
+    if (pages.length < 2) return;
+    const next = ((to % pages.length) + pages.length) % pages.length;
+    setShown({ key: pages[next].key, index: next, since: now });
   };
   return { current, index, secondsLeft, goTo };
 }
@@ -173,7 +226,10 @@ function Controls(props: {
   /** The competitions in the cycle, in order, and the one on screen. */
   cycle: { id: string; name: string }[];
   index: number;
-  onGoTo: (index: number) => void;
+  /** How many pages the cycle has; the buttons and keys step through them. */
+  pageCount: number;
+  onGoToCompetition: (index: number) => void;
+  onStep: (delta: number) => void;
   excluded: string[];
   onToggle: (id: string) => void;
 }) {
@@ -186,24 +242,25 @@ function Controls(props: {
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
   const button = 'flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-sm font-semibold hover:bg-white/20';
-  const { cycle, index, onGoTo } = props;
+  const { cycle, index, onGoToCompetition, onStep } = props;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && (e.target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName))) return;
-      if (e.key === 'ArrowLeft') onGoTo(index - 1);
-      else if (e.key === 'ArrowRight') onGoTo(index + 1);
+      if (e.key === 'ArrowLeft') onStep(-1);
+      else if (e.key === 'ArrowRight') onStep(1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [index, onGoTo]);
+  }, [onStep]);
 
   return (
     <div className={cn('relative flex items-center gap-2 transition-opacity', props.visible || open ? 'opacity-100' : 'pointer-events-none opacity-0')}>
+      {props.pageCount > 1 && (
+        <button type="button" className={button} aria-label={t('display.previousPage')} title={t('display.previousPage')} onClick={() => onStep(-1)}>
+          <ChevronLeft className="size-4" aria-hidden />
+        </button>
+      )}
       {cycle.length > 1 && (
-        <>
-          <button type="button" className={button} aria-label={t('display.previousCompetition')} title={t('display.previousCompetition')} onClick={() => onGoTo(index - 1)}>
-            <ChevronLeft className="size-4" aria-hidden />
-          </button>
           <ul className="flex max-w-[40vw] items-center gap-1 overflow-hidden" aria-label={t('display.competitions')}>
             {cycle.map((c, i) => (
               <li key={c.id} className="min-w-0">
@@ -212,17 +269,18 @@ function Controls(props: {
                   aria-current={i === index ? 'true' : undefined}
                   title={c.name}
                   className={cn('max-w-40 truncate rounded-md px-3 py-1.5 text-sm font-semibold', i === index ? 'bg-indigo-500 text-white' : 'bg-white/10 hover:bg-white/20')}
-                  onClick={() => onGoTo(i)}
+                  onClick={() => onGoToCompetition(i)}
                 >
                   {c.name}
                 </button>
               </li>
             ))}
           </ul>
-          <button type="button" className={button} aria-label={t('display.nextCompetition')} title={t('display.nextCompetition')} onClick={() => onGoTo(index + 1)}>
-            <ChevronRight className="size-4" aria-hidden />
-          </button>
-        </>
+      )}
+      {props.pageCount > 1 && (
+        <button type="button" className={button} aria-label={t('display.nextPage')} title={t('display.nextPage')} onClick={() => onStep(1)}>
+          <ChevronRight className="size-4" aria-hidden />
+        </button>
       )}
       <button type="button" className={button} aria-expanded={open} onClick={() => setOpen(!open)}>
         <Settings className="size-4" aria-hidden />
@@ -359,42 +417,24 @@ function NextMatches({ now }: { now: number }) {
   );
 }
 
-/** The display's group boxes are narrow, so its grid is wider than the canvas's: fewer rows to fit into the height. */
-const displayGroupColumns = (count: number, sideBySide: boolean) => Math.min(count, Math.max(1, Math.ceil(Math.sqrt(count * (sideBySide ? 0.9 : 1.8)))));
-
-/** One competition's groups and brackets, fitted to the space and not interactive. */
-function CompetitionView({ competitionId, now }: { competitionId: string; now: number }) {
-  const { t } = useTranslation();
-  const [playOffLayout] = usePlayOffLayout();
-  const competition = useQuery((s) => getCompetition(s, competitionId), [competitionId]);
-  const stageIds = (competition?.stages ?? []).map((s) => s.id).join();
-  const stages =
-    useQuery(
-      (s) =>
-        stageIds
-          .split(',')
-          .filter(Boolean)
-          .map((id) => getStage(s, id, now))
-          .filter((v): v is StageView => v !== null),
-      [stageIds, now],
-    ) ?? [];
-  // Groups feeding a bracket sit beside it, not above it: the screen is wider than it is tall (#0029).
-  const sideBySide = stages.length > 1 && stages.some((s) => s.type === 'groups');
+/** One page of the display: some groups, or some blocks of a bracket, fitted to the space and not interactive. */
+function PageView({ page }: { page: DisplayPage }) {
+  const { content } = page;
   return (
     <FitToScreen className="flex-1 bg-slate-100">
-      <div className={cn('flex items-center gap-12 p-8', sideBySide ? 'flex-row' : 'flex-col')}>
-        {stages.map((s) =>
-          s.type === 'groups' ? (
-            <div key={s.id} className="grid gap-6" style={{ gridTemplateColumns: `repeat(${displayGroupColumns(s.groups.length, sideBySide)}, auto)` }}>
-              {s.groups.map((group) => (
-                <GroupBox key={group.id} group={group} selectedMatch={null} />
-              ))}
-            </div>
-          ) : (
-            <BracketBoard key={s.id} sections={bracketLayoutSections(t, s, playOffLayout)} selectedMatch={null} />
-          ),
-        )}
-      </div>
+      {content.kind === 'groups' ? (
+        <div className="grid items-start gap-6 p-4" style={{ gridTemplateColumns: `repeat(${content.columns}, auto)` }}>
+          {content.groups.map((group) => (
+            <GroupBox key={group.id} group={group} selectedMatch={null} shownMatches={content.matches[group.id]} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-start gap-10 p-4">
+          {content.blocks.map((block, i) => (
+            <BracketBoard key={i} sections={block.sections} selectedMatch={null} crop={block.crop} />
+          ))}
+        </div>
+      )}
     </FitToScreen>
   );
 }
