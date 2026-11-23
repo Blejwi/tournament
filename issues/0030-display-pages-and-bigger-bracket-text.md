@@ -1,7 +1,7 @@
 ---
 id: 30
 title: Display pages and bigger bracket text
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-11-23
 ---
@@ -51,13 +51,35 @@ The display's bracket text gets bigger (15 px), and the content is split into **
 
 ## Acceptance Criteria
 
-- [ ] Display bracket text is larger; on-screen size (font × scale) is reported before and after.
-- [ ] Pages per competition as described; page counts reported before and after.
-- [ ] Finished groups / early rounds drop out as the competition progresses; a finished competition still shows its final page(s).
-- [ ] Header "Name · Drabinka n/m" (EN and PL); controls step pages and restart the countdown; chips jump to a competition's first page.
-- [ ] Printout and play screen unchanged; tests, build and lint green.
-- [ ] Checked at 1920×1080 and 1280×800.
+- [x] Display bracket text is larger; on-screen size (font × scale) is reported before and after.
+- [x] Pages per competition as described; page counts reported before and after.
+- [x] Finished groups / early rounds drop out as the competition progresses; a finished competition still shows its final page(s).
+- [x] Header "Name · Drabinka n/m" (EN and PL); controls step pages and restart the countdown; chips jump to a competition's first page.
+- [x] Printout and play screen unchanged; tests, build and lint green.
+- [x] Checked at 1920×1080 and 1280×800.
 
 ## Out of Scope
 
 - Short names on the play screen; configurable page time or minimum scale.
+
+## Resolution
+
+Done in 23eb769.
+
+**Built**
+- Engine: `getDisplayFocus(state, competition, now)` (`displayFocus.test.ts`, 6 tests): per stage `started` / `finished`, and for groups stages the groups still current (all, or only the unfinished ones once the next stage has started) with their current matches (in play, then next).
+- `planBracketPages` takes options (page size, minimum scale, card width, maximum scale, region); the defaults are the printout's. The display planner `ui/display/pagePlan.ts` (pure) splits a bracket into blocks (play-off trees, double-elimination parts), drops leading rounds that are finished (and lays the rest out again so it stacks compactly), keeps a finished bracket's last two rounds, plans each block and stacks parts that fit one page. Groups: boxes per page from the space at the minimum scale, evenly spread.
+- Display: card text 15 px, card width 200, `DISPLAY_MIN_SCALE` = 1.3 (eased to as low as 1.1 on screens narrower than 1920), `PAGE_SECONDS` = 12 replaces the 20 s per competition. Header "Open · Drabinka 2/3" (EN and PL), previous/next page, ←/→, competition chips jump to a competition's first page; every manual step restarts the countdown. Group boxes show standings plus the match in play and the next one.
+
+**Measured** (seed: 36 players → 8 groups → 16 bracket "Open", 32-entry single elimination "Cup32", 16-entry double elimination "DE16"; the display at 1920×1080; text on screen = font × scale)
+- Before (#0029), "Open" on one screen: scale 0.60, card text 13 px → 7.8 px; 1 page per competition.
+- After, groups in play: Open 2 group pages (4 groups each, 26 px) + 1 bracket page (21 px); Cup32 3 pages (19.5–22 px); DE16 4 pages (21–30 px).
+- After, groups done and bracket in play: Open 1 page (QF onward, 29 px); Cup32 1 page (QF onward + 3rd place, 29 px); DE16 2 pages (19–29 px).
+- At 1280×800 (minimum scale 1.1): Open 4 group pages + 3 bracket pages (18–24 px), DE16 up to 5 pages (19–24 px), Cup32 1 page (18 px) once the early rounds are done.
+
+**Deferred**
+- At 1280×800 the first two pages of a fresh 32-entry bracket are at scale 0.93 (14 px): the top/bottom split doesn't split a half again.
+- The "Cup32 first-round" page counts above were measured only at 1920×1080 and 1280×800; no 64-entry bracket was tried.
+- A stray connector stub shows at the right edge of a cropped losers-bracket block.
+- The "before" figures are for Open only (measured earlier); Cup32 and DE16 weren't measured at #0029.
+- The planner and the paging are UI, so they're checked in the browser, not unit-tested (ADR 0004).
