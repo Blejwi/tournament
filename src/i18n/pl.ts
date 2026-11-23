@@ -411,7 +411,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     pageGroups: 'Grupy',
     pageBracket: 'Drabinka',
     competitions: 'Konkurencje',
-    splitPages: 'Dziel na strony (wyłącz, by pokazać całość na jednym ekranie)',
+    splitPages: 'Dziel na strony (większy tekst, kilka ekranów)',
     pages: 'Strony',
     tablesEmpty: 'Brak aktywnych stołów.',
     freeTable: 'Wolny',

@@ -24,10 +24,10 @@ export function saveExcluded(id: TournamentId, excluded: readonly CompetitionId[
   }
 }
 
-const splitKey = (id: TournamentId) => `tm:display-unsplit:${id}`;
+const splitKey = (id: TournamentId) => `tm:display-split:${id}`;
 
-/** The competitions the operator turned page splitting off for (they are shown whole on one screen). */
-export function loadUnsplit(id: TournamentId, store: Storage = window.localStorage): CompetitionId[] {
+/** The competitions the operator turned page splitting on for; the others are shown whole on one screen. */
+export function loadSplit(id: TournamentId, store: Storage = window.localStorage): CompetitionId[] {
   try {
     const parsed: unknown = JSON.parse(store.getItem(splitKey(id)) ?? '[]');
     return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
@@ -36,9 +36,9 @@ export function loadUnsplit(id: TournamentId, store: Storage = window.localStora
   }
 }
 
-export function saveUnsplit(id: TournamentId, unsplit: readonly CompetitionId[], store: Storage = window.localStorage): void {
+export function saveSplit(id: TournamentId, split: readonly CompetitionId[], store: Storage = window.localStorage): void {
   try {
-    store.setItem(splitKey(id), JSON.stringify(unsplit));
+    store.setItem(splitKey(id), JSON.stringify(split));
   } catch {
     // Storage full or blocked: the choice just won't survive a reload.
   }

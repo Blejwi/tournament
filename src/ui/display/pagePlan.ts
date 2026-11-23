@@ -40,8 +40,8 @@ export type PageContent =
   /** `matches` limits a box to those matches (the one in play and the next); without it a box shows them all. */
   | { kind: 'groups'; groups: GroupView[]; columns: number; matches?: Record<GroupId, MatchId[]> }
   | { kind: 'bracket'; blocks: BracketBlock[] }
-  /** A whole competition on one page (page splitting is off): its parts side by side. */
-  | { kind: 'combined'; parts: PageContent[] };
+  /** A whole competition on one page (page splitting is off): its parts in columns, side by side. */
+  | { kind: 'columns'; columns: PageContent[][] };
 
 export interface DisplayPage {
   /** Stable while the page keeps existing, so the cycle can stay on it. */
@@ -137,15 +137,65 @@ function groupPages(stage: Extract<StageView, { type: 'groups' }>, focus: Displa
   });
 }
 
-/** A stage in full, as one piece of content: all its groups with all their matches, or its whole bracket. */
-function wholeStage(t: TFunction, stage: StageView): PageContent | null {
-  if (stage.type === 'groups') {
-    if (stage.groups.length === 0) return null;
-    return { kind: 'groups', groups: stage.groups, columns: Math.max(1, Math.ceil(Math.sqrt(stage.groups.length * 0.9))) };
+/** A piece of a whole competition, with its size in layout pixels (padding included). */
+interface Item {
+  content: PageContent;
+  w: number;
+  h: number;
+}
+const ITEM_PAD = 32;
+const COLUMN_GAP = 48;
+
+/** A competition in full as pieces: all the groups with all their matches, the main bracket, each play-off tree. */
+function wholeItems(t: TFunction, stages: (StageView | null)[]): Item[] {
+  return stages.flatMap((stage): Item[] => {
+    if (!stage || stage.drawState === 'notDrawn') return [];
+    if (stage.type === 'groups') {
+      const n = stage.groups.length;
+      if (n === 0) return [];
+      const columns = Math.max(1, Math.ceil(Math.sqrt(n)));
+      const rows = Math.ceil(n / columns);
+      const tallest = Math.max(...stage.groups.map((g) => 28 + (g.standings.length + 1) * 26 + Math.ceil(g.matches.length / 2) * 72 + 36));
+      return [
+        {
+          content: { kind: 'groups', groups: stage.groups, columns },
+          w: columns * GROUP_BOX_W + (columns - 1) * GROUP_GAP + ITEM_PAD,
+          h: rows * tallest + (rows - 1) * GROUP_GAP + ITEM_PAD,
+        },
+      ];
+    }
+    return blocksOf(stage, bracketLayoutSections(t, stage, 'below')).flatMap((sections): Item[] => {
+      const layout = layoutBracket(sections, DISPLAY_CARD_W);
+      // A play-off that was never switched on is just a title and a switch: nothing to show.
+      if (!layout.cards.some((c) => c.match.status !== 'disabled')) return [];
+      return [{ content: { kind: 'bracket', blocks: [{ sections, crop: { x: 0, y: 0, w: layout.width, h: layout.height } }] }, w: layout.width + ITEM_PAD, h: layout.height + ITEM_PAD }];
+    });
+  });
+}
+
+/**
+ * Places the pieces in 1 to 4 columns (each next piece goes under the shortest column) and keeps the
+ * number of columns that lets the whole be drawn largest in the space, so a wide screen is used on its sides.
+ */
+function arrange(items: Item[], space: PageSpace): PageContent | null {
+  if (items.length === 0) return null;
+  if (items.length === 1) return items[0].content;
+  let best: { scale: number; columns: Item[][] } | null = null;
+  for (let count = 1; count <= Math.min(items.length, 4); count++) {
+    const columns: Item[][] = Array.from({ length: count }, () => []);
+    const heights = Array.from({ length: count }, () => 0);
+    for (const item of items) {
+      const k = heights.indexOf(Math.min(...heights));
+      columns[k].push(item);
+      heights[k] += item.h + BLOCK_GAP;
+    }
+    const used = columns.filter((c) => c.length > 0);
+    const w = used.reduce((sum, c) => sum + Math.max(...c.map((i) => i.w)), 0) + (used.length - 1) * COLUMN_GAP;
+    const h = Math.max(...used.map((c) => c.reduce((sum, i) => sum + i.h, 0) + (c.length - 1) * BLOCK_GAP));
+    const scale = Math.min(MAX_SCALE, (space.w - 24) / w, (space.h - 24) / h);
+    if (!best || scale > best.scale + 0.01) best = { scale, columns: used };
   }
-  const sections = bracketLayoutSections(t, stage, 'below');
-  const layout = layoutBracket(sections, DISPLAY_CARD_W);
-  return { kind: 'bracket', blocks: [{ sections, crop: { x: 0, y: 0, w: layout.width, h: layout.height } }] };
+  return { kind: 'columns', columns: best!.columns.map((c) => c.map((i) => i.content)) };
 }
 
 /**
@@ -161,9 +211,8 @@ export function planCompetitionPages(
   split = true,
 ): DisplayPage[] {
   if (!split) {
-    const parts = stages.flatMap((stage) => (stage && stage.drawState !== 'notDrawn' ? (wholeStage(t, stage) ?? []) : []));
-    if (parts.length === 0) return [];
-    const content: PageContent = parts.length === 1 ? parts[0] : { kind: 'combined', parts };
+    const content = arrange(wholeItems(t, stages), space);
+    if (!content) return [];
     return [{ key: `${competition}:all`, competition, stage: stages.find((s) => s)?.id ?? competition, type: content.kind, n: 1, of: 1, content }];
   }
   return stages.flatMap((stage, i) => {

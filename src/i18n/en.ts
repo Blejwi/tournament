@@ -408,7 +408,7 @@ export const en = {
     pageGroups: 'Groups',
     pageBracket: 'Bracket',
     competitions: 'Competitions',
-    splitPages: 'Split into pages (turn off to fit it all on one screen)',
+    splitPages: 'Split into pages (bigger text, several screens)',
     pages: 'Pages',
     tablesEmpty: 'No active tables.',
     freeTable: 'Free',
