@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MatchId, MatchView, PlaceRange } from '@/engine';
 import { cn } from '@/lib/utils';
-import { CARD_H, CARD_W, COMPACT_CARD_W, layoutBracket, type LayoutSection } from './bracketLayout';
+import { CARD_H, CARD_W, DISPLAY_CARD_W, PLAY_CARD_W, layoutBracket, type LayoutSection } from './bracketLayout';
 import { Switch } from '@/ui/components/ui/switch';
 import { formatPlace } from '@/ui/matchLabels';
 import { useDisplayMode } from './displayMode';
@@ -31,7 +31,7 @@ export function BracketBoard(props: {
   crop?: { x: number; y: number; w: number; h: number };
 }) {
   const { t } = useTranslation();
-  const cardW = useDisplayMode() ? COMPACT_CARD_W : CARD_W;
+  const cardW = useDisplayMode() ? DISPLAY_CARD_W : props.print ? CARD_W : PLAY_CARD_W;
   const layout = layoutBracket(props.sections, cardW);
   const { crop } = props;
   const inCrop = (x: number, y: number, w: number, h: number) => !crop || (x < crop.x + crop.w && x + w > crop.x && y < crop.y + crop.h && y + h > crop.y);

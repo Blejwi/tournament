@@ -24,14 +24,14 @@ export function GroupBox(props: {
   const tieToSettle = group.ties.some((tie) => tie.resolution === null);
 
   return (
-    <div className={cn('rounded-lg border border-slate-200 bg-white p-3 shadow-sm', names ? 'w-[440px]' : 'w-[628px]')}>
+    <div className={cn('rounded-lg border border-slate-200 bg-white p-3 shadow-sm', names ? 'w-[388px]' : 'w-[474px]')}>
       <Header
         className="mb-2 flex w-full items-center gap-2 rounded text-left"
         onOpenDetail={props.onOpenDetail}
         label={t('groups.openDetail', { name: group.name })}
       >
         <span className="flex size-6 items-center justify-center rounded bg-indigo-600 font-bold text-white">{group.name}</span>
-        <span className="font-semibold">{t('groups.group', { name: group.name })}</span>
+        <span className={cn('font-semibold', names && 'text-lg')}>{t('groups.group', { name: group.name })}</span>
         <span className="text-xs text-slate-500">{t('groups.played', { done, total: group.matches.length })}</span>
         {group.complete &&
           (tieToSettle ? (
@@ -40,7 +40,7 @@ export function GroupBox(props: {
             <span className="text-xs font-semibold text-emerald-600">✓ {t('groups.final')}</span>
           ))}
       </Header>
-      <table className="mb-2 w-full table-fixed text-xs">
+      <table className={cn('mb-2 w-full table-fixed', names ? 'text-sm' : 'text-xs')}>
         <thead>
           <tr className="text-[10px] text-slate-400 uppercase">
             <th className="w-8 text-left">{t('groups.place')}</th>

@@ -17,6 +17,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0029](0029-narrower-cards-bigger-display-text-and-manual-competition-controls.md) | Narrower cards, bigger display text, manual competition controls | Parent #0028 |
 
 ## ⛔ Blocked
 

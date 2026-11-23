@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { Maximize, Minimize, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize, Minimize, Settings } from 'lucide-react';
 import {
   getCompetition,
   getCompetitions,
@@ -76,7 +76,7 @@ function Display({ state }: { state: TournamentState }) {
   const competitions = useQuery(getCompetitions) ?? [];
   const cycle = useMemo(() => getDisplayCycle(state, { excluded }), [state, excluded]);
   const tournament = useQuery(getTournament);
-  const { current, secondsLeft } = useCycle(cycle, now);
+  const { current, index, secondsLeft, goTo } = useCycle(cycle, now);
   const { visible: controls, bump: showControls } = useTransientVisibility();
   const names = useQuery(getDisplayNames);
   const mode = useMemo(() => ({ names: names ?? {} }), [names]);
@@ -95,7 +95,15 @@ function Display({ state }: { state: TournamentState }) {
         {current && <span className="truncate text-lg text-slate-400">{tournament?.name}</span>}
         <div className="ml-auto flex items-center gap-4">
           {secondsLeft !== null && <span className="text-sm text-slate-300 tabular-nums">{t('display.nextIn', { seconds: secondsLeft })}</span>}
-          <Controls visible={controls} competitions={competitions} cycleIds={cycle.map((c) => c.id)} excluded={excluded} onToggle={toggle} />
+          <Controls
+            visible={controls}
+            competitions={competitions}
+            cycle={cycle}
+            index={index}
+            onGoTo={goTo}
+            excluded={excluded}
+            onToggle={toggle}
+          />
         </div>
       </header>
       {secondsLeft !== null && (
@@ -136,7 +144,13 @@ function useCycle(cycle: { id: string; name: string }[], now: number) {
 
   const current = cycle[index] ?? null;
   const secondsLeft = cycle.length > 1 ? Math.max(0, Math.ceil((CYCLE_SECONDS * 1000 - (now - shown.since)) / 1000)) : null;
-  return { current, secondsLeft };
+  /** Shows the competition at `to` (wrapping round) at once and restarts the countdown, so the cycle carries on from it. */
+  const goTo = (to: number) => {
+    if (cycle.length < 2) return;
+    const next = ((to % cycle.length) + cycle.length) % cycle.length;
+    setShown({ id: cycle[next].id, index: next, since: now });
+  };
+  return { current, index, secondsLeft, goTo };
 }
 
 /** True while the mouse moves, and for a moment after. */
@@ -156,7 +170,10 @@ function useTransientVisibility() {
 function Controls(props: {
   visible: boolean;
   competitions: { id: string; name: string }[];
-  cycleIds: string[];
+  /** The competitions in the cycle, in order, and the one on screen. */
+  cycle: { id: string; name: string }[];
+  index: number;
+  onGoTo: (index: number) => void;
   excluded: string[];
   onToggle: (id: string) => void;
 }) {
@@ -169,9 +186,44 @@ function Controls(props: {
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
   const button = 'flex items-center gap-1.5 rounded-md bg-white/10 px-3 py-1.5 text-sm font-semibold hover:bg-white/20';
+  const { cycle, index, onGoTo } = props;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && (e.target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName))) return;
+      if (e.key === 'ArrowLeft') onGoTo(index - 1);
+      else if (e.key === 'ArrowRight') onGoTo(index + 1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [index, onGoTo]);
 
   return (
     <div className={cn('relative flex items-center gap-2 transition-opacity', props.visible || open ? 'opacity-100' : 'pointer-events-none opacity-0')}>
+      {cycle.length > 1 && (
+        <>
+          <button type="button" className={button} aria-label={t('display.previousCompetition')} title={t('display.previousCompetition')} onClick={() => onGoTo(index - 1)}>
+            <ChevronLeft className="size-4" aria-hidden />
+          </button>
+          <ul className="flex max-w-[40vw] items-center gap-1 overflow-hidden" aria-label={t('display.competitions')}>
+            {cycle.map((c, i) => (
+              <li key={c.id} className="min-w-0">
+                <button
+                  type="button"
+                  aria-current={i === index ? 'true' : undefined}
+                  title={c.name}
+                  className={cn('max-w-40 truncate rounded-md px-3 py-1.5 text-sm font-semibold', i === index ? 'bg-indigo-500 text-white' : 'bg-white/10 hover:bg-white/20')}
+                  onClick={() => onGoTo(i)}
+                >
+                  {c.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button type="button" className={button} aria-label={t('display.nextCompetition')} title={t('display.nextCompetition')} onClick={() => onGoTo(index + 1)}>
+            <ChevronRight className="size-4" aria-hidden />
+          </button>
+        </>
+      )}
       <button type="button" className={button} aria-expanded={open} onClick={() => setOpen(!open)}>
         <Settings className="size-4" aria-hidden />
         {t('display.settings')}
@@ -195,7 +247,7 @@ function Controls(props: {
                   <label className="flex items-center gap-2 rounded p-1 hover:bg-slate-50">
                     <input type="checkbox" className="size-4" checked={included} onChange={() => props.onToggle(c.id)} />
                     <span className="min-w-0 flex-1 truncate font-medium">{c.name}</span>
-                    {included && !props.cycleIds.includes(c.id) && <span className="text-xs text-slate-400">{t('display.notConfirmed')}</span>}
+                    {included && !props.cycle.some((item) => item.id === c.id) && <span className="text-xs text-slate-400">{t('display.notConfirmed')}</span>}
                   </label>
                 </li>
               );
@@ -227,7 +279,7 @@ function Sidebar({ now }: { now: number }) {
             key={name}
             role="tab"
             aria-selected={view === name}
-            className={cn('flex-1 truncate px-4 py-3 text-center text-lg font-bold', view === name ? 'bg-slate-900 text-white' : 'text-slate-400')}
+            className={cn('flex-1 truncate px-2 py-3 text-center text-xl font-bold', view === name ? 'bg-slate-900 text-white' : 'text-slate-400')}
           >
             {heading(name)}
           </h2>
@@ -263,21 +315,21 @@ function TableTile({ row }: { row: TableOverviewRow }) {
   return (
     <li
       className={cn(
-        'flex min-w-0 items-center gap-3 rounded-lg border-2 bg-slate-50 p-2',
+        'flex min-w-0 items-center gap-3 rounded-lg border-2 bg-slate-50 p-2.5 max-[1400px]:gap-2 max-[1400px]:p-1.5',
         row.status === 'overdue' ? (m?.overdue === 'red' ? 'border-red-500' : 'border-amber-500') : row.status === 'playing' ? 'border-sky-300' : 'border-slate-200',
       )}
     >
-      <span className={cn('flex size-12 shrink-0 items-center justify-center rounded-lg text-2xl font-bold', tableTone(row))}>{row.number}</span>
+      <span className={cn('flex size-14 shrink-0 items-center justify-center rounded-lg text-3xl font-bold max-[1400px]:size-10 max-[1400px]:text-xl', tableTone(row))}>{row.number}</span>
       {m ? (
         <>
-          <span className="min-w-0 flex-1 text-lg leading-tight font-semibold">
+          <span className="min-w-0 flex-1 text-2xl leading-tight font-semibold max-[1400px]:text-lg">
             <span className="block truncate">{nameOf(m.slots[0].entry)}</span>
             <span className="block truncate">{nameOf(m.slots[1].entry)}</span>
           </span>
-          <span className={cn('shrink-0 text-xl font-bold tabular-nums', overdueText(m))}>{formatClock(row.elapsedMs ?? 0)}</span>
+          <span className={cn('shrink-0 text-2xl font-bold tabular-nums max-[1400px]:text-lg', overdueText(m))}>{formatClock(row.elapsedMs ?? 0)}</span>
         </>
       ) : (
-        <span className="text-lg font-semibold text-emerald-700">{t('display.freeTable')}</span>
+        <span className="text-2xl font-semibold text-emerald-700">{t('display.freeTable')}</span>
       )}
     </li>
   );
@@ -294,13 +346,13 @@ function NextMatches({ now }: { now: number }) {
     <ol className="min-h-0 flex-1 overflow-hidden">
       {next.map((m: MatchView, i) => (
         <li key={m.id} className="border-b px-4 py-3">
-          <span className="flex items-baseline gap-2 text-sm text-slate-500">
+          <span className="flex items-baseline gap-2 text-base text-slate-500">
             <span className="font-bold text-slate-400">{i + 1}.</span>
             {competitions.length > 1 && <b className="truncate text-slate-700">{competitions.find((c) => c.id === m.competition)?.name}</b>}
             <span className="truncate">{matchTitle(t, m)}</span>
           </span>
-          <span className="block text-xl leading-snug font-semibold">{nameOf(m.slots[0].entry)}</span>
-          <span className="block text-xl leading-snug font-semibold">{nameOf(m.slots[1].entry)}</span>
+          <span className="block text-2xl leading-snug font-semibold max-[1400px]:text-xl">{nameOf(m.slots[0].entry)}</span>
+          <span className="block text-2xl leading-snug font-semibold max-[1400px]:text-xl">{nameOf(m.slots[1].entry)}</span>
         </li>
       ))}
     </ol>
@@ -308,7 +360,7 @@ function NextMatches({ now }: { now: number }) {
 }
 
 /** The display's group boxes are narrow, so its grid is wider than the canvas's: fewer rows to fit into the height. */
-const displayGroupColumns = (count: number) => Math.min(count, Math.max(1, Math.ceil(Math.sqrt(count * 1.8))));
+const displayGroupColumns = (count: number, sideBySide: boolean) => Math.min(count, Math.max(1, Math.ceil(Math.sqrt(count * (sideBySide ? 0.9 : 1.8)))));
 
 /** One competition's groups and brackets, fitted to the space and not interactive. */
 function CompetitionView({ competitionId, now }: { competitionId: string; now: number }) {
@@ -326,12 +378,14 @@ function CompetitionView({ competitionId, now }: { competitionId: string; now: n
           .filter((v): v is StageView => v !== null),
       [stageIds, now],
     ) ?? [];
+  // Groups feeding a bracket sit beside it, not above it: the screen is wider than it is tall (#0029).
+  const sideBySide = stages.length > 1 && stages.some((s) => s.type === 'groups');
   return (
     <FitToScreen className="flex-1 bg-slate-100">
-      <div className="flex flex-col items-center gap-12 p-8">
+      <div className={cn('flex items-center gap-12 p-8', sideBySide ? 'flex-row' : 'flex-col')}>
         {stages.map((s) =>
           s.type === 'groups' ? (
-            <div key={s.id} className="grid gap-6" style={{ gridTemplateColumns: `repeat(${displayGroupColumns(s.groups.length)}, auto)` }}>
+            <div key={s.id} className="grid gap-6" style={{ gridTemplateColumns: `repeat(${displayGroupColumns(s.groups.length, sideBySide)}, auto)` }}>
               {s.groups.map((group) => (
                 <GroupBox key={group.id} group={group} selectedMatch={null} />
               ))}

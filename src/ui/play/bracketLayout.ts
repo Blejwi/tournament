@@ -8,11 +8,13 @@ import type { MatchId, MatchView, PlayOffView } from '@/engine';
  * play-offs form trees (a play-off, then a play-off per half) laid out as one block each.
  */
 
-/** Match card size and the gaps between cards (world px). Must match MatchCard. */
+/** Match card size and the gaps between cards (world px). `CARD_W` is the printout's card width. */
 export const CARD_W = 292;
 export const CARD_H = 64;
-/** Card width on the read-only display, where names are short (#0028). */
-export const COMPACT_CARD_W = 200;
+/** Card width on the play screen: room for a typical full name; longer ones are cut with an ellipsis (#0029). */
+export const PLAY_CARD_W = 220;
+/** Card width on the read-only display, where names are short (#0028, #0029). */
+export const DISPLAY_CARD_W = 170;
 /** Vertical centre of slot A and slot B inside a card (below the 18px header, 21px per slot). */
 export const SLOT_Y: [number, number] = [28, 49];
 const GAP_X = 56;
