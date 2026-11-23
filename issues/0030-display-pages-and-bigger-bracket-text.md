@@ -83,3 +83,9 @@ Done in 23eb769.
 - A stray connector stub shows at the right edge of a cropped losers-bracket block.
 - The "before" figures are for Open only (measured earlier); Cup32 and DE16 weren't measured at #0029.
 - The planner and the paging are UI, so they're checked in the browser, not unit-tested (ADR 0004).
+
+## Follow-up: tabs and optional splitting
+
+- Navigation is now a persistent tab bar under the header: a tab per competition and, under it, a tab per page of the competition on screen (e.g. "Grupy 1/2", "Drabinka"). The current tab is marked; a click goes there at once and restarts the 12 s countdown. ←/→ still step through the pages. The previous/next buttons and the chips in the hover controls are gone.
+- Page splitting is a per-competition setting (screen settings, "Split into pages"), kept per tournament in this browser under `tm:display-unsplit:<id>`. With it off the competition is one page: all its groups with all their matches beside its whole bracket, fitted to the screen as before #0030 (Open: scale 0.59 at 1920×1080).
+- The tab bar takes a little height, so the group box estimate was tightened (`GROUP_BOX_H` 290) to keep 4 groups per page.

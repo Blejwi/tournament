@@ -18,7 +18,7 @@ export const MAX_SCALE = 2;
 export const PAGE_MARGIN = 56;
 /** A group box on the display: its width, and about how tall it is (standings and two matches). */
 export const GROUP_BOX_W = 388;
-export const GROUP_BOX_H = 330;
+export const GROUP_BOX_H = 290;
 const GROUP_GAP = 24;
 /** Space between two blocks on one page. */
 export const BLOCK_GAP = 40;
@@ -37,15 +37,18 @@ export interface BracketBlock {
 }
 
 export type PageContent =
-  | { kind: 'groups'; groups: GroupView[]; columns: number; matches: Record<GroupId, MatchId[]> }
-  | { kind: 'bracket'; blocks: BracketBlock[] };
+  /** `matches` limits a box to those matches (the one in play and the next); without it a box shows them all. */
+  | { kind: 'groups'; groups: GroupView[]; columns: number; matches?: Record<GroupId, MatchId[]> }
+  | { kind: 'bracket'; blocks: BracketBlock[] }
+  /** A whole competition on one page (page splitting is off): its parts side by side. */
+  | { kind: 'combined'; parts: PageContent[] };
 
 export interface DisplayPage {
   /** Stable while the page keeps existing, so the cycle can stay on it. */
   key: string;
   competition: CompetitionId;
   stage: StageId;
-  type: 'groups' | 'bracket';
+  type: PageContent['kind'];
   /** This page among the stage's pages (1-based). */
   n: number;
   of: number;
@@ -134,14 +137,35 @@ function groupPages(stage: Extract<StageView, { type: 'groups' }>, focus: Displa
   });
 }
 
-/** All the pages of one competition, stage by stage. */
+/** A stage in full, as one piece of content: all its groups with all their matches, or its whole bracket. */
+function wholeStage(t: TFunction, stage: StageView): PageContent | null {
+  if (stage.type === 'groups') {
+    if (stage.groups.length === 0) return null;
+    return { kind: 'groups', groups: stage.groups, columns: Math.max(1, Math.ceil(Math.sqrt(stage.groups.length * 0.9))) };
+  }
+  const sections = bracketLayoutSections(t, stage, 'below');
+  const layout = layoutBracket(sections, DISPLAY_CARD_W);
+  return { kind: 'bracket', blocks: [{ sections, crop: { x: 0, y: 0, w: layout.width, h: layout.height } }] };
+}
+
+/**
+ * All the pages of one competition, stage by stage. With `split` off the whole competition is one page,
+ * fitted to the screen at whatever scale that gives.
+ */
 export function planCompetitionPages(
   t: TFunction,
   competition: CompetitionId,
   stages: (StageView | null)[],
   focus: DisplayStageFocus[],
   space: PageSpace,
+  split = true,
 ): DisplayPage[] {
+  if (!split) {
+    const parts = stages.flatMap((stage) => (stage && stage.drawState !== 'notDrawn' ? (wholeStage(t, stage) ?? []) : []));
+    if (parts.length === 0) return [];
+    const content: PageContent = parts.length === 1 ? parts[0] : { kind: 'combined', parts };
+    return [{ key: `${competition}:all`, competition, stage: stages.find((s) => s)?.id ?? competition, type: content.kind, n: 1, of: 1, content }];
+  }
   return stages.flatMap((stage, i) => {
     const f = focus[i];
     if (!stage || !f || stage.drawState === 'notDrawn') return [];

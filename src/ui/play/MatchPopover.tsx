@@ -13,7 +13,7 @@ import {
   type MatchResult,
   type MatchView,
 } from '@/engine';
-import { useApp, useQuery } from '@/app/useApp';
+import { appStore, useApp, useQuery } from '@/app/useApp';
 import { errorMessage } from '@/i18n';
 import { cn } from '@/lib/utils';
 import {
@@ -303,6 +303,22 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; correcting?: 
     else commit(result, false);
   }
 
+  /** One click on a games-only score ("3:1"): saves it, or asks first when a correction resets later matches. */
+  function quickSave(games: [number, number]) {
+    const chosen: MatchResult = { kind: 'gamesOnly', games };
+    setText(`${games[0]}:${games[1]}`);
+    setSaveError(null);
+    const state = appStore.getState().current;
+    if (correcting && state && getCorrectionPreview(state, match.id, chosen, Date.now()).resets.length) setConfirming(true);
+    else commit(chosen, false);
+  }
+  const quickScores: [number, number][] = match.gamesOnlyAllowed
+    ? [
+        ...Array.from({ length: match.gamesToWin }, (_, i): [number, number] => [match.gamesToWin, i]),
+        ...Array.from({ length: match.gamesToWin }, (_, i): [number, number] => [match.gamesToWin - 1 - i, match.gamesToWin]),
+      ]
+    : [];
+
   let preview: string | null = null;
   if (valid && (result.kind === 'games' || result.kind === 'gamesOnly')) {
     const [a, b] = result.kind === 'games' ? gamesWon(result.games) : result.games;
@@ -316,6 +332,24 @@ function ScoreEntry(props: { match: MatchView; autoFocus: boolean; correcting?: 
       <label htmlFor={id} className="text-xs font-semibold text-slate-500 uppercase">
         {t(correcting ? 'match.correctHeading' : 'match.scoreHeading')}
       </label>
+      {quickScores.length > 0 && (
+        <div role="group" aria-label={t('match.quickScores')} className="mt-1 flex flex-wrap gap-1">
+          {quickScores.map((games) => (
+            <button
+              key={games.join(':')}
+              type="button"
+              title={t('match.quickScoreTitle', { score: games.join(':'), name: entryName(match.slots[games[0] > games[1] ? 0 : 1].entry) })}
+              onClick={() => quickSave(games)}
+              className={cn(
+                'min-w-10 flex-1 rounded-md border py-1 text-center font-bold tabular-nums',
+                games[0] > games[1] ? 'border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100' : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100',
+              )}
+            >
+              {games[0]}:{games[1]}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="mt-1 flex gap-1">
         <input
           id={id}
