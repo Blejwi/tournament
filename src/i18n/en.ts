@@ -20,6 +20,7 @@ export const en = {
     add: 'Add',
     save: 'Save',
     cancel: 'Cancel',
+    done: 'Done',
     edit: 'Edit',
     delete: 'Delete',
     remove: 'Remove',
@@ -495,6 +496,9 @@ export const en = {
   },
   players: {
     add: 'Add player',
+    addTo: 'Add player to {{competition}}',
+    added_one: '✓ {{name}} added ({{count}} added so far)',
+    added_other: '✓ {{name}} added ({{count}} added so far)',
     edit: 'Edit player',
     firstName: 'First name',
     lastName: 'Last name',

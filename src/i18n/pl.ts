@@ -20,6 +20,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     add: 'Dodaj',
     save: 'Zapisz',
     cancel: 'Anuluj',
+    done: 'Gotowe',
     edit: 'Edytuj',
     delete: 'Usuń',
     remove: 'Usuń',
@@ -502,6 +503,10 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
   },
   players: {
     add: 'Dodaj zawodnika',
+    addTo: 'Dodaj zawodnika do: {{competition}}',
+    added_one: '✓ Dodano: {{name}} (łącznie {{count}})',
+    added_few: '✓ Dodano: {{name}} (łącznie {{count}})',
+    added_many: '✓ Dodano: {{name}} (łącznie {{count}})',
     edit: 'Edytuj zawodnika',
     firstName: 'Imię',
     lastName: 'Nazwisko',

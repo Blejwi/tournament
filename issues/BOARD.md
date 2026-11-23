@@ -27,6 +27,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Resolution |
 |---|---|---|
+| [#0031](0031-add-players-in-a-row.md) | Add new players one after another | fed9f47 |
 | [#0030](0030-display-pages-and-bigger-bracket-text.md) | Display pages and bigger bracket text | 23eb769 |
 | [#0029](0029-narrower-cards-bigger-display-text-and-manual-competition-controls.md) | Narrower cards, bigger display text, manual competition controls | 77f3500 |
 | [#0028](0028-display-readable-for-big-competitions.md) | Display screen readable for big competitions | 1fb872b |
