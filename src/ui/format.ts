@@ -9,15 +9,15 @@ export function formatDate(isoDate: string, language: string): string {
   );
 }
 
-/** A player's full name, e.g. "Jan Kowalski". Names are never abbreviated. */
-export function playerName(player: EntryPlayerView): string {
-  return `${player.firstName} ${player.lastName}`;
+/** A player's full name, e.g. "Jan Kowalski". Names are abbreviated only on the display screen (`shortNames`). */
+export function playerName(player: EntryPlayerView, shortNames?: Record<string, string>): string {
+  return shortNames?.[player.id] ?? `${player.firstName} ${player.lastName}`;
 }
 
-/** An entry's full name, e.g. "Jan Kowalski"; null when the slot is not decided. */
-export function entryName(entry: EntryView | null): string | null {
+/** An entry's full name, e.g. "Jan Kowalski"; null when the slot is not decided. With `shortNames` (the display), e.g. "Kowalski J.". */
+export function entryName(entry: EntryView | null, shortNames?: Record<string, string>): string | null {
   if (!entry) return null;
-  return entry.players.map((p) => playerName(p)).join(' / ');
+  return entry.players.map((p) => playerName(p, shortNames)).join(' / ');
 }
 
 /** Several entries' names, comma separated. */

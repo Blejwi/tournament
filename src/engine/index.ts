@@ -65,6 +65,7 @@ export {
 export {
   getExpectedDurations,
   getPlayers,
+  getDisplayNames,
   getTables,
   getTournament,
   getCompetitions,

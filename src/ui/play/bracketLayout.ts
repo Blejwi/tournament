@@ -11,6 +11,8 @@ import type { MatchId, MatchView, PlayOffView } from '@/engine';
 /** Match card size and the gaps between cards (world px). Must match MatchCard. */
 export const CARD_W = 292;
 export const CARD_H = 64;
+/** Card width on the read-only display, where names are short (#0028). */
+export const COMPACT_CARD_W = 200;
 /** Vertical centre of slot A and slot B inside a card (below the 18px header, 21px per slot). */
 export const SLOT_Y: [number, number] = [28, 49];
 const GAP_X = 56;
@@ -96,10 +98,11 @@ export interface BracketLayout {
 type Placed = Map<MatchId, { x: number; y: number; group: string; linkFrom?: string }>;
 
 /** Whether `from` feeds `to` with a line: the same section or tree, or a linked section in the next column. */
-const linked = (from: { x: number; group: string }, to: { x: number; group: string; linkFrom?: string }) =>
-  from.group === to.group || (from.group === to.linkFrom && Math.abs(Math.abs(from.x - to.x) - (CARD_W + GAP_X)) < 0.5);
+const linked = (cardW: number, from: { x: number; group: string }, to: { x: number; group: string; linkFrom?: string }) =>
+  from.group === to.group || (from.group === to.linkFrom && Math.abs(Math.abs(from.x - to.x) - (cardW + GAP_X)) < 0.5);
 
-export function layoutBracket(sections: LayoutSection[]): BracketLayout {
+/** `cardW` is the card width: the default on the canvas and on paper, narrower on the display (#0028). */
+export function layoutBracket(sections: LayoutSection[], cardW: number = CARD_W): BracketLayout {
   const pos: Placed = new Map();
   const cards: PlacedCard[] = [];
   const labels: PlacedLabel[] = [];
@@ -116,6 +119,7 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
         sections.filter((s) => s.tree?.key === section.tree!.key),
         cursor,
         { pos, cards, labels },
+        cardW,
       );
       bottom = Math.max(bottom, treeBottom);
       cursor = treeBottom + SECTION_GAP;
@@ -138,7 +142,7 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
     const cardsTop = top + SECTION_TITLE_H + (hasRoundTitles ? ROUND_TITLE_H : 0);
     labels.push({
       kind: 'section',
-      x: titleColumn * (CARD_W + GAP_X),
+      x: titleColumn * (cardW + GAP_X),
       y: top,
       title: section.title,
       subtitle: section.subtitle,
@@ -147,7 +151,7 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
 
     let sectionBottom = cardsTop;
     section.rounds.forEach((matches, r) => {
-      const x = (column + step * r) * (CARD_W + GAP_X);
+      const x = (column + step * r) * (cardW + GAP_X);
       if (section.roundTitles?.[r])
         labels.push({
           kind: 'round',
@@ -159,7 +163,7 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
       matches.forEach((match, i) => {
         // Centre on the feeders inside this section (or a linked one next to it); otherwise stack in order.
         const here = { x, group: section.key, linkFrom: section.linkFrom };
-        const feeders = match.slots.map((s) => (s.feeder ? pos.get(s.feeder.match) : undefined)).filter((p) => p && linked(p, here));
+        const feeders = match.slots.map((s) => (s.feeder ? pos.get(s.feeder.match) : undefined)).filter((p) => p && linked(cardW, p, here));
         let y = feeders.length ? feeders.reduce((sum, p) => sum + p!.y, 0) / feeders.length : cardsTop + i * (CARD_H + GAP_Y);
         for (let moved = true; moved;) {
           moved = false;
@@ -195,14 +199,14 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
     match.slots.forEach((slot, side) => {
       const feeder = slot.feeder;
       const from = feeder ? pos.get(feeder.match) : undefined;
-      if (!feeder || !from || !linked(from, to)) return;
+      if (!feeder || !from || !linked(cardW, from, to)) return;
       const loser = feeder.take === 'loser';
       const offset = loser ? LOSER_OFFSET : 0;
       const y1 = from.y + CARD_H / 2 + offset;
       const y2 = to.y + SLOT_Y[side];
       // Drawn to the left of its feeders (a losers' half, a mirrored losers bracket): the line leaves the feeder's left edge.
       const leftward = to.x < from.x;
-      const [x1, x2] = leftward ? [from.x, to.x + CARD_W] : [from.x + CARD_W, to.x];
+      const [x1, x2] = leftward ? [from.x, to.x + cardW] : [from.x + cardW, to.x];
       const xm = leftward ? x2 + GAP_X / 2 - offset : x2 - GAP_X / 2 + offset;
       const feederCard = cards.find((c) => c.match.id === feeder.match)!;
       connectors.push({
@@ -216,7 +220,7 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
     });
   }
 
-  const width = Math.max(CARD_W, ...cards.map((c) => c.x + CARD_W), ...labels.map((l) => l.x + (l.compact ? CARD_W : 240)));
+  const width = Math.max(cardW, ...cards.map((c) => c.x + cardW), ...labels.map((l) => l.x + (l.compact ? cardW : 240)));
   return { cards, connectors, labels, width, height: Math.max(bottom, CARD_H) };
 }
 
@@ -226,7 +230,7 @@ export function layoutBracket(sections: LayoutSection[]): BracketLayout {
  * without matches yet (just the title and switch) sits level with the middle of its parent.
  * Returns the tree's bottom edge.
  */
-function layoutTree(sections: LayoutSection[], top: number, out: { pos: Placed; cards: PlacedCard[]; labels: PlacedLabel[] }): number {
+function layoutTree(sections: LayoutSection[], top: number, out: { pos: Placed; cards: PlacedCard[]; labels: PlacedLabel[] }, cardW: number): number {
   const group = sections[0].tree!.key;
   const minColumn = Math.min(...sections.map((s) => s.tree!.column));
   const taken = new Map<number, [number, number][]>();
@@ -235,7 +239,7 @@ function layoutTree(sections: LayoutSection[], top: number, out: { pos: Placed; 
 
   for (const section of sections) {
     const column = section.tree!.column - minColumn;
-    const x = column * (CARD_W + GAP_X);
+    const x = column * (cardW + GAP_X);
     const matches = section.rounds.flat();
 
     // Where the cards want to be, relative to the label's top when they have no feeders here.

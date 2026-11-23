@@ -6,6 +6,7 @@ import {
   getCompetition,
   getCompetitions,
   getDisplayCycle,
+  getDisplayNames,
   getStage,
   getTableOverview,
   getTournament,
@@ -18,12 +19,13 @@ import {
 import { loadExcluded, saveExcluded } from '@/app/displayPrefs';
 import { TournamentStateContext, useQuery } from '@/app/useApp';
 import { cn } from '@/lib/utils';
-import { entryName, formatClock } from '@/ui/format';
+import { formatClock } from '@/ui/format';
 import { matchTitle } from '@/ui/matchLabels';
 import { BracketBoard } from '@/ui/play/BracketBoard';
+import { DisplayModeContext, useEntryName } from '@/ui/play/displayMode';
 import { GroupBox } from '@/ui/play/GroupBox';
 import { overdueText } from '@/ui/play/overdueStyle';
-import { bracketLayoutSections, groupColumns } from '@/ui/play/bracketSections';
+import { bracketLayoutSections } from '@/ui/play/bracketSections';
 import { tableTone } from '@/ui/play/tableTone';
 import { useNow } from '@/ui/useNow';
 import { usePlayOffLayout } from '@/ui/usePlayOffLayout';
@@ -32,6 +34,8 @@ import { useDisplayTournament } from './useDisplayTournament';
 
 /** How long one competition stays on screen before the next one. */
 export const CYCLE_SECONDS = 20;
+/** How long the sidebar shows one view (the tables, then the next matches) before the other. Faster than the competitions. */
+export const SIDEBAR_CYCLE_SECONDS = 8;
 /** How many waiting matches the "next" list shows. */
 const NEXT_MATCHES = 5;
 /** The settings hide again this long after the mouse stopped moving. */
@@ -74,6 +78,8 @@ function Display({ state }: { state: TournamentState }) {
   const tournament = useQuery(getTournament);
   const { current, secondsLeft } = useCycle(cycle, now);
   const { visible: controls, bump: showControls } = useTransientVisibility();
+  const names = useQuery(getDisplayNames);
+  const mode = useMemo(() => ({ names: names ?? {} }), [names]);
 
   const toggle = (id: string) => {
     const next = excluded.includes(id) ? excluded.filter((x) => x !== id) : [...excluded, id];
@@ -82,6 +88,7 @@ function Display({ state }: { state: TournamentState }) {
   };
 
   return (
+    <DisplayModeContext.Provider value={mode}>
     <div className="flex h-dvh flex-col bg-slate-100 text-slate-900" onMouseMove={showControls}>
       <header className="flex shrink-0 items-center gap-6 bg-slate-900 px-6 py-3 text-white">
         <h1 className="min-w-0 truncate text-2xl font-bold">{current ? current.name : tournament?.name}</h1>
@@ -96,7 +103,6 @@ function Display({ state }: { state: TournamentState }) {
           <div className="h-full bg-indigo-500 transition-[width] duration-1000 ease-linear" style={{ width: `${(secondsLeft / CYCLE_SECONDS) * 100}%` }} />
         </div>
       )}
-      <TablesStrip now={now} />
       <div className="flex min-h-0 flex-1">
         <main className="flex min-w-0 flex-1 flex-col">
           {current ? (
@@ -105,9 +111,10 @@ function Display({ state }: { state: TournamentState }) {
             <div className="grid flex-1 place-items-center p-10 text-center text-xl text-slate-400">{t('display.noCompetition')}</div>
           )}
         </main>
-        <NextMatches now={now} />
+        <Sidebar now={now} />
       </div>
     </div>
+    </DisplayModeContext.Provider>
   );
 }
 
@@ -200,25 +207,58 @@ function Controls(props: {
   );
 }
 
-/** One tile per active table: its number, the match on it and how long it has been playing. */
-function TablesStrip({ now }: { now: number }) {
+/**
+ * The right sidebar (#0028): the tables and the next matches in turn, each for `SIDEBAR_CYCLE_SECONDS`.
+ * Both headings show, the one on screen marked, and a bar runs down to the next switch.
+ */
+function Sidebar({ now }: { now: number }) {
+  const { t } = useTranslation();
+  const [since] = useState(now);
+  const period = SIDEBAR_CYCLE_SECONDS * 1000;
+  const elapsed = Math.max(0, now - since);
+  const view = Math.floor(elapsed / period) % 2 === 0 ? 'tables' : 'next';
+  const left = period - (elapsed % period);
+  const heading = (name: 'tables' | 'next') => (name === 'tables' ? t('tablesPanel.heading') : t('display.next'));
+  return (
+    <aside aria-label={heading(view)} className="flex w-96 shrink-0 flex-col border-l bg-white max-[1400px]:w-80">
+      <div className="flex border-b" role="tablist">
+        {(['tables', 'next'] as const).map((name) => (
+          <h2
+            key={name}
+            role="tab"
+            aria-selected={view === name}
+            className={cn('flex-1 truncate px-4 py-3 text-center text-lg font-bold', view === name ? 'bg-slate-900 text-white' : 'text-slate-400')}
+          >
+            {heading(name)}
+          </h2>
+        ))}
+      </div>
+      <div className="h-1 shrink-0 bg-slate-200">
+        <div className="h-full bg-indigo-500 transition-[width] duration-1000 ease-linear" style={{ width: `${(left / period) * 100}%` }} />
+      </div>
+      {view === 'tables' ? <TablesView now={now} /> : <NextMatches now={now} />}
+    </aside>
+  );
+}
+
+/** Every active table: its number, the match on it and how long it has been playing, or "Free". */
+function TablesView({ now }: { now: number }) {
   const { t } = useTranslation();
   const overview = useQuery((s) => getTableOverview(s, now), [now]);
   const tables = (overview?.tables ?? []).filter((r) => r.status !== 'inactive');
-  if (tables.length === 0) return null;
+  if (tables.length === 0) return <p className="p-4 text-slate-400">{t('display.tablesEmpty')}</p>;
   return (
-    <section aria-label={t('tablesPanel.heading')} className="shrink-0 border-b bg-white px-4 py-3">
-      <ul className="grid gap-3" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${tables.length > 8 ? '14rem' : '17rem'}, 1fr))` }}>
-        {tables.map((row) => (
-          <TableTile key={row.id} row={row} />
-        ))}
-      </ul>
-    </section>
+    <ul className="grid min-h-0 flex-1 content-start gap-2 overflow-hidden p-2">
+      {tables.map((row) => (
+        <TableTile key={row.id} row={row} />
+      ))}
+    </ul>
   );
 }
 
 function TableTile({ row }: { row: TableOverviewRow }) {
   const { t } = useTranslation();
+  const nameOf = useEntryName();
   const m = row.match;
   return (
     <li
@@ -227,14 +267,14 @@ function TableTile({ row }: { row: TableOverviewRow }) {
         row.status === 'overdue' ? (m?.overdue === 'red' ? 'border-red-500' : 'border-amber-500') : row.status === 'playing' ? 'border-sky-300' : 'border-slate-200',
       )}
     >
-      <span className={cn('flex size-14 shrink-0 items-center justify-center rounded-lg text-3xl font-bold', tableTone(row))}>{row.number}</span>
+      <span className={cn('flex size-12 shrink-0 items-center justify-center rounded-lg text-2xl font-bold', tableTone(row))}>{row.number}</span>
       {m ? (
         <>
           <span className="min-w-0 flex-1 text-lg leading-tight font-semibold">
-            <span className="block truncate">{entryName(m.slots[0].entry)}</span>
-            <span className="block truncate">{entryName(m.slots[1].entry)}</span>
+            <span className="block truncate">{nameOf(m.slots[0].entry)}</span>
+            <span className="block truncate">{nameOf(m.slots[1].entry)}</span>
           </span>
-          <span className={cn('shrink-0 text-2xl font-bold tabular-nums', overdueText(m))}>{formatClock(row.elapsedMs ?? 0)}</span>
+          <span className={cn('shrink-0 text-xl font-bold tabular-nums', overdueText(m))}>{formatClock(row.elapsedMs ?? 0)}</span>
         </>
       ) : (
         <span className="text-lg font-semibold text-emerald-700">{t('display.freeTable')}</span>
@@ -246,31 +286,29 @@ function TableTile({ row }: { row: TableOverviewRow }) {
 /** The next matches that can be called, in the waiting list's order. */
 function NextMatches({ now }: { now: number }) {
   const { t } = useTranslation();
+  const nameOf = useEntryName();
   const competitions = useQuery(getCompetitions) ?? [];
   const next = (useQuery((s) => getWaitingList(s, now), [now]) ?? []).filter((m) => m.status === 'ready').slice(0, NEXT_MATCHES);
+  if (next.length === 0) return <p className="p-4 text-slate-400">{t('display.nextEmpty')}</p>;
   return (
-    <aside aria-label={t('display.next')} className="flex w-96 shrink-0 flex-col border-l bg-white max-[1400px]:w-80">
-      <h2 className="border-b px-4 py-3 text-xl font-bold">{t('display.next')}</h2>
-      {next.length === 0 ? (
-        <p className="p-4 text-slate-400">{t('display.nextEmpty')}</p>
-      ) : (
-        <ol className="min-h-0 flex-1 overflow-hidden">
-          {next.map((m: MatchView, i) => (
-            <li key={m.id} className="border-b px-4 py-3">
-              <span className="flex items-baseline gap-2 text-sm text-slate-500">
-                <span className="font-bold text-slate-400">{i + 1}.</span>
-                {competitions.length > 1 && <b className="truncate text-slate-700">{competitions.find((c) => c.id === m.competition)?.name}</b>}
-                <span className="truncate">{matchTitle(t, m)}</span>
-              </span>
-              <span className="block text-xl leading-snug font-semibold">{entryName(m.slots[0].entry)}</span>
-              <span className="block text-xl leading-snug font-semibold">{entryName(m.slots[1].entry)}</span>
-            </li>
-          ))}
-        </ol>
-      )}
-    </aside>
+    <ol className="min-h-0 flex-1 overflow-hidden">
+      {next.map((m: MatchView, i) => (
+        <li key={m.id} className="border-b px-4 py-3">
+          <span className="flex items-baseline gap-2 text-sm text-slate-500">
+            <span className="font-bold text-slate-400">{i + 1}.</span>
+            {competitions.length > 1 && <b className="truncate text-slate-700">{competitions.find((c) => c.id === m.competition)?.name}</b>}
+            <span className="truncate">{matchTitle(t, m)}</span>
+          </span>
+          <span className="block text-xl leading-snug font-semibold">{nameOf(m.slots[0].entry)}</span>
+          <span className="block text-xl leading-snug font-semibold">{nameOf(m.slots[1].entry)}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
+
+/** The display's group boxes are narrow, so its grid is wider than the canvas's: fewer rows to fit into the height. */
+const displayGroupColumns = (count: number) => Math.min(count, Math.max(1, Math.ceil(Math.sqrt(count * 1.8))));
 
 /** One competition's groups and brackets, fitted to the space and not interactive. */
 function CompetitionView({ competitionId, now }: { competitionId: string; now: number }) {
@@ -293,7 +331,7 @@ function CompetitionView({ competitionId, now }: { competitionId: string; now: n
       <div className="flex flex-col items-center gap-12 p-8">
         {stages.map((s) =>
           s.type === 'groups' ? (
-            <div key={s.id} className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupColumns(s.groups.length)}, auto)` }}>
+            <div key={s.id} className="grid gap-6" style={{ gridTemplateColumns: `repeat(${displayGroupColumns(s.groups.length)}, auto)` }}>
               {s.groups.map((group) => (
                 <GroupBox key={group.id} group={group} selectedMatch={null} />
               ))}

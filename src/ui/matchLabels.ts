@@ -86,8 +86,8 @@ export function originLabel(origin: { place: number; groupName: string }): strin
 }
 
 /** Who plays in a slot, or what it waits for: a name, "BYE", "W QF1", or "TBD". */
-export function slotText(t: TFunction, slot: SlotView): { text: string; placeholder: boolean } {
-  const name = entryName(slot.entry);
+export function slotText(t: TFunction, slot: SlotView, shortNames?: Record<string, string>): { text: string; placeholder: boolean } {
+  const name = entryName(slot.entry, shortNames);
   // An origin label ("1A") stays next to the name once the group has decided it.
   const origin = slot.origin ? originLabel(slot.origin) : null;
   if (name) return { text: origin ? `${name} · ${origin}` : name, placeholder: false };

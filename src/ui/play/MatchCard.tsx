@@ -8,6 +8,7 @@ import { matchCode, slotText } from '@/ui/matchLabels';
 import { busyLines } from './busy';
 import { overdueText } from './overdueStyle';
 import { ResultBadge } from './ResultBadge';
+import { useDisplayMode } from './displayMode';
 import { hasGames } from './specialResults';
 
 /** Card frame by derived match status (spec user story 86). */
@@ -37,6 +38,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
   const { match } = props;
   const competitions = useQuery(getCompetitions) ?? [];
   const { print = false } = props;
+  const display = useDisplayMode();
   const busy = !print && match.status === 'busy' ? busyLines(t, match, competitions).join(' ') : undefined;
   const Frame = props.onSelect ? 'button' : 'div';
   return (
@@ -46,7 +48,8 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
       title={busy}
       onClick={props.onSelect ? (e) => props.onSelect!(e.currentTarget) : undefined}
       className={cn(
-        'relative block h-16 w-[292px] overflow-hidden rounded-md text-left text-slate-900 select-none',
+        'relative block h-16 overflow-hidden rounded-md text-left text-slate-900 select-none',
+        display ? 'w-full' : 'w-[292px]',
         props.onSelect && 'hover:shadow-md',
         print ? (match.result || match.decidedByBye ? PRINT_STYLE : PRINT_PENDING_STYLE) : match.overdue === 'red' ? RED_OVERDUE_STYLE : STATUS_STYLE[match.status],
         props.selected && 'outline-2 outline-offset-2 outline-slate-900',
@@ -60,7 +63,7 @@ export function MatchCard(props: { match: MatchView; selected: boolean; onSelect
       </span>
       {([0, 1] as const).map((side) => {
         const won = match.result?.winner === side;
-        const slot = slotText(t, match.slots[side]);
+        const slot = slotText(t, match.slots[side], display?.names);
         return (
           <span
             key={side}

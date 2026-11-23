@@ -402,6 +402,7 @@ export const en = {
     notConfirmed: 'draw not confirmed',
     fullScreen: 'Full screen',
     exitFullScreen: 'Exit full screen',
+    tablesEmpty: 'No active tables.',
     freeTable: 'Free',
   },
   print: {

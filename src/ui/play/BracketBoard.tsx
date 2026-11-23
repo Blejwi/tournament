@@ -2,9 +2,10 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MatchId, MatchView, PlaceRange } from '@/engine';
 import { cn } from '@/lib/utils';
-import { CARD_H, CARD_W, layoutBracket, type LayoutSection } from './bracketLayout';
+import { CARD_H, CARD_W, COMPACT_CARD_W, layoutBracket, type LayoutSection } from './bracketLayout';
 import { Switch } from '@/ui/components/ui/switch';
 import { formatPlace } from '@/ui/matchLabels';
+import { useDisplayMode } from './displayMode';
 import { MatchCard } from './MatchCard';
 
 /**
@@ -30,13 +31,14 @@ export function BracketBoard(props: {
   crop?: { x: number; y: number; w: number; h: number };
 }) {
   const { t } = useTranslation();
-  const layout = layoutBracket(props.sections);
+  const cardW = useDisplayMode() ? COMPACT_CARD_W : CARD_W;
+  const layout = layoutBracket(props.sections, cardW);
   const { crop } = props;
   const inCrop = (x: number, y: number, w: number, h: number) => !crop || (x < crop.x + crop.w && x + w > crop.x && y < crop.y + crop.h && y + h > crop.y);
   const [dx, dy] = crop ? [crop.x, crop.y] : [0, 0];
   const [width, height] = crop ? [crop.w, crop.h] : [layout.width, layout.height];
-  const labels = (props.print ? layout.labels.filter((l) => l.kind === 'round' || l.compact) : layout.labels).filter((l) => inCrop(l.x, l.y, l.compact ? CARD_W : 120, 20));
-  const cards = layout.cards.filter((c) => inCrop(c.x, c.y, CARD_W, CARD_H));
+  const labels = (props.print ? layout.labels.filter((l) => l.kind === 'round' || l.compact) : layout.labels).filter((l) => inCrop(l.x, l.y, l.compact ? cardW : 120, 20));
+  const cards = layout.cards.filter((c) => inCrop(c.x, c.y, cardW, CARD_H));
   return (
     <div className="relative" style={{ width, height }}>
       <svg className="pointer-events-none absolute inset-0" width={width} height={height} viewBox={`${dx} ${dy} ${width} ${height}`} aria-hidden>
@@ -55,7 +57,7 @@ export function BracketBoard(props: {
         <div
           key={`label-${i}`}
           className={cn('absolute flex items-baseline gap-x-2 whitespace-nowrap', label.compact && 'flex-wrap')}
-          style={{ left: label.x - dx, top: label.y - dy, width: label.compact ? CARD_W : undefined }}
+          style={{ left: label.x - dx, top: label.y - dy, width: label.compact ? cardW : undefined }}
         >
           <span
             className={cn(
@@ -79,7 +81,7 @@ export function BracketBoard(props: {
         </div>
       ))}
       {cards.map(({ match, x, y }) => (
-        <div key={match.id} className="absolute" style={{ left: x - dx, top: y - dy, width: CARD_W, height: CARD_H }}>
+        <div key={match.id} className="absolute" style={{ left: x - dx, top: y - dy, width: cardW, height: CARD_H }}>
           {props.renderCard?.(match) ?? (
             <MatchCard match={match} selected={props.selectedMatch === match.id} print={props.print} onSelect={props.onSelectMatch && ((el) => props.onSelectMatch!(match.id, el))} />
           )}

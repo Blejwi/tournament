@@ -4,6 +4,7 @@ import type { GroupView, MatchId } from '@/engine';
 import { cn } from '@/lib/utils';
 import { entryName } from '@/ui/format';
 import { originLabel } from '@/ui/matchLabels';
+import { useDisplayMode } from './displayMode';
 import { MatchCard } from './MatchCard';
 import { hasGames, specialKind } from './specialResults';
 
@@ -18,11 +19,12 @@ export function GroupBox(props: {
 }) {
   const { t } = useTranslation();
   const { group } = props;
+  const names = useDisplayMode()?.names;
   const done = group.matches.filter((m) => m.result).length;
   const tieToSettle = group.ties.some((tie) => tie.resolution === null);
 
   return (
-    <div className="w-[628px] rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+    <div className={cn('rounded-lg border border-slate-200 bg-white p-3 shadow-sm', names ? 'w-[440px]' : 'w-[628px]')}>
       <Header
         className="mb-2 flex w-full items-center gap-2 rounded text-left"
         onOpenDetail={props.onOpenDetail}
@@ -63,7 +65,7 @@ export function GroupBox(props: {
                 {row.place}
               </td>
               <td className="py-[2px] break-words">
-                {entryName(row.entry) ?? (origin ? originLabel(origin) : t('match.unknown'))}{' '}
+                {entryName(row.entry, names) ?? (origin ? originLabel(origin) : t('match.unknown'))}{' '}
                 {row.entry && origin && <span className="text-[10px] font-semibold text-indigo-500">{originLabel(origin)}</span>}{' '}
                 {row.entry?.players[0]?.club && <span className="text-[10px] text-slate-400">{row.entry.players[0].club}</span>}
               </td>
@@ -84,9 +86,9 @@ export function GroupBox(props: {
           {group.carriedOver.map((carried, i) => (
             <li key={i} title={t('groups.carriedOverTitle')} className="flex items-center gap-1.5 italic">
               <span className="font-semibold not-italic">{t('groups.carriedOver')}</span>
-              <span className={cn(carried.result.winner === 0 && 'font-semibold text-slate-700')}>{entryName(carried.entries[0])}</span>
+              <span className={cn(carried.result.winner === 0 && 'font-semibold text-slate-700')}>{entryName(carried.entries[0], names)}</span>
               <span className="tabular-nums">{hasGames(carried) ? `${carried.result.gamesWon[0]}:${carried.result.gamesWon[1]}` : t(`match.specialBadge.${specialKind(carried.result)!}`)}</span>
-              <span className={cn(carried.result.winner === 1 && 'font-semibold text-slate-700')}>{entryName(carried.entries[1])}</span>
+              <span className={cn(carried.result.winner === 1 && 'font-semibold text-slate-700')}>{entryName(carried.entries[1], names)}</span>
             </li>
           ))}
         </ul>

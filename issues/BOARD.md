@@ -17,6 +17,7 @@ Progress of the v1 tickets (parent: [#0001 Tournament manager v1](0001-tournamen
 
 | Ticket | Title | Notes |
 |---|---|---|
+| [#0028](0028-display-readable-for-big-competitions.md) | Display screen readable for big competitions | Sidebar cycle, compact cards, short names |
 
 ## ⛔ Blocked
 

@@ -405,6 +405,7 @@ export const pl: Translations<'one' | 'few' | 'many', 'other'> = {
     notConfirmed: 'losowanie niezatwierdzone',
     fullScreen: 'Pełny ekran',
     exitFullScreen: 'Zamknij pełny ekran',
+    tablesEmpty: 'Brak aktywnych stołów.',
     freeTable: 'Wolny',
   },
   print: {
