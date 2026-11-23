@@ -1,7 +1,7 @@
 ---
 id: 28
 title: Display screen readable for big competitions
-status: in-progress
+status: done
 labels: [ready-for-agent]
 created: 2026-11-23
 ---
@@ -45,16 +45,31 @@ Three changes to the display only. (1) The tables strip leaves the top; tables j
 
 ## Acceptance Criteria
 
-- [ ] No tables strip across the top; the competition gets the full height.
-- [ ] The right sidebar alternates tables ↔ next matches every `SIDEBAR_CYCLE_SECONDS` (8 s), shows which view is up and a progress bar.
-- [ ] Display bracket cards are narrower; groups tightened where cheap; the content is scaled up compared to before.
-- [ ] Names on the display (brackets, groups, tables view, next matches) are "Surname I."; clashing players show "Surname Firstname".
-- [ ] `getDisplayNames` is pure, tested, exported via `@/engine`.
-- [ ] The play screen and the printout look and behave as before.
-- [ ] EN and PL keys for new text.
-- [ ] Tests, build and lint green.
+- [x] No tables strip across the top; the competition gets the full height.
+- [x] The right sidebar alternates tables ↔ next matches every `SIDEBAR_CYCLE_SECONDS` (8 s), shows which view is up and a progress bar.
+- [x] Display bracket cards are narrower; groups tightened where cheap; the content is scaled up compared to before.
+- [x] Names on the display (brackets, groups, tables view, next matches) are "Surname I."; clashing players show "Surname Firstname".
+- [x] `getDisplayNames` is pure, tested, exported via `@/engine`.
+- [x] The play screen and the printout look and behave as before.
+- [x] EN and PL keys for new text.
+- [x] Tests, build and lint green.
 
 ## Out of Scope
 
 - Paging a big competition's content over several screens.
 - Changing the competition cycle or its settings.
+
+## Resolution
+
+Done in 1fb872b.
+
+**Built**
+- Engine query `getDisplayNames(state)` (player id → "Kowalski J."; full first name for players whose short names clash), tested in `displayNames.test.ts`, exported from `@/engine`.
+- The top tables strip is gone. The right sidebar alternates a tables view and the next-matches view every `SIDEBAR_CYCLE_SECONDS` = 8 s, with both headings (the one up is marked) and a progress bar. New key `display.tablesEmpty` in EN and PL.
+- Display mode (`play/displayMode.ts`, a context next to `print`): bracket cards `COMPACT_CARD_W` = 200 instead of 292 (`layoutBracket` takes the width, default unchanged), group boxes 440 instead of 628 px with a wider grid, short names in brackets, groups, tables and next matches. The play screen and printout don't set it, so they are unchanged.
+
+**Checked in the browser** at 1920×1080 with a seeded tournament (36 players: 8 groups → 16-entry bracket, plus a 12-player bracket "Juniors"; Jan and Jakub Kowalski clash). Effective content scale of the "Open" competition: **0.32 before, 0.52 after** (about 60% larger); the clash shows as "Kowalski Jan" / "Kowalski Jakub". The sidebar switched views every 8 s. The play screen still shows full names. Tests, build and lint (src) green.
+
+**Deferred**
+- The content is still height-bound (groups stacked over the bracket). Putting the groups and the bracket side by side on wide screens would raise the scale further.
+- 1280×800 not re-checked.
