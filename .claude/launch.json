@@ -6,6 +6,12 @@
       "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
       "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5173", "--strictPort"],
       "port": 5173
+    },
+    {
+      "name": "build-preview",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "preview", "--port", "4180", "--strictPort"],
+      "port": 4180
     }
   ]
 }

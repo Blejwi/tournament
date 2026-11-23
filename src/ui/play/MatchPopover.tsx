@@ -95,7 +95,7 @@ export function MatchPopover(props: {
           <X className="size-4" />
         </button>
       </div>
-      <div className="grid gap-3 p-3">
+      <div className="grid grid-cols-1 gap-3 p-3">
         <div className="grid gap-1.5">
           {([0, 1] as const).map((side) => {
             const entry = match.slots[side].entry;
