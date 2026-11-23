@@ -9,11 +9,15 @@ import {
   getDisplayCycle,
   getDisplayFocus,
   getDisplayNames,
+  getFinalPlaces,
   getStage,
   getTableOverview,
   getTournament,
   getWaitingList,
+  type FinalPlacesView,
+  type FinalPlaceView,
   type MatchView,
+  type PlaceRange,
   type TableOverviewRow,
   type TournamentState,
 } from '@/engine';
@@ -33,7 +37,7 @@ import { DISPLAY_MIN_SCALE, planCompetitionPages, type DisplayPage, type PageCon
 import { useDisplayTournament } from './useDisplayTournament';
 
 /** How long one page (some groups, or part of a bracket) stays on screen before the next one. */
-export const PAGE_SECONDS = 12;
+export const PAGE_SECONDS = 20;
 /** How long the sidebar shows one view (the tables, then the next matches) before the other. Faster than the pages. */
 export const SIDEBAR_CYCLE_SECONDS = 8;
 /** How many waiting matches the "next" list shows. */
@@ -97,6 +101,7 @@ function Display({ state }: { state: TournamentState }) {
                 (getCompetition(s, c.id)?.stages ?? []).map((stage) => getStage(s, stage.id, now)),
                 getDisplayFocus(s, c.id, now),
                 { w: size.w, h: size.h, minScale },
+                getFinalPlaces(s, c.id),
                 split.includes(c.id),
                 hideFinished.includes(c.id),
               ),
@@ -167,7 +172,7 @@ function Display({ state }: { state: TournamentState }) {
 
 /** "Drabinka 2/3", or just "Grupy" when the stage is one page. */
 function pageLabel(t: TFunction, page: DisplayPage): string {
-  const name = t(page.type === 'groups' ? 'display.pageGroups' : 'display.pageBracket');
+  const name = t(`display.page.${page.label}`);
   return page.of > 1 ? `${name} ${page.n}/${page.of}` : name;
 }
 
@@ -492,6 +497,8 @@ function ContentView({ content }: { content: PageContent }) {
           ))}
         </div>
       );
+    case 'places':
+      return <PlacesView places={content.places} />;
     case 'columns':
       return (
         <div className="flex items-start gap-12">
@@ -505,4 +512,45 @@ function ContentView({ content }: { content: PageContent }) {
         </div>
       );
   }
+}
+
+const medal = (from: number) => (from === 1 ? 'bg-amber-400 text-amber-950' : from === 2 ? 'bg-slate-300 text-slate-800' : from === 3 ? 'bg-orange-300 text-orange-950' : 'bg-slate-200 text-slate-700');
+
+/** The final places of a competition: one card per place or shared range, the entries in it, and what is still to come. */
+function PlacesView({ places }: { places: FinalPlacesView }) {
+  const { t } = useTranslation();
+  const nameOf = useEntryName();
+  const blocks = new Map<string, { place: PlaceRange; rows: FinalPlaceView[]; missing: number }>();
+  const blockOf = (place: PlaceRange) => {
+    const key = `${place.from}-${place.to}`;
+    const block = blocks.get(key) ?? { place, rows: [], missing: 0 };
+    blocks.set(key, block);
+    return block;
+  };
+  for (const row of places.rows) blockOf(row.place).rows.push(row);
+  for (const gap of places.open) blockOf(gap.place).missing = gap.count;
+  const all = [...blocks.values()].sort((a, b) => a.place.from - b.place.from);
+  // Places nobody has reached yet are not listed one by one: a single line says how many are still open.
+  const ordered = all.filter((b) => b.rows.length > 0);
+  const undecided = all.filter((b) => b.rows.length === 0).reduce((sum, b) => sum + b.missing, 0);
+  const label = (p: PlaceRange) => (p.from === p.to ? String(p.from) : `${p.from}–${p.to}`);
+  return (
+    <div className="w-[1100px] columns-2 gap-6 p-6">
+      {ordered.map((block) => (
+        <section key={label(block.place)} className="mb-4 flex break-inside-avoid gap-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <span className={cn('flex h-14 min-w-14 shrink-0 items-center justify-center rounded-lg px-2 text-3xl font-bold', medal(block.place.from))}>{label(block.place)}</span>
+          <ul className={cn('min-w-0 flex-1 gap-x-6 text-2xl font-semibold', block.rows.length > 12 ? 'columns-3' : block.rows.length > 4 ? 'columns-2' : '')}>
+            {block.rows.map((row) => (
+              <li key={row.entry.id} className="truncate leading-9">
+                {nameOf(row.entry)}
+                {block.rows.length <= 4 && row.entry.players[0]?.club && <span className="ml-2 text-base font-normal text-slate-400">{row.entry.players[0].club}</span>}
+              </li>
+            ))}
+            {block.missing > 0 && <li className="leading-9 text-slate-400 italic">{t('display.placesMissing', { count: block.missing })}</li>}
+          </ul>
+        </section>
+      ))}
+      {undecided > 0 && <p className="break-inside-avoid px-2 text-xl text-slate-500 italic">{t('display.placesMissing', { count: undecided })}</p>}
+    </div>
+  );
 }

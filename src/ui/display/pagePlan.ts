@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import type { BracketStageView, CompetitionId, DisplayStageFocus, GroupId, GroupView, MatchId, MatchView, StageId, StageView } from '@/engine';
+import type { BracketStageView, CompetitionId, DisplayStageFocus, FinalPlacesView, GroupId, GroupView, MatchId, MatchView, StageId, StageView } from '@/engine';
 import { bracketLayoutSections } from '@/ui/play/bracketSections';
 import { DISPLAY_CARD_W, layoutBracket, type LayoutSection } from '@/ui/play/bracketLayout';
 import { planBracketPages, type PagePlanOptions } from '@/ui/print/printPlan';
@@ -41,7 +41,9 @@ export type PageContent =
   | { kind: 'groups'; groups: GroupView[]; columns: number; matches?: Record<GroupId, MatchId[]> }
   | { kind: 'bracket'; blocks: BracketBlock[] }
   /** A whole competition on one page (page splitting is off): its parts in columns, side by side. */
-  | { kind: 'columns'; columns: PageContent[][] };
+  | { kind: 'columns'; columns: PageContent[][] }
+  /** The final places decided so far, and how many entries are still to land in each place. */
+  | { kind: 'places'; places: FinalPlacesView };
 
 export interface DisplayPage {
   /** Stable while the page keeps existing, so the cycle can stay on it. */
@@ -49,6 +51,8 @@ export interface DisplayPage {
   competition: CompetitionId;
   stage: StageId;
   type: PageContent['kind'];
+  /** What the page is called in the header and the tabs. */
+  label: 'groups' | 'bracket' | 'all' | 'places';
   /** This page among the stage's pages (1-based). */
   n: number;
   of: number;
@@ -209,16 +213,22 @@ export function planCompetitionPages(
   stages: (StageView | null)[],
   focus: DisplayStageFocus[],
   space: PageSpace,
+  places: FinalPlacesView | null,
   split = true,
   /** Leave out what is finished: groups once the next stage has started, early bracket rounds, finished blocks. */
   hideFinished = false,
 ): DisplayPage[] {
+  // Last page of every competition: its final places, once any place is decided.
+  const placesPage: DisplayPage[] =
+    places && places.rows.length > 0
+      ? [{ key: `${competition}:places`, competition, stage: stages.filter((s) => s).at(-1)?.id ?? competition, type: 'places', label: 'places', n: 1, of: 1, content: { kind: 'places', places } }]
+      : [];
   if (!split) {
     const content = arrange(wholeItems(t, stages), space);
-    if (!content) return [];
-    return [{ key: `${competition}:all`, competition, stage: stages.find((s) => s)?.id ?? competition, type: content.kind, n: 1, of: 1, content }];
+    if (!content) return placesPage;
+    return [{ key: `${competition}:all`, competition, stage: stages.find((s) => s)?.id ?? competition, type: content.kind, label: 'all', n: 1, of: 1, content }, ...placesPage];
   }
-  return stages.flatMap((stage, i) => {
+  const stagePages = stages.flatMap((stage, i) => {
     const f = focus[i];
     if (!stage || !f || stage.drawState === 'notDrawn') return [];
     const contents: PageContent[] =
@@ -228,9 +238,11 @@ export function planCompetitionPages(
       competition,
       stage: stage.id,
       type: content.kind,
+      label: stage.type === 'groups' ? ('groups' as const) : ('bracket' as const),
       n: n + 1,
       of: contents.length,
       content,
     }));
   });
+  return [...stagePages, ...placesPage];
 }
