@@ -1,7 +1,7 @@
 ---
 id: 31
 title: Add new players one after another
-status: open
+status: done
 labels: [ready-for-agent]
 created: 2026-11-23
 ---
@@ -50,3 +50,13 @@ Keep the existing `PlayerDialog`, and in add mode (not edit) leave it open after
 - `src/ui/components/PlayerDialog.tsx` gets the competition's name (pass `CompetitionView` or its name from `EntriesCard` in `src/ui/screens/CompetitionScreen.tsx`).
 - New i18n keys go in `en.ts` and `pl.ts` (title with competition, the added line with plurals, "Done").
 - No engine tests are affected. Verify in the browser: add three players with Enter only, check focus, the count and the title, then trigger an error (empty last name).
+
+## Resolution
+
+Done in fed9f47.
+
+**Built**
+
+- In add mode `PlayerDialog` stays open after each successful add: all fields (club included) clear, focus returns to First name, and a status line shows the last player and the count so far. A failed add keeps the fields and the previous status line.
+- The title names the competition ("Add player to ..."); the secondary button reads "Done" in add mode. Edit mode is unchanged.
+- UI only: the engine and its tests are untouched.
